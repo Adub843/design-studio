@@ -1,0 +1,19 @@
+{
+  "name": "design-studio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "node --check assets/util.js && node --check assets/app.js && node --check assets/api.js && node --check assets/brands.js && node --check assets/home.js && node --check assets/library.js && node --check assets/studio.js && node --check assets/confirm.js && node --check lib/auth.mjs && node --check lib/images.mjs && node --check lib/kv-store.mjs && node --check worker/index.mjs && node --check scripts/build.mjs && node --check scripts/test-api.mjs && node --check scripts/test-ui.cjs",
+    "test": "node scripts/test-api.mjs",
+    "test:ui": "NODE_PATH=$(npm root -g) node scripts/test-ui.cjs",
+    "build": "node scripts/build.mjs",
+    "deploy": "npm run check && npm test && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.150.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

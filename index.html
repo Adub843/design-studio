@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <title>Design Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="side" id="side" aria-label="Studio"></nav>
+    <div class="main-col">
+      <div class="topbar" id="top"></div>
+      <main id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <dialog class="palette" id="palette" aria-label="Search or jump to">
+    <input id="pal-q" type="search" placeholder="Search pages, brands, actions and images…" autocomplete="off" aria-controls="pal-list">
+    <ul id="pal-list" role="listbox"></ul>
+    <p class="hint">Enter opens the first result. Esc closes.</p>
+  </dialog>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
