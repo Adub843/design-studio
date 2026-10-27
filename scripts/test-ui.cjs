@@ -167,6 +167,30 @@ const ART = [
         await page.keyboard.press("Escape");
       });
 
+      await step(`${tag}: the Go to menu reaches the console and every site from every page`, async () => {
+        const want = ["business-console.business-console.workers.dev", "charleston3d.com", "app.charleston3d.com",
+          "elevatedshirts.com", "design.elevatedshirts.com", "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
+        for (const r of ["home", "library", "designer"]) {
+          await page.goto(`${BASE}#${r}`);
+          await page.locator(".go-btn").click();
+          await page.waitForSelector("#go-menu:popover-open");
+          const hrefs = await page.locator("#go-menu a").evaluateAll((as) => as.map((a) => [a.href, a.target, a.rel]));
+          for (const w of want) assert.ok(hrefs.some(([h]) => h.includes(w)), `${r}: Go to is missing ${w}`);
+          for (const [h, t, rel] of hrefs) { assert.match(h, /^https:\/\//); assert.equal(t, "_blank"); assert.match(rel, /noopener/); }
+          const box = await page.locator("#go-menu").boundingBox();
+          assert.ok(box.x >= 0 && box.x + box.width <= width, `${r}: Go to menu runs off the screen`);
+          if (r === "home") await shot(page, `${tag}-go-to`);
+          await page.keyboard.press("Escape");
+          assert.equal(await page.locator("#go-menu:popover-open").count(), 0);
+        }
+        await page.locator(".jump").click();
+        await page.fill("#pal-q", "order app");
+        await page.waitForFunction(() => document.querySelector("#pal-list button")?.textContent.includes("Charleston 3D order app"));
+        await page.keyboard.press("Escape"); // the first Escape clears the search box, the second closes the palette
+        await page.keyboard.press("Escape");
+        assert.equal(await page.locator("#palette[open]").count(), 0);
+      });
+
       await step(`${tag}: no horizontal scroll on any page`, async () => {
         for (const r of ["home", "library", "designer"]) {
           await page.goto(`${BASE}#${r}`);

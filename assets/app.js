@@ -10,6 +10,19 @@ import { consoleKey, askForKey, onKeyChange } from "./api.js";
 
 export { el, store, toast };
 export const CONSOLE_URL = "https://business-console.business-console.workers.dev";
+// Everywhere the team works, one click from any page: the Go to menu in the top bar and the jump palette.
+export const GO_TO = [
+  { group: "Back office", links: [
+    { label: "Business Console", note: "Products, insights, promotions, marketing", url: CONSOLE_URL, icon: "console" }] },
+  { group: "Sites", links: [
+    { label: "Charleston 3D shop", note: "charleston3d.com", url: "https://charleston3d.com", icon: "store" },
+    { label: "Charleston 3D order app", note: "app.charleston3d.com", url: "https://app.charleston3d.com", icon: "phone" },
+    { label: "Elevated Designs shop", note: "elevatedshirts.com", url: "https://elevatedshirts.com", icon: "store" },
+    { label: "Elevated Designs shirt app", note: "design.elevatedshirts.com", url: "https://design.elevatedshirts.com", icon: "phone" }] },
+  { group: "Reference", links: [
+    { label: "Accounts and connections", note: "Every account and what connects to what", url: "https://claude.ai/artifact/Xek7W6RMuhNjUHaPmoRtuY", icon: "map" },
+    { label: "Master links", note: "Every link in one sheet", url: "https://docs.google.com/spreadsheets/d/11SqwifuaDQjHgIGcuaZNRkdkG7JxfQacmT-7sEAH7Y4/edit", icon: "list" }] },
+];
 
 // ---------- icons (one stroke set, no emoji) ----------
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -27,6 +40,12 @@ const PATHS = {
   upload: "M12 16V4M7 9l5-5 5 5M4 16v4h16v-4",
   download: "M12 4v12M7 11l5 5 5-5M4 20h16",
   close: "M6 6l12 12M18 6L6 18",
+  apps: "M5 5h4v4H5zM15 5h4v4h-4zM5 15h4v4H5zM15 15h4v4h-4z",
+  store: "M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6",
+  phone: "M8 3h8v18H8zM11 18h2",
+  map: "M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14",
+  list: "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01",
+  out: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",
 };
 export const icon = (name, cls = "ico") => {
   const s = document.createElementNS(SVG_NS, "svg");
@@ -94,9 +113,18 @@ const keyBtn = el("button", { class: "btn ghost key-btn", type: "button", onclic
 const paintKey = () => keyBtn.replaceChildren(icon(consoleKey.get() ? "unlock" : "lock"), el("span", { class: "key-label" }, consoleKey.get() ? "Unlocked" : "Unlock"));
 paintKey();
 onKeyChange(paintKey);
+const goMenu = el("div", { class: "go-menu", id: "go-menu", popover: "auto", role: "menu", "aria-label": "Go to" },
+  GO_TO.map((g) => el("div", { class: "go-group" }, el("span", { class: "eyebrow" }, g.group),
+    g.links.map((l) => el("a", { class: "go-link", href: l.url, target: "_blank", rel: "noopener", role: "menuitem",
+      onclick: () => goMenu.hidePopover?.() },
+      icon(l.icon), el("span", { class: "stack" }, el("span", { class: "go-label" }, l.label), el("span", { class: "muted small" }, l.note)),
+      icon("out", "ico go-out"))))));
+const goBtn = el("button", { class: "btn ghost go-btn", type: "button", popovertarget: "go-menu", "aria-haspopup": "menu", title: "Go to the console and every site" },
+  icon("apps"), el("span", { class: "go-btn-label" }, "Go to"));
 top.append(brandSeg,
   el("button", { class: "jump", type: "button", onclick: () => openPalette() }, icon("search"), el("span", { class: "jump-label" }, "Search or jump to…"), el("kbd", {}, "/")),
-  keyBtn);
+  goBtn, keyBtn);
+document.body.append(goMenu);
 
 // ---------- jump palette: pages, brands, actions and library images ----------
 const pal = document.getElementById("palette");
@@ -109,7 +137,7 @@ function palItems(q) {
     ...PAGES.map((p) => ({ name: p.label, kind: "Page", run: () => go(p.route) })),
     ...["all", ...BRAND_KEYS].map((k) => ({ name: `Show ${brandName(k)}`, kind: "Brand", run: () => setBrand(k) })),
     { name: "Upload art", kind: "Action", run: () => { store.set("ds-open-upload", true); go("library"); } },
-    { name: "Business Console", kind: "Open", run: () => window.open(CONSOLE_URL, "_blank", "noopener") },
+    ...GO_TO.flatMap((g) => g.links.map((l) => ({ name: l.label, kind: g.group, run: () => window.open(l.url, "_blank", "noopener") }))),
     { name: "Switch light or dark", kind: "Action", run: () => document.getElementById("theme").click() },
     ...palImages.map((i) => ({ name: i.name, kind: `Image · ${brandName(i.brand ?? "ed")}`, run: () => { store.set("ds-focus-image", i.key); go("library"); } })),
   ];

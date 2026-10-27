@@ -24,6 +24,9 @@ run_worker_first = true
 binding = "IMAGES"
 id = "a4c25d0fee6e45448ada053a44b19bcc"
 
-# epix3d.com is attached once its DNS is on Cloudflare (phase 2 of the plan). Until then the studio
-# is at https://design-studio.<account>.workers.dev.
-# routes = [{ pattern = "epix3d.com", custom_domain = true }]
+# epix3d.com and www.epix3d.com (DNS on Cloudflare since 27 Oct 2026; the domain is still registered
+# at Wix). The workers.dev address stays on as a backup.
+routes = [
+  { pattern = "epix3d.com", custom_domain = true },
+  { pattern = "www.epix3d.com", custom_domain = true },
+]

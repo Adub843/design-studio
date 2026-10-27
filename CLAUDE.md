@@ -187,4 +187,5 @@ The skills live in project files `agent-skills-catalog/skills/` and on the Deskt
 - The studio key is the same `CONSOLE_KEY` secret as the console. Aaron sets it himself with `npx.cmd wrangler secret put CONSOLE_KEY`.
 - The Kittl sync cron stays in the console; the studio only reads its result (`sync:kittl`).
 - Deploy by hand from Aaron's PC: `npx.cmd wrangler deploy` in the repo folder, after `npm run check`, `npm test` and `npm run test:ui` pass. A production deploy needs Aaron's typed OK.
-- epix3d.com is not connected yet: the custom domain in `wrangler.toml` stays commented out until the epix3d.com nameservers move from Wix to Cloudflare (needs Aaron's typed OK).
+- The studio is live at https://epix3d.com and www.epix3d.com (the epix3d.com DNS zone moved from Wix to Cloudflare on 2026-10-27 with Aaron's typed OK; the registration stays at Wix). Backup address: design-studio.business-console.workers.dev. Both custom domains are declared in `wrangler.toml`.
+- Every page has a "Go to" menu in the top bar (the Business Console, both shops, both apps, the accounts map and the Master Links sheet). Keep it in step with the console's own Go to menu.

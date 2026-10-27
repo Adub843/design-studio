@@ -5,8 +5,11 @@ The Business Console keeps the business side (products, insights, marketing, pro
 write the same image library, so a design saved here is ready to list from the console and shows in the
 shirt apps when it's marked public.
 
-It will live at **epix3d.com**. Until that domain is moved to Cloudflare it runs at the Worker's
-`workers.dev` address.
+It lives at **https://epix3d.com** (and www.epix3d.com). The backup address is
+https://design-studio.business-console.workers.dev.
+
+The **Go to** button in the top bar of every page opens the Business Console, both shops, both apps,
+the accounts and connections map and the Master Links sheet. The same links are in the search palette.
 
 ## What's in it
 
@@ -72,5 +75,4 @@ npm run dev          # local Worker at http://localhost:8787
    (the same value as the console's).
 3. `npx.cmd wrangler deploy`.
 
-The custom domain (epix3d.com) is commented out in `wrangler.toml`. Turn it on after the epix3d.com
-nameservers move from Wix to Cloudflare.
+`wrangler.toml` declares epix3d.com and www.epix3d.com as custom domains, so a deploy keeps them.

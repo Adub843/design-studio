@@ -66,7 +66,7 @@ export async function renderHome() {
       el("div", { class: "thumbs" }, mine.slice(0, 4).map((i) => el("span", { class: "checker" }, el("img", { src: imageUrl(i), alt: "", loading: "lazy" })))),
       el("div", { class: "row" },
         el("button", { class: "btn", type: "button", onclick: () => { setBrand(k); go("library"); } }, "Open library"),
-        el("a", { class: "linkbtn small", href: BRANDS[k].site, target: "_blank", rel: "noopener" }, "Visit site")));
+        BRANDS[k].site ? el("a", { class: "linkbtn small", href: BRANDS[k].site, target: "_blank", rel: "noopener" }, "Visit site") : null));
   }));
 
   const sync = el("p", { class: "muted small" });
