@@ -1,0 +1,88 @@
+{
+ "note": "Studio photos of white blanks. Each view has a base photo (garment shot black, studio background) and a shade map; the app shows color x shade + base. cx, top and ppi are fractions of the photo width: print area center, print area top, and pixels per inch.",
+ "size": 1080,
+ "styles": {
+  "tee": {
+   "front": {
+    "cx": 0.5056,
+    "top": 0.2546,
+    "ppi": 0.02315
+   },
+   "back": {
+    "cx": 0.5111,
+    "top": 0.2176,
+    "ppi": 0.02315
+   }
+  },
+  "fitted": {
+   "front": {
+    "cx": 0.5111,
+    "top": 0.2361,
+    "ppi": 0.02222
+   },
+   "back": {
+    "cx": 0.5074,
+    "top": 0.2083,
+    "ppi": 0.02222
+   }
+  },
+  "longsleeve": {
+   "front": {
+    "cx": 0.5,
+    "top": 0.2546,
+    "ppi": 0.02222
+   },
+   "back": {
+    "cx": 0.5,
+    "top": 0.2222,
+    "ppi": 0.02222
+   }
+  },
+  "tank": {
+   "front": {
+    "cx": 0.5074,
+    "top": 0.2778,
+    "ppi": 0.0213
+   },
+   "back": {
+    "cx": 0.5074,
+    "top": 0.2315,
+    "ppi": 0.0213
+   }
+  },
+  "crew": {
+   "front": {
+    "cx": 0.5046,
+    "top": 0.2778,
+    "ppi": 0.02037
+   },
+   "back": {
+    "cx": 0.5,
+    "top": 0.2315,
+    "ppi": 0.02037
+   }
+  },
+  "hoodie": {
+   "front": {
+    "cx": 0.5046,
+    "top": 0.2778,
+    "ppi": 0.01944
+   },
+   "back": {
+    "cx": 0.4954,
+    "top": 0.2963,
+    "ppi": 0.01944
+   }
+  }
+ },
+ "byType": {
+  "tee": "tee",
+  "youth": "tee",
+  "womens": "fitted",
+  "long-sleeve": "longsleeve",
+  "tank": "tank",
+  "crewneck": "crew",
+  "hoodie": "hoodie",
+  "other": "tee"
+ }
+}

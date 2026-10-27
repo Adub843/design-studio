@@ -1,0 +1,29 @@
+# Design Studio on Cloudflare Workers (free plan): one Worker serves the app's files and /api/images.
+# Secrets are never written here: set CONSOLE_KEY with `npx wrangler secret put CONSOLE_KEY`
+# (the same value as the Business Console, so one key works in both).
+name = "design-studio"
+main = "worker/index.mjs"
+compatibility_date = "2026-10-01"
+# lib/auth.mjs and lib/images.mjs use node:crypto (createHash, createHmac, timingSafeEqual).
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Copies index.html and assets/ into dist/ before `wrangler dev` and `wrangler deploy`.
+[build]
+command = "node scripts/build.mjs"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# Every request goes through the Worker first, so /api wins and every page gets the security headers.
+run_worker_first = true
+
+# The image library: the SAME namespace the Business Console uses (business-console-images), so both
+# apps and the shirt apps see one library. `wrangler dev` keeps a separate local copy.
+[[kv_namespaces]]
+binding = "IMAGES"
+id = "a4c25d0fee6e45448ada053a44b19bcc"
+
+# epix3d.com is attached once its DNS is on Cloudflare (phase 2 of the plan). Until then the studio
+# is at https://design-studio.<account>.workers.dev.
+# routes = [{ pattern = "epix3d.com", custom_domain = true }]
