@@ -15,6 +15,12 @@ export const SITE_HEADERS = {
   "cross-origin-opener-policy": "same-origin",
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
 };
+// The 3D makers (makers/) are self-contained pages that load three.js and JSZip from public CDNs and
+// run their own inline scripts, so they get their own policy. They still can't be framed elsewhere.
+export const MAKER_HEADERS = {
+  ...SITE_HEADERS,
+  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+};
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
 });
@@ -41,7 +47,8 @@ export async function handleRequest(req, env) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(req);
   const out = new Response(res.body, res);
-  for (const [k, v] of Object.entries(SITE_HEADERS)) out.headers.set(k, v);
+  const headers = pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
+  for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }
 

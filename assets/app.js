@@ -10,10 +10,12 @@ import { consoleKey, askForKey, onKeyChange } from "./api.js";
 
 export { el, store, toast };
 export const CONSOLE_URL = "https://business-console.business-console.workers.dev";
+export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
 // Everywhere the team works, one click from any page: the Go to menu in the top bar and the jump palette.
 export const GO_TO = [
   { group: "Back office", links: [
-    { label: "Business Console", note: "Products, insights, promotions, marketing", url: CONSOLE_URL, icon: "console" }] },
+    { label: "Creative Lab Studios", note: "Main console: team, marketing, Holo, money", url: HQ_URL, icon: "console" },
+    { label: "Store engine", note: "Price sync, Shopify publishing, promotions", url: CONSOLE_URL, icon: "console" }] },
   { group: "Sites", links: [
     { label: "Charleston 3D shop", note: "charleston3d.com", url: "https://charleston3d.com", icon: "store" },
     { label: "Charleston 3D order app", note: "app.charleston3d.com", url: "https://app.charleston3d.com", icon: "phone" },
@@ -40,6 +42,7 @@ const PATHS = {
   upload: "M12 16V4M7 9l5-5 5 5M4 16v4h16v-4",
   download: "M12 4v12M7 11l5 5 5-5M4 20h16",
   close: "M6 6l12 12M18 6L6 18",
+  makers: "M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5",
   apps: "M5 5h4v4H5zM15 5h4v4h-4zM5 15h4v4H5zM15 15h4v4h-4z",
   store: "M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6",
   phone: "M8 3h8v18H8zM11 18h2",
@@ -59,6 +62,7 @@ export const PAGES = [
   { route: "home", label: "Home", short: "Home", icon: "home", load: () => import("./home.js").then((m) => m.renderHome()) },
   { route: "designer", label: "Shirt designer", short: "Design", icon: "designer", load: () => import("./studio.js").then((m) => m.renderDesigner()) },
   { route: "library", label: "Library", short: "Library", icon: "library", load: () => import("./library.js").then((m) => m.renderLibrary()) },
+  { route: "makers", label: "3D makers", short: "Makers", icon: "makers", load: () => import("./makers.js").then((m) => m.renderMakers()) },
 ];
 
 // A Polaris-style page header: where you are, the title, and the page's actions on the right.
@@ -81,7 +85,7 @@ side.append(
     el("a", { class: "nav", href: `#${p.route}`, "data-route": p.route, title: p.label }, icon(p.icon),
       el("span", { class: "nav-long side-label" }, p.label), el("span", { class: "nav-short", "aria-hidden": "true" }, p.short)))),
   el("div", { class: "side-foot" },
-    el("a", { class: "nav", href: CONSOLE_URL, target: "_blank", rel: "noopener", title: "Business Console" }, icon("console"), el("span", { class: "side-label" }, "Business Console")),
+    el("a", { class: "nav", href: HQ_URL, target: "_blank", rel: "noopener", title: "Creative Lab Studios console" }, icon("console"), el("span", { class: "side-label" }, "Main console")),
     el("button", { class: "nav", type: "button", id: "theme", title: "Switch light or dark" }, icon("theme"), el("span", { class: "side-label" }, "Theme")),
     el("button", { class: "nav side-toggle", type: "button", "aria-label": "Collapse the sidebar", "aria-expanded": String(!collapsed()),
       onclick: (e) => { const v = !collapsed(); applyCollapse(v); store.set("ds-side-min", v); e.currentTarget.setAttribute("aria-expanded", String(!v)); } },
