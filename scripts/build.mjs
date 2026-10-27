@@ -9,5 +9,5 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist);
-for (const f of ["index.html", "assets"]) fs.cpSync(path.join(root, f), path.join(dist, f), { recursive: true });
-console.log("Built dist/ (index.html and assets/)");
+for (const f of ["index.html", "assets", "makers"]) fs.cpSync(path.join(root, f), path.join(dist, f), { recursive: true });
+console.log("Built dist/ (index.html, assets/ and makers/)");

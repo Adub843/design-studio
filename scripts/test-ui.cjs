@@ -32,7 +32,7 @@ function memoryKV() {
 }
 const ASSETS = { async fetch(req) {
   let p = decodeURIComponent(new URL(req.url).pathname);
-  if (p === "/") p = "/index.html";
+  if (p.endsWith("/")) p += "index.html"; // Workers static assets serve a folder's index.html the same way
   const file = path.join(DIST, path.normalize(p));
   if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) return new Response("Not found", { status: 404 });
   return new Response(fs.readFileSync(file), { headers: { "content-type": TYPES[path.extname(file)] ?? "application/octet-stream" } });
@@ -168,9 +168,9 @@ const ART = [
       });
 
       await step(`${tag}: the Go to menu reaches the console and every site from every page`, async () => {
-        const want = ["business-console.business-console.workers.dev", "charleston3d.com", "app.charleston3d.com",
+        const want = ["business-console.business-console.workers.dev", "claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
           "elevatedshirts.com", "design.elevatedshirts.com", "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
-        for (const r of ["home", "library", "designer"]) {
+        for (const r of ["home", "library", "designer", "makers"]) {
           await page.goto(`${BASE}#${r}`);
           await page.locator(".go-btn").click();
           await page.waitForSelector("#go-menu:popover-open");
@@ -191,8 +191,30 @@ const ART = [
         assert.equal(await page.locator("#palette[open]").count(), 0);
       });
 
+      await step(`${tag}: the 3D makers open and come back to the studio`, async () => {
+        // Their own tab: the makers load three.js from public CDNs, which this test's sandbox may block,
+        // so their script errors are not the studio's.
+        const page = await ctx.newPage();
+        for (const [name, slug] of [["Hype Chain Maker", "hype-chain"], ["Nameplate Maker", "nameplate"]]) {
+          await page.goto(`${BASE}#makers`);
+          await page.locator(".maker a", { hasText: name }).click();
+          await page.waitForURL(`**/makers/${slug}/`);
+          const res = await page.request.get(`${BASE}makers/${slug}/`);
+          assert.match(res.headers()["content-security-policy"], /cdnjs\.cloudflare\.com/);
+          assert.equal(res.headers()["x-frame-options"], "DENY");
+          const bar = page.locator("#ds-back-bar a");
+          assert.match(await bar.innerText(), /Back to Design Studio/);
+          if (scheme === "light") await shot(page, `${tag}-${slug}`);
+          await bar.click();
+          await page.waitForSelector(".maker-grid");
+        }
+        const site = await page.request.get(BASE);
+        assert.doesNotMatch(site.headers()["content-security-policy"], /cdnjs/); // the studio itself keeps the strict policy
+        await page.close();
+      });
+
       await step(`${tag}: no horizontal scroll on any page`, async () => {
-        for (const r of ["home", "library", "designer"]) {
+        for (const r of ["home", "library", "designer", "makers"]) {
           await page.goto(`${BASE}#${r}`);
           await page.waitForTimeout(250);
           const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
