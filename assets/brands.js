@@ -6,7 +6,7 @@ import { store } from "./util.js";
 export const BRANDS = {
   c3d: { name: "Charleston 3D", short: "C3D", site: "https://charleston3d.com" },
   ed: { name: "Elevated Designs", short: "ED", site: "https://elevatedshirts.com" },
-  epix3d: { name: "EPIX3D", short: "EPIX", site: "https://epix3d.com" },
+  epix3d: { name: "EPIX3D", short: "EPIX", site: null }, // epix3d.com is this studio, so EPIX3D has no shop of its own
 };
 export const BRAND_KEYS = Object.keys(BRANDS);
 
