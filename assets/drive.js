@@ -46,7 +46,7 @@ export async function renderDrive() {
         el("button", { class: "btn ghost icon-btn", type: "button", "aria-label": "Close", onclick: () => sheet.close() }, icon("close"))),
       el("div", { class: "checker sheet-img" }, tile(i)),
       el("p", { class: "muted small wrap" }, [brandName(i.brand), extLabel(i.ext), size(i.size)].filter(Boolean).join(" · ")),
-      el("p", { class: "small wrap" }, el("span", { class: "eyebrow" }, "Where it is"), el("br"), i.src === "kittl" ? i.folder : `${i.src === "lab" ? "Design lab images" : "E:"}\\${i.folder}`),
+      el("p", { class: "small wrap" }, el("span", { class: "eyebrow" }, "Where it is"), el("br"), i.src === "e" ? `E:\\${i.folder}` : i.folder),
       i.copies > 1 ? el("p", { class: "muted small" }, `The drive has ${i.copies} copies of this file. It's listed once.`) : null,
       el("div", { class: "row" },
         i.fileUrl ? el("a", { class: "btn primary", href: i.fileUrl, download: i.name }, icon("download"), "Download") : null,

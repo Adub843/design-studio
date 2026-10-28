@@ -31,7 +31,8 @@ ROOTS.forEach((root, r) => {
       let st; try { st = fs.statSync(path.join(dir, d.name)); } catch { continue; }
       const c = classify(relPath);
       const brand = root.brand ?? c.brand;
-      insert.run(fileId(d.name, st.size), root.src, r, relPath, d.name, path.dirname(relPath) === "." ? "" : path.dirname(relPath),
+      const folder = path.dirname(relPath) === "." ? "" : path.dirname(relPath);
+      insert.run(fileId(d.name, st.size), root.src, r, relPath, d.name, root.src === "lab" ? `Design lab${folder ? "\\" + folder : ""}` : folder,
         c.ext, st.size, brand, c.kind, null, null, Math.floor(st.mtimeMs));
       if (++files % 20000 === 0) console.log(`${files} files read…`);
     }
