@@ -1,7 +1,7 @@
 // API tests for the Design Studio Worker: routing, the studio key, brands on images, and the rule that
 // keeps Charleston 3D art out of the public shirt-app feed. Runs with plain Node (npm test), no network.
 import assert from "node:assert/strict";
-import { handleRequest, SITE_HEADERS } from "../worker/index.mjs";
+import { handleRequest, SITE_HEADERS, HQ_URL } from "../worker/index.mjs";
 import { requireKey, MIN_KEY_LENGTH } from "../lib/auth.mjs";
 import { brandOf, canBePublic } from "../lib/images.mjs";
 
@@ -128,6 +128,7 @@ await test("CORS: only the shirt app origins, only on reads", async () => {
   assert.equal(bad.headers.get("access-control-allow-origin"), null);
 });
 
+
 // ----- E: drive library (lib/drive.mjs), checked against the PC side's own signature check -----
 const { handleDrive } = await import("../lib/drive.mjs");
 const { verifySig, driveSig: driveSigFor } = await import("../drive-server/lib.mjs");
@@ -201,6 +202,15 @@ await test("drive: files are sorted into the right brand and kind", async () => 
   assert.equal(classify("Logo Library\\a.png").kind, "logo");
   assert.equal(classify("SVG FILES\\a\\b.svg").kind, "svg");
   assert.equal(classify("Vector files\\a.eps").kind, "source");
+});
+
+await test("/hq is a short link to the main console", async () => {
+  for (const path of ["/hq", "/hq/"]) {
+    const r = await call(env(), path, { redirect: "manual" });
+    assert.equal(r.status, 302);
+    assert.equal(r.headers.get("location"), HQ_URL);
+  }
+
 });
 
 console.log(`\n${passed} API tests passed`);

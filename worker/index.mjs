@@ -6,6 +6,7 @@ import { kvBlobStore } from "../lib/kv-store.mjs";
 import { handleDrive } from "../lib/drive.mjs";
 
 // Where the console's hourly Kittl sync keeps its last result, in the same namespace.
+export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
 export const SYNC_STATE_KEY = "sync:kittl";
 
 export const SITE_HEADERS = {
@@ -29,6 +30,8 @@ const envReader = (env) => (k) => typeof env?.[k] === "string" ? env[k] : undefi
 
 export async function handleRequest(req, env) {
   const { pathname } = new URL(req.url);
+  // Short link to Aaron's main console (Creative Lab Studios on claude.ai).
+  if (pathname === "/hq" || pathname === "/hq/") return new Response(null, { status: 302, headers: { ...SITE_HEADERS, location: HQ_URL, "cache-control": "no-store" } });
   try {
     if (pathname === "/api/images" || pathname.startsWith("/api/images/")) {
       if (!env?.IMAGES || typeof env.IMAGES.list !== "function")
