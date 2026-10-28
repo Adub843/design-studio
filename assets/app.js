@@ -49,6 +49,7 @@ const PATHS = {
   map: "M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14",
   list: "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01",
   out: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",
+  drive: "M3 7h18v10H3zM3 12h18M7 15h.01M11 15h.01",
 };
 export const icon = (name, cls = "ico") => {
   const s = document.createElementNS(SVG_NS, "svg");
@@ -62,6 +63,7 @@ export const PAGES = [
   { route: "home", label: "Home", short: "Home", icon: "home", load: () => import("./home.js").then((m) => m.renderHome()) },
   { route: "designer", label: "Shirt designer", short: "Design", icon: "designer", load: () => import("./studio.js").then((m) => m.renderDesigner()) },
   { route: "library", label: "Library", short: "Library", icon: "library", load: () => import("./library.js").then((m) => m.renderLibrary()) },
+  { route: "drive", label: "E: drive", short: "E: drive", icon: "drive", load: () => import("./drive.js").then((m) => m.renderDrive()) },
   { route: "makers", label: "3D makers", short: "Makers", icon: "makers", load: () => import("./makers.js").then((m) => m.renderMakers()) },
 ];
 

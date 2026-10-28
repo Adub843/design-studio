@@ -1,0 +1,9 @@
+{
+  "name": "design-library-server",
+  "private": true,
+  "type": "module",
+  "description": "Serves the E: drive design library to the Design Studio through the Cloudflare Tunnel (read only).",
+  "scripts": { "start": "node server.mjs", "index": "node build-index.mjs" },
+  "dependencies": { "sharp": "0.34.4" },
+  "engines": { "node": ">=24" }
+}

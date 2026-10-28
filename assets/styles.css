@@ -367,3 +367,7 @@ html[data-route="designer"] .editor { border: 0; border-radius: 0; min-height: c
 .maker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .maker { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .maker p { margin: 0; flex: 1; }
+
+/* E: drive page: a file-type tile where there's no preview (3D models, source files), and the pager */
+.ftile { display: grid; place-items: center; width: 100%; height: 100%; font-size: 13px; font-weight: 600; letter-spacing: .06em; color: var(--muted); background: var(--surface); }
+.pager { justify-content: center; gap: 12px; margin-top: 8px; }

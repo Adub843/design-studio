@@ -3,6 +3,7 @@
 // (wrangler.toml), so a design saved here is listed from the console and read by the shirt apps.
 import { handleImages } from "../lib/images.mjs";
 import { kvBlobStore } from "../lib/kv-store.mjs";
+import { handleDrive } from "../lib/drive.mjs";
 
 // Where the console's hourly Kittl sync keeps its last result, in the same namespace.
 export const SYNC_STATE_KEY = "sync:kittl";
@@ -34,6 +35,7 @@ export async function handleRequest(req, env) {
         return json({ error: "The image library isn't set up yet: add the IMAGES KV namespace binding (see the README).", code: "storage_not_set_up" }, 503);
       return await handleImages(req, { blobs: kvBlobStore(env.IMAGES), env: envReader(env) });
     }
+    if (pathname === "/api/drive" || pathname.startsWith("/api/drive/")) return await handleDrive(req, { env: envReader(env) });
     if (pathname === "/api/library-sync" && req.method === "GET") {
       const last = env?.IMAGES ? await env.IMAGES.get(SYNC_STATE_KEY, "json") : null;
       const { failed = [], ...rest } = last ?? {};

@@ -7,6 +7,16 @@ compatibility_date = "2026-10-01"
 # lib/auth.mjs and lib/images.mjs use node:crypto (createHash, createHmac, timingSafeEqual).
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
+# epix3d.com and www.epix3d.com (DNS on Cloudflare since 27 Oct 2026; the domain is still registered
+# at Wix). The workers.dev address stays on as a backup.
+routes = [
+  { pattern = "epix3d.com", custom_domain = true },
+  { pattern = "www.epix3d.com", custom_domain = true },
+]
+
+# The E: drive library: files stay on Aaron's PC and come through the Cloudflare Tunnel (drive-server/).
+[vars]
+DRIVE_ORIGIN = "https://library.epix3d.com"
 
 # Copies index.html and assets/ into dist/ before `wrangler dev` and `wrangler deploy`.
 [build]
@@ -24,9 +34,3 @@ run_worker_first = true
 binding = "IMAGES"
 id = "a4c25d0fee6e45448ada053a44b19bcc"
 
-# epix3d.com and www.epix3d.com (DNS on Cloudflare since 27 Oct 2026; the domain is still registered
-# at Wix). The workers.dev address stays on as a backup.
-routes = [
-  { pattern = "epix3d.com", custom_domain = true },
-  { pattern = "www.epix3d.com", custom_domain = true },
-]
