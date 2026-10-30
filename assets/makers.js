@@ -1,8 +1,10 @@
-// 3D makers: the Hype Chain Maker, the Nameplate Maker and the License Plate Maker, each a full page of its
-// own under /makers/. All of them build Bambu-ready .3mf files in the browser; nothing is uploaded.
+// 3D makers: the Light Box Maker, the Hype Chain Maker, the Nameplate Maker and the License Plate Maker, each a full page
+// of its own under /makers/. All of them build Bambu-ready .3mf files in the browser; nothing is uploaded.
 import { el, icon, pageHeader } from "./app.js";
 
 const MAKERS = [
+  { href: "/makers/lightbox/", name: "Light Box Maker",
+    text: "A picture or text glowing in a box with a press-fit back cover, plus keychains, signs and lithophanes. Exports a Bambu-ready .3mf and .stl." },
   { href: "/makers/hype-chain/", name: "Hype Chain Maker",
     text: "A pendant from a logo or text, chain styles and lengths, LED channels and filament slots. Exports a Bambu-ready .3mf with a preview card." },
   { href: "/makers/nameplate/", name: "Nameplate Maker",
