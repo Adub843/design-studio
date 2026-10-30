@@ -52,10 +52,14 @@ const ART = [
 (async () => {
   const { handleRequest } = await import(path.join(ROOT, "worker/index.mjs"));
   const env = { IMAGES: memoryKV(), CONSOLE_KEY: KEY, ASSETS };
+  // The Charleston3D store's product feed, with only its free custom request product (quote mode).
+  const storeFetch = async () => Object.defineProperty(new Response(JSON.stringify({ products: [
+    { id: 7, handle: "custom-request", title: "Custom request", tags: [], variants: [{ id: 4242, title: "Default Title", price: "0.00", available: true }] },
+  ] }), { headers: { "content-type": "application/json" } }), "url", { value: "https://charleston3d.com/products.json" });
   const server = http.createServer(async (req, res) => {
     const chunks = []; for await (const c of req) chunks.push(c);
     const body = chunks.length ? Buffer.concat(chunks) : undefined;
-    const r = await handleRequest(new Request(`http://${req.headers.host}${req.url}`, { method: req.method, headers: req.headers, body: ["GET", "HEAD"].includes(req.method) ? undefined : body, duplex: "half" }), env);
+    const r = await handleRequest(new Request(`http://${req.headers.host}${req.url}`, { method: req.method, headers: req.headers, body: ["GET", "HEAD"].includes(req.method) ? undefined : body, duplex: "half" }), env, storeFetch);
     res.writeHead(r.status, Object.fromEntries(r.headers));
     res.end(Buffer.from(await r.arrayBuffer()));
   });
@@ -210,6 +214,31 @@ const ART = [
         }
         const site = await page.request.get(BASE);
         assert.doesNotMatch(site.headers()["content-security-policy"], /cdnjs/); // the studio itself keeps the strict policy
+        await page.close();
+      });
+
+      await step(`${tag}: a license plate order goes to the Charleston3D cart with its print file`, async () => {
+        const page = await ctx.newPage();
+        let post = null;
+        await page.route("https://charleston3d.com/cart/add", async (r) => { post = r.request(); await r.fulfill({ status: 200, contentType: "text/html", body: "<p>cart</p>" }); });
+        await page.goto(`${BASE}makers/license-plate/`);
+        await page.waitForFunction(() => document.documentElement.dataset.ready === "1" && window.LPM.order());
+        if (width <= 1180) { await page.locator('[data-tool="print"]').click(); }
+        const btn = page.locator(width > 1180 ? ".props [data-order]" : ".print-extra [data-order]");
+        await btn.waitFor({ state: "visible" });
+        assert.equal(await btn.innerText(), "Request this print");
+        if (scheme === "light") await shot(page, `${tag}-license-plate-order`);
+        assert.equal(await page.locator(".bar-order").innerText(), "Request print");
+        assert.ok(await page.locator(".bar-order").isVisible());
+        await btn.click();
+        await page.waitForURL("https://charleston3d.com/cart/add", { timeout: 30000 });
+        const body = post.postDataBuffer().toString("latin1");
+        assert.match(post.headers()["content-type"], /multipart\/form-data/);
+        for (const f of ['name="id"', "4242", 'name="properties[Item]"', "License plate frame", 'name="properties[Text]"', "Charleston, SC",
+          'name="properties[Print file]"; filename="plate-frame-charleston-sc-2-pieces-3mf.zip"', 'name="properties[Design preview]"', 'name="properties[_Source]"', 'name="return_to"'])
+          assert.ok(body.includes(f), `order post is missing ${f}`);
+        const res = await page.request.get(`${BASE}makers/license-plate/`);
+        assert.match(res.headers()["content-security-policy"], /form-action 'self' https:\/\/charleston3d\.com/);
         await page.close();
       });
 

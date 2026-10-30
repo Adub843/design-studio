@@ -3,6 +3,7 @@
 // (wrangler.toml), so a design saved here is listed from the console and read by the shirt apps.
 import { handleImages } from "../lib/images.mjs";
 import { kvBlobStore } from "../lib/kv-store.mjs";
+import { loadPlateOrder } from "../lib/plate-order.mjs";
 
 // Where the console's hourly Kittl sync keeps its last result, in the same namespace.
 export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
@@ -22,12 +23,17 @@ export const MAKER_HEADERS = {
   ...SITE_HEADERS,
   "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 };
+// The License Plate Maker also posts orders to the Charleston3D store's cart (lib/plate-order.mjs).
+export const PLATE_HEADERS = {
+  ...MAKER_HEADERS,
+  "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("form-action 'self'", "form-action 'self' https://charleston3d.com https://www.charleston3d.com"),
+};
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
 });
 const envReader = (env) => (k) => typeof env?.[k] === "string" ? env[k] : undefined;
 
-export async function handleRequest(req, env) {
+export async function handleRequest(req, env, fetchImpl = fetch) {
   const { pathname } = new URL(req.url);
   // Short link to Aaron's main console (Creative Lab Studios on claude.ai).
   if (pathname === "/hq" || pathname === "/hq/") return new Response(null, { status: 302, headers: { ...SITE_HEADERS, location: HQ_URL, "cache-control": "no-store" } });
@@ -42,6 +48,10 @@ export async function handleRequest(req, env) {
       const { failed = [], ...rest } = last ?? {};
       return json(last ? { ...rest, failed: failed.length } : { ok: false, error: "No sync has run yet." });
     }
+    if (pathname === "/api/plate-order" && req.method === "GET") {
+      try { return json(await loadPlateOrder(fetchImpl)); }
+      catch (e) { console.error("plate order lookup failed", e?.message); return json({ mode: "none", error: "The store couldn't be reached." }); }
+    }
     if (pathname === "/api" || pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
   } catch (e) {
     console.error("studio api error", pathname, e?.name);
@@ -50,7 +60,7 @@ export async function handleRequest(req, env) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(req);
   const out = new Response(res.body, res);
-  const headers = pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
+  const headers = pathname.startsWith("/makers/license-plate") ? PLATE_HEADERS : pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }
