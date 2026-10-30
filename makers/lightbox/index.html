@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Light Box Maker · Charleston 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@800&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@700&family=Montserrat:wght@800&family=Roboto+Slab:wght@700&family=Playfair+Display:wght@800&family=Great+Vibes&display=swap">
+<script>try{var t=parent.document.documentElement.dataset.theme||localStorage.getItem("bc-theme");if(t)document.documentElement.dataset.theme=String(t).replace(/"/g,"")}catch(e){}</script>
+<style>
+:root{--bg:#f6f1e7;--card:#fffdf8;--raise:#ece5d6;--line:#ddd3bf;--fg:#16203a;--muted:#5e6474;--accent:#0e7c74;--accent-fg:#fff;--stage:#e7e1d4;--warn:#9a5b00;--ok:#0e7c74;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1428;--card:#111d36;--raise:#182644;--line:#24345a;--fg:#f3ede1;--muted:#aab3c7;--accent:#4fc8bd;--accent-fg:#06201d;--stage:#0d1830;--warn:#f0b44c;--ok:#4fc8bd;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a1428;--card:#111d36;--raise:#182644;--line:#24345a;--fg:#f3ede1;--muted:#aab3c7;--accent:#4fc8bd;--accent-fg:#06201d;--stage:#0d1830;--warn:#f0b44c;--ok:#4fc8bd;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+[hidden]{display:none!important}.small{font-size:12.5px}.muted{color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:600;font-size:14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{border-color:var(--muted)}.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.btn:disabled{opacity:.5;cursor:default}
+.btn.block{width:100%}.btn.sm{padding:6px 10px;font-size:13px}
+#lbMount{flex:1;min-height:0;display:flex}
+.ed{flex:1;min-width:0;min-height:0;display:grid;grid-template-columns:76px 292px minmax(0,1fr) 304px;grid-template-rows:56px minmax(0,1fr)}
+.ed-top{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 16px;background:var(--card);border-bottom:1px solid var(--line);min-width:0}
+.ed-brand{font-weight:600;font-size:15px;white-space:nowrap}.ed-brand span{color:var(--muted);font-weight:500}
+.seg{display:inline-flex;background:var(--raise);border-radius:9px;padding:3px;gap:2px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.seg button{font:inherit;font-size:13.5px;font-weight:500;border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.ed-top .grow{flex:1}
+.ed-rail{grid-row:2;grid-column:1;background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:8px 6px}
+.ed-rail button{font:inherit;font-size:11.5px;font-weight:500;border:0;background:none;color:var(--muted);display:grid;justify-items:center;gap:4px;padding:10px 2px;border-radius:9px;cursor:pointer}
+.ed-rail button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ed-rail button:hover{color:var(--fg)}.ed-rail button[aria-pressed="true"]{background:var(--raise);color:var(--accent)}
+.ed-rail .r-print{display:none}
+.ed-drawer{grid-row:2;grid-column:2;background:var(--card);border-right:1px solid var(--line);overflow:auto;padding:18px 16px 24px}
+.ed-props{grid-row:2;grid-column:4;background:var(--card);border-left:1px solid var(--line);overflow:auto;padding:18px 16px 24px}
+.ed-drawer h2,.ed-props h2{font-size:15px;margin:0 0 14px;font-weight:600}
+.ed-props h3,.ed-drawer h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px;font-weight:600}
+.sheet-x{display:none}
+.fld{display:block;font-size:12.5px;color:var(--muted)}.fld .u{font-size:11px;opacity:.8}
+.fld input[type=number],.fld input[type=text],.fld select{display:block;margin-top:4px;width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:14px}
+.fld input[type=range]{display:block;width:100%;margin-top:6px;accent-color:var(--accent)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--fg);padding:4px 0}.chk input{accent-color:var(--accent);width:16px;height:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g2 .wide{grid-column:1/-1}
+.stack{display:grid;gap:12px}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.lbdrop{border:1.5px dashed var(--line);border-radius:10px;padding:18px 12px;text-align:center;cursor:pointer;display:grid;place-items:center;gap:10px;background:var(--bg)}
+.lbdrop.over{border-color:var(--accent)}.lbdrop-in{display:grid;gap:3px;justify-items:center}
+.lbdrop-ic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.6;opacity:.6}
+.lbthumbs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.lbthumb{position:relative;display:inline-block}
+.lbthumb img{width:84px;height:84px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:#fff repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/14px 14px}
+.lbrm{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;line-height:1;font-size:15px}
+.fonts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fonts button{font-size:15px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:7px;padding:8px 6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fonts button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.fonts button small{display:block;font:500 10.5px/1.2 "IBM Plex Sans",system-ui,sans-serif;color:var(--muted);margin-top:2px}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.swatches button{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.2);cursor:pointer;padding:0}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}
+.layers{display:grid;gap:6px;margin-top:12px}
+.layers button{font:inherit;text-align:left;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:8px 10px;cursor:pointer}
+.layers button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.layers i{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.2)}.layers span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tedit{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.rowb{display:flex;gap:8px;margin-top:12px}.rowb .btn{flex:1}
+.tog{width:100%;justify-content:flex-start}.tog[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.tog .dot{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;display:inline-block;flex:none}
+.tog[aria-pressed="true"] .dot{background:currentColor;box-shadow:inset 0 0 0 3px var(--card)}
+.ed-stage{grid-row:2;grid-column:3;position:relative;background:var(--stage);display:flex;flex-direction:column;min-width:0;min-height:0}
+.stage-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 14px}
+#mkPrevChip{position:absolute;left:12px;top:4px;z-index:1;pointer-events:none}
+.chip{font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.stage-bar .seg{background:var(--card);border:1px solid var(--line)}.stage-bar .seg button[aria-pressed="true"]{background:var(--raise)}
+.stage-c{flex:1;min-height:0;position:relative}
+#mkStage{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+#mkStage.grab{cursor:grab}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.empty>div{pointer-events:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;display:grid;gap:12px;max-width:320px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.empty p{margin:0;font-weight:600}.empty .rowb{margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13.5px}.kv dt{color:var(--muted)}.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.lbpal{display:flex;flex-wrap:wrap;gap:6px}
+.lbpal .sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 9px 3px 4px;border-radius:999px;border:1px solid var(--line)}
+.lbpal .sw i{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.2)}
+.pcheck{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pcheck li{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:13px;line-height:1.4}
+.pcheck svg{width:16px;height:16px;margin-top:1px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pcheck .ok svg{stroke:var(--ok)}.pcheck .warn svg{stroke:var(--warn)}.pcheck .info svg{stroke:var(--muted)}
+.pcheck .warn{color:var(--fg);font-weight:500}
+.dl{display:grid;gap:8px;margin-top:16px}#lbDl{display:grid;gap:6px}
+.lbstat{margin-top:10px}
+.toasts{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:grid;gap:6px;z-index:9}
+.toast{background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:14px}
+@media (max-width:1180px){.ed{grid-template-columns:72px 260px minmax(0,1fr) 272px}}
+@media (max-width:860px){
+  .ed{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+  .ed-top{padding:8px 12px;gap:10px;flex-wrap:wrap}.ed-brand{display:none}.ed-top .grow{display:none}.ed-top .seg{flex:1}.ed-top .seg button{flex:1;padding:6px 8px}
+  .ed-top #mkTopDl{display:none}
+  .ed-stage{grid-row:2;grid-column:1}
+  .ed-rail{grid-row:3;grid-column:1;flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+  .ed-rail button{flex:1;padding:7px 2px}.ed-rail .r-print{display:grid}
+  .ed-drawer,.ed-props{position:fixed;left:0;right:0;bottom:var(--barh,62px);max-height:58dvh;border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.18);z-index:5;padding-top:14px}
+  .ed:not([data-sheet="tool"]) .ed-drawer{display:none}.ed:not([data-sheet="print"]) .ed-props{display:none}
+  .sheet-x{display:inline-flex;float:right;margin:-4px -4px 0 0}
+  .stage-bar{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<!-- Copy of tools/maker/index.html from Adub843/Business-console, plus the back bar. Change it there first, then copy it here. -->
+<div id="ds-back-bar" style="position:sticky;top:0;z-index:2147483000;display:flex;align-items:center;gap:12px;height:40px;flex:none;padding:0 16px;background:#15223f;color:#f7f2e8;font:500 14px/1 Inter,system-ui,sans-serif"><a href="/#makers" style="color:#f7f2e8;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><span aria-hidden="true">&#8592;</span> Back to Design Studio</a><span style="opacity:.6;margin-left:auto">Light Box Maker</span></div>
+<div id="lbMount"></div>
+<script>
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SV=p=>`<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const ICON={image:SV('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>'),text:SV('<path d="M5 6V4h14v2M12 4v16M9 20h6"/>'),size:SV('<path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7"/>'),box:SV('<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/>'),print:SV('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'),ok:SV('<path d="M20 6 9 17l-5-5"/>'),warn:SV('<path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/>'),info:SV('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),x:SV('<path d="M6 6l12 12M18 6 6 18"/>')};
+function toast(msg){let box=document.getElementById("toasts");if(!box){box=document.createElement("div");box.id="toasts";box.className="toasts";box.setAttribute("role","status");document.body.appendChild(box);}const t=document.createElement("div");t.className="toast";t.textContent=msg;box.appendChild(t);setTimeout(()=>t.remove(),3500);}
+function dlBlob(name,blob){name=String(name||"file").replace(/[\\/:*?"<>|]+/g,"-");const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);return true;}
+</script>
+<script>
+/* ================= MAKER: Light box · Keychain · Sign · Lithophane — picture or text in, Bambu-ready 3MF/STL out =================
+   Layout: tools on the left, design preview in the middle, print settings and download on the right; a bottom bar on phones. */
+const MK_MODES=[["lightbox","Light box","Picture or text glowing in a box. The lights glue inside through the back cover."],["keychain","Keychain","Picture or text traced into a flat multi-colour tag with a ring hole."],["sign","Sign","Raised lettering on a plate. Name plates, badges, shelf signs."],["litho","Lithophane","Photo as a thin plate that shows the picture when lit from behind."]];
+const MK_SHAPES=[["trace","Trace the picture"],["rect","Square / rectangle"],["round","Rounded"],["circle","Circle"]];
+/* print-friendly fonts: bold enough to hold up at 0.4 mm; [family, label, weight] */
+const MK_FONTS=[["Archivo Black","Heavy sans",400],["Inter","Clean sans",800],["Montserrat","Geometric",800],["Bebas Neue","Tall caps",400],["Oswald","Condensed",700],["Roboto Slab","Slab serif",700],["Playfair Display","Serif",800],["Great Vibes","Script",400]];
+/* filament colours */
+const MK_INKS=[["Black","#1d1d1f"],["White","#f4f3ef"],["Red","#c8202c"],["Orange","#e8731e"],["Yellow","#f2c21b"],["Green","#2e9a4c"],["Teal","#0e7c74"],["Blue","#1f5fbf"],["Navy","#1b2a4a"],["Purple","#6b3fa0"],["Pink","#e46aa2"],["Grey","#8a8d91"]];
+const MK_BED=256, MK_HOLE=15;
+const MK={mode:"lightbox", imgs:[], texts:[], sel:null, tool:"picture", sheet:null, view:{lightbox:"lit",keychain:"front",sign:"front",litho:"lit"},
+  shape:"trace", width:120, height:0, lock:true, res:0.4, colors:4, border:4, gap:0, depth:50, wallT:3, lid:true, hole:false, imgT:0.6, backT:1.0, keyT:3, ring:true, text:"", font:"Archivo Black", textT:1, plateT:3, name:"",
+  minT:0.8, maxT:3.0, lres:0.3, arc:0, invert:false, bright:0, contrast:0, blur:0.6, mirror:false,
+  busy:false, parts:[], palette:[], node:null, dirty:true, keyTol:40, bg:"auto", L:null, sealed:null, fontGen:0};
+const LB=MK; /* legacy alias */
+let mkTextId=0;
+
+function mkRound(n,d){ return Math.round(n*(d||10))/(d||10); }
+function mkTitle(){ return ({lightbox:"Light box",keychain:"Keychain",sign:"Sign",litho:"Lithophane"})[MK.mode]||"Maker"; }
+function mkFontW(f){ const x=MK_FONTS.find(a=>a[0]===f); return x?x[2]:700; }
+function mkFontReady(f){ if(!document.fonts||!document.fonts.load) return; document.fonts.load(`${mkFontW(f)} 80px "${f}"`).then(()=>{ MK.fontGen++; MK.comp=null; lbPreview(); }).catch(()=>{}); }
+function mkFontGrid(id,cur){ return `<div class="fonts" id="${id}">${MK_FONTS.map(f=>`<button type="button" data-font="${esc(f[0])}" aria-pressed="${cur===f[0]}" style="font-family:'${esc(f[0])}';font-weight:${f[2]}">${esc(f[0])}<small>${esc(f[1])}</small></button>`).join("")}</div>`; }
+/* ---- page ---- */
+function lbMount(){ const m=document.getElementById("lbMount"); if(!m) return; MK.node=m;
+  try{ const q=new URLSearchParams(location.search).get("mode"); if(MK_MODES.some(x=>x[0]===q)) MK.mode=q; }catch{}
+  const tools=[["picture","Picture",ICON.image],["text","Text",ICON.text],["size","Size",ICON.size],["build","Box",ICON.box],["print","Print",ICON.print]];
+  m.innerHTML=`<div class="ed" id="mkEd">
+    <header class="ed-top">
+      <div class="ed-brand">Maker <span>· Charleston 3D</span></div>
+      <div class="seg" id="mkModes" role="group" aria-label="What to make">${MK_MODES.map(x=>`<button type="button" data-mode="${x[0]}" title="${esc(x[2])}" aria-pressed="${MK.mode===x[0]}">${x[1]}</button>`).join("")}</div>
+      <div class="grow"></div>
+      <button type="button" class="btn primary" id="mkTopDl">${ICON.print.replace("<svg",'<svg width="18" height="18" style="stroke:currentColor;fill:none;stroke-width:1.8"')}Download print files</button>
+    </header>
+    <nav class="ed-rail" id="mkRail" aria-label="Tools">${tools.map(t=>`<button type="button" data-tool="${t[0]}" class="r-${t[0]}" aria-pressed="false">${t[2]}<span>${t[1]}</span></button>`).join("")}</nav>
+    <aside class="ed-drawer" id="mkDrawer" aria-label="Tool settings">
+      <button type="button" class="btn sm sheet-x" data-close aria-label="Close">${ICON.x.replace("<svg",'<svg width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:2"')}</button>
+      <section data-panel="picture">
+        <h2>Picture</h2>
+        <div class="lbdrop" id="lbDrop" tabindex="0" role="button" aria-label="Drop a picture here or tap to choose">
+          <input type="file" id="lbFile" accept="image/*" multiple hidden>
+          <div class="lbdrop-in"><span class="lbdrop-ic">${ICON.image}</span><strong>Upload a picture</strong><span class="small muted">Drop it here, tap to choose, or paste</span></div>
+          <div class="lbthumbs" id="lbThumbs"></div></div>
+        <p class="hint">A PNG with a see-through background traces cleanest. With a photo, the plain background around the subject is removed.</p>
+        <div class="stack" style="margin-top:14px">
+          <label class="fld">Brightness<input type="range" id="lbBright" min="-60" max="60" step="5" value="${MK.bright}"></label>
+          <label class="fld">Contrast<input type="range" id="lbContrast" min="-60" max="60" step="5" value="${MK.contrast}"></label>
+          <label class="fld mk-litho">Smooth<input type="range" id="lbBlur" min="0" max="2" step="0.2" value="${MK.blur}"></label>
+          <label class="chk mk-litho"><input type="checkbox" id="lbInvert" ${MK.invert?"checked":""}> Negative</label>
+        </div>
+      </section>
+      <section data-panel="text">
+        <h2>Text</h2>
+        <div class="mk-sign stack">
+          <label class="fld">Sign text<input type="text" id="mkText" maxlength="40" placeholder="e.g. THE LEWIS FAMILY" value="${esc(MK.text)}"></label>
+          <div><h3 style="margin-top:4px">Font</h3>${mkFontGrid("mkFont",MK.font)}</div>
+        </div>
+        <div class="mk-notsign">
+          <button type="button" class="btn primary block" id="mkAddText">Add text</button>
+          <div class="layers" id="mkLayers"></div>
+          <div class="tedit" id="mkTextEd" hidden></div>
+        </div>
+      </section>
+      <section data-panel="size">
+        <h2>Size &amp; shape</h2>
+        <div class="g2">
+          <label class="fld wide mk-shape">Outline<select id="mkShape">${MK_SHAPES.map(s=>`<option value="${s[0]}" ${MK.shape===s[0]?"selected":""}>${s[1]}</option>`).join("")}</select></label>
+          <label class="fld">Width <span class="u">mm</span><input type="number" id="lbW" min="20" max="240" step="1" value="${MK.width}"></label>
+          <label class="fld mk-notsign">Height <span class="u">mm</span><input type="number" id="lbH" min="20" max="240" step="1" value="${MK.height||""}" placeholder="auto"></label>
+          <label class="chk wide mk-notsign"><input type="checkbox" id="lbLock" ${MK.lock?"checked":""}> Keep picture shape</label>
+          <label class="fld mk-color">Colours<select id="mkColors">${[2,3,4,5,6,8].map(n=>`<option ${MK.colors===n?"selected":""}>${n}</option>`).join("")}</select></label>
+          <label class="fld mk-notlitho">Detail<select id="mkRes"><option value="0.6" ${MK.res===0.6?"selected":""}>Fast · 0.6 mm</option><option value="0.4" ${MK.res===0.4?"selected":""}>Normal · 0.4 mm</option><option value="0.3" ${MK.res===0.3?"selected":""}>Fine · 0.3 mm</option></select></label>
+          <label class="fld mk-litho">Detail<select id="lbRes"><option value="0.4" ${MK.lres===0.4?"selected":""}>Fast · 0.4 mm</option><option value="0.3" ${MK.lres===0.3?"selected":""}>Normal · 0.3 mm</option><option value="0.2" ${MK.lres===0.2?"selected":""}>Fine · 0.2 mm</option></select></label>
+          <label class="fld mk-lightbox mk-keychain">Border <span class="u">mm</span><input type="number" id="mkBorder" min="1" max="15" step="0.5" value="${MK.border}"></label>
+          <label class="fld mk-lightbox mk-keychain">Space round picture <span class="u">mm</span><input type="number" id="mkGap" min="0" max="20" step="0.5" value="${MK.gap}"></label>
+        </div>
+        <p class="hint mk-shape" id="mkShapeHint" hidden>Tracing needs a picture, so text on its own gets a rounded outline.</p>
+      </section>
+      <section data-panel="build">
+        <h2 id="mkBuildTitle">Box</h2>
+        <div class="g2 mk-lightbox">
+          <label class="fld">Box depth <span class="u">mm</span><input type="number" id="mkDepth" min="15" max="120" step="1" value="${MK.depth}"></label>
+          <label class="fld">Wall <span class="u">mm</span><input type="number" id="mkWallT" min="1.6" max="6" step="0.2" value="${MK.wallT}"></label>
+          <label class="chk wide"><input type="checkbox" id="mkLid" ${MK.lid?"checked":""}> Press-fit back cover</label>
+          <button type="button" class="btn tog wide" id="mkHole" aria-pressed="${MK.hole}"><span class="dot" aria-hidden="true"></span><span id="mkHoleTxt">Add a ${MK_HOLE} mm hole to the back</span></button>
+          <p class="hint wide" style="margin:0">The lights glue to the inside through the back cover. The hole lets the cable out.</p>
+        </div>
+        <div class="g2 mk-keychain">
+          <label class="fld">Thickness <span class="u">mm</span><input type="number" id="mkKeyT" min="2" max="6" step="0.5" value="${MK.keyT}"></label>
+          <label class="chk"><input type="checkbox" id="mkRing" ${MK.ring?"checked":""}> Ring hole tab</label>
+        </div>
+        <div class="g2 mk-sign">
+          <label class="fld">Letter height <span class="u">mm</span><input type="number" id="mkTextT" min="0.4" max="4" step="0.2" value="${MK.textT}"></label>
+          <label class="fld">Plate thickness <span class="u">mm</span><input type="number" id="mkPlateT" min="2" max="8" step="0.5" value="${MK.plateT}"></label>
+        </div>
+        <div class="g2 mk-litho">
+          <label class="fld">Thinnest <span class="u">mm</span><input type="number" id="lbMin" min="0.4" max="2" step="0.1" value="${MK.minT}"></label>
+          <label class="fld">Thickest <span class="u">mm</span><input type="number" id="lbMax" min="1.5" max="6" step="0.1" value="${MK.maxT}"></label>
+          <label class="fld">Curve <span class="u">° (0 = flat)</span><input type="number" id="lbArc" min="0" max="180" step="10" value="${MK.arc}"></label>
+        </div>
+      </section>
+    </aside>
+    <main class="ed-stage">
+      <div class="stage-bar"><div class="seg" id="mkViews" role="group" aria-label="Preview"></div></div>
+      <div class="stage-c"><span class="chip" id="mkPrevChip">Design preview</span><canvas id="mkStage" tabindex="0" aria-label="Design preview. Drag text to move it; arrow keys nudge the selected text."></canvas>
+        <div class="empty" id="mkEmpty" hidden><div><p id="mkEmptyMsg">Add a picture or some text to start.</p><div class="rowb"><button type="button" class="btn primary" data-act="upload">Upload picture</button><button type="button" class="btn" data-act="text">Add text</button></div></div></div></div>
+    </main>
+    <aside class="ed-props" id="mkProps" aria-label="Print settings">
+      <button type="button" class="btn sm sheet-x" data-close aria-label="Close">${ICON.x.replace("<svg",'<svg width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:2"')}</button>
+      <h2>Print</h2>
+      <label class="fld">Name<input type="text" id="lbName" maxlength="80" placeholder="e.g. Grandma's cat light box" value="${esc(MK.name)}"></label>
+      <h3>Size</h3><dl class="kv" id="mkSize"></dl>
+      <h3>Filament</h3><div class="lbpal" id="lbPal"></div>
+      <h3>Print check</h3><ul class="pcheck" id="mkCheck"></ul>
+      <div class="dl"><button type="button" class="btn primary block" id="lbBuild">Download print files</button><div id="lbDl"></div></div>
+      <div class="lbstat small muted" id="lbStat"></div>
+    </aside>
+  </div>`;
+  const ed=m.querySelector("#mkEd"), drop=m.querySelector("#lbDrop"), file=m.querySelector("#lbFile");
+  drop.onclick=e=>{ if(e.target.closest("[data-lbrm]")) return; file.click(); }; drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); file.click(); } };
+  file.onchange=()=>{ lbAddFiles(file.files); file.value=""; };
+  ["dragenter","dragover"].forEach(ev=>m.addEventListener(ev,e=>{ if(![...(e.dataTransfer&&e.dataTransfer.types||[])].includes("Files")) return; e.preventDefault(); drop.classList.add("over"); })); ["dragleave","drop"].forEach(ev=>m.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.remove("over"); }));
+  m.addEventListener("drop",e=>{ if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length) lbAddFiles(e.dataTransfer.files); });
+  if(!MK.pasteBound){ MK.pasteBound=true; document.addEventListener("paste",e=>{ if(!MK.node||!document.body.contains(MK.node)||MK.mode==="sign") return; const fs=[...(e.clipboardData&&e.clipboardData.files||[])].filter(f=>/^image\//.test(f.type)); if(fs.length){ e.preventDefault(); lbAddFiles(fs); } }); }
+  m.querySelector("#mkModes").onclick=e=>{ const b=e.target.closest("[data-mode]"); if(!b) return; MK.mode=b.dataset.mode; m.querySelectorAll("[data-mode]").forEach(x=>x.setAttribute("aria-pressed",x===b)); if(MK.mode==="sign"&&MK.tool==="picture") MK.tool="text"; mkShowOpts(); lbPreview(); };
+  m.querySelector("#mkRail").onclick=e=>{ const b=e.target.closest("[data-tool]"); if(!b) return; mkTool(b.dataset.tool,true); };
+  m.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{ ed.removeAttribute("data-sheet"); MK.sheet=null; mkRailState(); });
+  m.querySelector("#mkViews").onclick=e=>{ const b=e.target.closest("[data-view]"); if(!b) return; MK.view[MK.mode]=b.dataset.view; mkViewsBar(); mkDraw(); };
+  m.querySelector("#mkEmpty").onclick=e=>{ const a=e.target.closest("[data-act]"); if(!a) return; if(a.dataset.act==="upload") file.click(); else { if(MK.mode!=="sign") mkAddText(); mkTool("text",true); } };
+  const num=(id,k,min,max)=>{ const i=m.querySelector(id); if(!i) return; i.oninput=()=>{ const v=parseFloat(i.value); if(!isFinite(v)){ if(k==="height") MK.height=0; lbPreview(); return; } MK[k]=Math.min(max,Math.max(min,v)); if(k==="height"&&MK.lock){ MK.lock=false; m.querySelector("#lbLock").checked=false; } if(k==="height"||k==="width") MK.comp=null; lbPreview(); }; };
+  num("#lbW","width",20,240); num("#lbH","height",20,240); num("#lbMin","minT",0.4,2); num("#lbMax","maxT",1.5,6); num("#lbArc","arc",0,180); num("#mkBorder","border",1,15); num("#mkGap","gap",0,20); num("#mkDepth","depth",15,120); num("#mkWallT","wallT",1.6,6); num("#mkKeyT","keyT",2,6); num("#mkTextT","textT",0.4,4); num("#mkPlateT","plateT",2,8);
+  num("#lbBright","bright",-60,60); num("#lbContrast","contrast",-60,60); num("#lbBlur","blur",0,2);
+  const sel=(id,k,f)=>{ const i=m.querySelector(id); if(i) i.onchange=e=>{ MK[k]=f?f(e.target.value):e.target.value; lbPreview(); }; };
+  sel("#lbRes","lres",parseFloat); sel("#mkRes","res",parseFloat); sel("#mkColors","colors",v=>parseInt(v,10)); sel("#mkShape","shape");
+  const chk=(id,k)=>{ const i=m.querySelector(id); if(i) i.onchange=e=>{ MK[k]=e.target.checked; if(k==="lock"){ if(MK.lock) MK.height=0; MK.comp=null; } if(k==="lid") mkHoleBtn(); lbPreview(); }; };
+  chk("#lbLock","lock"); chk("#lbInvert","invert"); chk("#mkLid","lid"); chk("#mkRing","ring");
+  m.querySelector("#mkHole").onclick=()=>{ if(!MK.lid){ toast("Turn on the back cover first."); return; } MK.hole=!MK.hole; mkHoleBtn(); lbPreview(); };
+  m.querySelector("#mkFont").onclick=e=>{ const b=e.target.closest("[data-font]"); if(!b) return; MK.font=b.dataset.font; m.querySelectorAll("#mkFont [data-font]").forEach(x=>x.setAttribute("aria-pressed",x===b)); mkFontReady(MK.font); lbPreview(); };
+  m.querySelector("#mkText").oninput=e=>{ MK.text=e.target.value; lbPreview(); };
+  m.querySelector("#mkAddText").onclick=()=>mkAddText();
+  m.querySelector("#lbName").oninput=e=>{ MK.name=e.target.value; };
+  m.querySelector("#lbBuild").onclick=lbBuild; m.querySelector("#mkTopDl").onclick=lbBuild;
+  mkStageEvents(); mkFontReady(MK.font);
+  if(window.ResizeObserver){ new ResizeObserver(()=>mkDraw()).observe(m.querySelector(".stage-c")); new ResizeObserver(()=>{ const r=m.querySelector("#mkRail"); ed.style.setProperty("--barh",r.offsetHeight+"px"); }).observe(m.querySelector("#mkRail")); }
+  else window.addEventListener("resize",()=>mkDraw());
+  mkShowOpts(); mkHoleBtn(); lbPaintThumbs(); mkTextUI(); lbPreview();
+}
+function mkPhone(){ return window.matchMedia&&matchMedia("(max-width:860px)").matches; }
+function mkTool(t,user){ const ed=MK.node.querySelector("#mkEd"); if(mkPhone()&&user){ const want=t==="print"?"print":"tool"; if(MK.sheet===want&&(t==="print"||MK.tool===t)){ MK.sheet=null; ed.removeAttribute("data-sheet"); mkRailState(); return; } MK.sheet=want; ed.dataset.sheet=want; }
+  if(t!=="print") MK.tool=t; else if(!mkPhone()) return;
+  MK.node.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==MK.tool); mkShowOpts(true); mkRailState(); }
+function mkRailState(){ const ph=mkPhone(); MK.node.querySelectorAll("#mkRail [data-tool]").forEach(b=>{ const t=b.dataset.tool; b.setAttribute("aria-pressed",ph?(t==="print"?MK.sheet==="print":MK.sheet==="tool"&&MK.tool===t):MK.tool===t); }); }
+function mkHoleBtn(){ const b=MK.node&&MK.node.querySelector("#mkHole"); if(!b) return; if(!MK.lid) MK.hole=false; b.setAttribute("aria-pressed",MK.hole); b.disabled=!MK.lid; MK.node.querySelector("#mkHoleTxt").textContent=MK.hole?`${MK_HOLE} mm hole in the back cover`:`Add a ${MK_HOLE} mm hole to the back`; }
+function mkShowOpts(keepTool){ const m=MK.node; if(!m) return; const md=MK.mode;
+  const rule={"mk-lightbox":md==="lightbox","mk-keychain":md==="keychain","mk-sign":md==="sign","mk-litho":md==="litho","mk-color":md==="lightbox"||md==="keychain","mk-shape":md==="lightbox"||md==="keychain","mk-img":md!=="sign","mk-notsign":md!=="sign","mk-notlitho":md!=="litho"};
+  m.querySelectorAll(".ed-drawer [class*='mk-']").forEach(x=>{ const cls=[...x.classList].filter(c=>c in rule); if(cls.length) x.hidden=!cls.some(c=>rule[c]); });
+  m.querySelector(".r-picture").hidden=md==="sign"; if(md==="sign"&&MK.tool==="picture") MK.tool="text";
+  const bl=({lightbox:"Box",keychain:"Tag",sign:"Plate",litho:"Plate"})[md]; m.querySelector(".r-build span").textContent=bl; m.querySelector("#mkBuildTitle").textContent=({lightbox:"Box & back cover",keychain:"Tag",sign:"Plate & letters",litho:"Thickness & curve"})[md];
+  if(!keepTool) m.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==MK.tool);
+  m.querySelector("#mkEmpty [data-act=text]").hidden=md==="litho"; m.querySelector("#mkEmpty [data-act=upload]").hidden=md==="sign";
+  mkRailState(); mkViewsBar(); mkTextUI(); }
+const MK_VIEWS={lightbox:[["lit","Lights on"],["off","Lights off"],["box","Box"],["back","Back"]],keychain:[["front","Front"],["parts","Layers"]],sign:[["front","Front"],["parts","Layers"]],litho:[["lit","Lights on"],["relief","Lights off"]]};
+function mkViewsBar(){ const v=MK.node.querySelector("#mkViews"); const cur=MK.view[MK.mode]; v.innerHTML=MK_VIEWS[MK.mode].map(x=>`<button type="button" data-view="${x[0]}" aria-pressed="${cur===x[0]}">${x[1]}</button>`).join(""); }
+/* ---- text layers ---- */
+function mkAddText(){ const t={id:++mkTextId,text:MK.imgs.length?"Your text":"YOUR TEXT",font:MK.font==="Great Vibes"?"Archivo Black":MK.font,size:MK.imgs.length?0.14:0.34,x:0.5,y:MK.imgs.length?0.86:0.5,color:MK.imgs.length?"#f4f3ef":"#1d1d1f"};
+  MK.texts.push(t); MK.sel=t.id; MK.comp=null; mkFontReady(t.font); mkTextUI(); lbPreview(); setTimeout(()=>{ const i=MK.node.querySelector("#mkTxtIn"); if(i&&!mkPhone()){ i.focus(); i.select(); } },0); }
+function mkSelText(){ return MK.texts.find(t=>t.id===MK.sel)||null; }
+function mkTextUI(){ const m=MK.node; if(!m) return; const list=m.querySelector("#mkLayers"), ed=m.querySelector("#mkTextEd"); if(!list) return;
+  list.innerHTML=MK.texts.map(t=>`<button type="button" data-tid="${t.id}" aria-pressed="${t.id===MK.sel}"><i style="background:${t.color}"></i><span style="font-family:'${esc(t.font)}';font-weight:${mkFontW(t.font)}">${esc(t.text||"(empty)")}</span></button>`).join("");
+  list.onclick=e=>{ const b=e.target.closest("[data-tid]"); if(!b) return; MK.sel=+b.dataset.tid; mkTextUI(); mkDraw(); };
+  const t=mkSelText(); ed.hidden=!t; if(!t){ ed.innerHTML=""; return; }
+  ed.innerHTML=`<div class="stack"><label class="fld">Text<input type="text" id="mkTxtIn" maxlength="40" value="${esc(t.text)}"></label>
+    <label class="fld">Size<input type="range" id="mkTxtSize" min="0.04" max="0.7" step="0.01" value="${t.size}"></label>
+    <div><h3 style="margin-top:2px">Colour</h3><div class="swatches" id="mkTxtInk">${MK_INKS.map(k=>`<button type="button" data-ink="${k[1]}" title="${k[0]}" aria-label="${k[0]}" aria-pressed="${t.color===k[1]}" style="background:${k[1]}"></button>`).join("")}</div></div>
+    <div><h3 style="margin-top:2px">Font</h3>${mkFontGrid("mkTxtFont",t.font)}</div></div>
+    <div class="rowb"><button type="button" class="btn sm" id="mkTxtCenter">Centre it</button><button type="button" class="btn sm" id="mkTxtDel">Delete</button></div>
+    <p class="hint">Drag the text on the preview to move it. Arrow keys nudge it.</p>`;
+  const upd=()=>{ MK.comp=null; lbPreview(80); const b=list.querySelector(`[data-tid="${t.id}"]`); if(b){ b.querySelector("span").textContent=t.text||"(empty)"; b.querySelector("span").style.fontFamily=`'${t.font}'`; b.querySelector("i").style.background=t.color; } };
+  ed.querySelector("#mkTxtIn").oninput=e=>{ t.text=e.target.value; upd(); };
+  ed.querySelector("#mkTxtSize").oninput=e=>{ t.size=parseFloat(e.target.value); upd(); };
+  ed.querySelector("#mkTxtInk").onclick=e=>{ const b=e.target.closest("[data-ink]"); if(!b) return; t.color=b.dataset.ink; ed.querySelectorAll("[data-ink]").forEach(x=>x.setAttribute("aria-pressed",x===b)); upd(); };
+  ed.querySelector("#mkTxtFont").onclick=e=>{ const b=e.target.closest("[data-font]"); if(!b) return; t.font=b.dataset.font; ed.querySelectorAll("#mkTxtFont [data-font]").forEach(x=>x.setAttribute("aria-pressed",x===b)); mkFontReady(t.font); upd(); };
+  ed.querySelector("#mkTxtCenter").onclick=()=>{ t.x=0.5; t.y=0.5; upd(); };
+  ed.querySelector("#mkTxtDel").onclick=()=>{ MK.texts=MK.texts.filter(x=>x!==t); MK.sel=MK.texts.length?MK.texts[MK.texts.length-1].id:null; MK.comp=null; mkTextUI(); lbPreview(); }; }
+function lbAddFiles(files){ const fs=[...(files||[])].filter(f=>/^image\//.test(f.type)); if(!fs.length){ toast("That isn't a picture."); return; }
+  fs.slice(0,1).forEach(f=>{ const url=URL.createObjectURL(f); const im=new Image(); im.onload=()=>{ MK.imgs.forEach(x=>URL.revokeObjectURL(x.url)); MK.imgs=[{file:f,url,img:im,w:im.naturalWidth,h:im.naturalHeight}]; MK.comp=null; if(!MK.name){ MK.name=(f.name||"photo").replace(/\.[a-z0-9]+$/i,"").replace(/[_-]+/g," ").slice(0,60); const n=MK.node&&MK.node.querySelector("#lbName"); if(n&&!n.value) n.value=MK.name; } lbPaintThumbs(); lbPreview(); }; im.onerror=()=>{ URL.revokeObjectURL(url); toast("Couldn't read that picture."); }; im.src=url; }); }
+function lbPaintThumbs(){ const t=MK.node&&MK.node.querySelector("#lbThumbs"); if(!t) return; t.innerHTML=MK.imgs.map((x,i)=>`<span class="lbthumb"><img src="${x.url}" alt="Your picture"><button type="button" class="lbrm" data-lbrm="${i}" aria-label="Remove picture">×</button></span>`).join("");
+  t.querySelectorAll("[data-lbrm]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const x=MK.imgs.splice(+b.dataset.lbrm,1)[0]; if(x) URL.revokeObjectURL(x.url); MK.comp=null; lbPaintThumbs(); lbPreview(); });
+  MK.node.querySelector("#lbDrop").classList.toggle("has",MK.imgs.length>0); }
+/* ---- source picture: picture + text layers (sign: its own text) ---- */
+function mkSource(){ if(MK.mode==="sign"){ const t=(MK.text||"").trim()||"YOUR TEXT"; const cv=document.createElement("canvas"); const ctx=cv.getContext("2d"); const fs=200, f=`${mkFontW(MK.font)} ${fs}px "${MK.font}"`; ctx.font=f; const tw=Math.ceil(ctx.measureText(t).width)+fs*0.6; cv.width=Math.max(300,tw); cv.height=Math.round(fs*1.5); ctx.font=f; ctx.textBaseline="middle"; ctx.textAlign="center"; ctx.fillStyle="#000"; ctx.fillText(t,cv.width/2,cv.height/2+fs*0.05); return {img:cv,w:cv.width,h:cv.height,alpha:true}; }
+  return mkComposite(); }
+function mkComposite(){ const im=MK.imgs[0]; const texts=MK.texts.filter(t=>(t.text||"").trim()); if(!im&&!texts.length) return null;
+  const key=[im?im.url:"",MK.fontGen,MK.lock?0:mkRound((MK.height||0)/MK.width,1000),JSON.stringify(texts.map(t=>[t.text,t.font,t.size,t.x,t.y,t.color]))].join("|"); if(MK.comp&&MK.comp.key===key) return MK.comp;
+  let W,H; if(im){ const s=Math.min(1,1600/Math.max(im.w,im.h)); W=Math.max(1,Math.round(im.w*s)); H=Math.max(1,Math.round(im.h*s)); } else { const ratio=(!MK.lock&&MK.height)?MK.height/MK.width:0.6; W=1600; H=Math.max(200,Math.round(1600*ratio)); }
+  const cv=document.createElement("canvas"); cv.width=W; cv.height=H; const ctx=cv.getContext("2d"); if(im) ctx.drawImage(im.img,0,0,W,H);
+  for(const t of texts){ const px=Math.max(8,t.size*H); ctx.font=`${mkFontW(t.font)} ${px}px "${t.font}"`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillStyle=t.color; ctx.fillText(t.text,t.x*W,t.y*H); const tw=ctx.measureText(t.text).width; t._bb=[(t.x*W-tw/2)/W,(t.y*H-px*0.55)/H,(t.x*W+tw/2)/W,(t.y*H+px*0.55)/H]; }
+  for(const t of MK.texts) if(!(t.text||"").trim()) t._bb=null;
+  MK.comp={img:cv,w:W,h:H,alpha:!im,textOnly:!im,key}; return MK.comp; }
+function lbDims(src){ src=src||mkSource(); const w=MK.width; let h=MK.height; if(!h||MK.lock||MK.mode==="sign") h=src?Math.round(w*src.h/src.w):Math.round(w*0.75); h=Math.min(240,Math.max(10,h)); return {w,h}; }
+/* sample the picture into a cols×rows grid: rgba per cell */
+function mkSample(src,cols,rows,filters){ const cv=document.createElement("canvas"); cv.width=cols; cv.height=rows; const ctx=cv.getContext("2d",{willReadFrequently:true}); const sc=Math.max(cols/src.w,rows/src.h), dw=src.w*sc, dh=src.h*sc;
+  const f=[]; if(filters){ if(MK.blur>0&&MK.mode==="litho") f.push(`blur(${(MK.blur*0.6).toFixed(2)}px)`); if(MK.bright) f.push(`brightness(${(1+MK.bright/100).toFixed(2)})`); if(MK.contrast) f.push(`contrast(${(1+MK.contrast/100).toFixed(2)})`); } try{ ctx.filter=f.join(" ")||"none"; }catch{}
+  ctx.drawImage(src.img,(cols-dw)/2,(rows-dh)/2,dw,dh); ctx.filter="none"; return ctx.getImageData(0,0,cols,rows).data; }
+/* ---- masks (Uint8Array cols*rows) ---- */
+function mkShapeMask(d,cols,rows,src){ const m=new Uint8Array(cols*rows); const n=cols*rows; const shape=(MK.shape==="trace"&&src&&src.textOnly&&MK.mode!=="sign")?"round":MK.shape;
+  if(shape==="trace"||MK.mode==="sign"){ let hasAlpha=false; for(let i=0;i<n;i++) if(d[i*4+3]<128){ hasAlpha=true; break; }
+    if(hasAlpha){ for(let i=0;i<n;i++) m[i]=d[i*4+3]>=128?1:0; }
+    else { /* key out the background colour sampled from the corners */ const cs=[0,cols-1,(rows-1)*cols,rows*cols-1].map(i=>[d[i*4],d[i*4+1],d[i*4+2]]); const bg=cs.reduce((a,c)=>[a[0]+c[0]/4,a[1]+c[1]/4,a[2]+c[2]/4],[0,0,0]); const tol=MK.keyTol*MK.keyTol*3;
+      for(let i=0;i<n;i++){ const dr=d[i*4]-bg[0],dg=d[i*4+1]-bg[1],db=d[i*4+2]-bg[2]; m[i]=(dr*dr+dg*dg+db*db)>tol?1:0; }
+      /* only cells reachable from the edge through background count as outside */ const out=mkFlood(m,cols,rows); for(let i=0;i<n;i++) m[i]=out[i]?0:1; }
+    if(MK.mode==="sign") return m; /* letters only; plate is built separately */
+    const out=mkFlood(m,cols,rows); for(let i=0;i<n;i++) m[i]=out[i]?0:1; /* fill holes */ return m; }
+  const cx=(cols-1)/2, cy=(rows-1)/2; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ let v=1; if(shape==="circle"){ const dx=(c-cx)/cx, dy=(r-cy)/cy; v=dx*dx+dy*dy<=1?1:0; } else if(shape==="round"){ const rad=Math.min(cols,rows)*0.12; const ix=Math.max(0,Math.max(rad-c,c-(cols-1-rad))), iy=Math.max(0,Math.max(rad-r,r-(rows-1-rad))); v=ix*ix+iy*iy<=rad*rad?1:0; } m[r*cols+c]=v; } return m; }
+/* cells reachable from the border through zero cells */
+function mkFlood(m,cols,rows){ const out=new Uint8Array(cols*rows); const st=[]; const push=(i)=>{ if(!m[i]&&!out[i]){ out[i]=1; st.push(i); } }; for(let c=0;c<cols;c++){ push(c); push((rows-1)*cols+c); } for(let r=0;r<rows;r++){ push(r*cols); push(r*cols+cols-1); }
+  while(st.length){ const i=st.pop(); const c=i%cols, r=(i-c)/cols; if(c>0) push(i-1); if(c<cols-1) push(i+1); if(r>0) push(i-cols); if(r<rows-1) push(i+cols); } return out; }
+/* grow a mask by rad cells (round brush) */
+function mkDilate(m,cols,rows,rad){ if(rad<=0) return m.slice(); const out=new Uint8Array(cols*rows); const R=Math.ceil(rad); const off=[]; for(let dy=-R;dy<=R;dy++) for(let dx=-R;dx<=R;dx++) if(dx*dx+dy*dy<=rad*rad) off.push([dx,dy]);
+  /* edge cells only: a cell on the boundary of m paints the brush */ for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ const i=r*cols+c; if(!m[i]) continue; out[i]=1; const edge=c===0||r===0||c===cols-1||r===rows-1||!m[i-1]||!m[i+1]||!m[i-cols]||!m[i+cols]; if(!edge) continue; for(const o of off){ const x=c+o[0], y=r+o[1]; if(x>=0&&y>=0&&x<cols&&y<rows) out[y*cols+x]=1; } } return out; }
+function mkErode(m,cols,rows,rad){ const inv=new Uint8Array(cols*rows); for(let i=0;i<inv.length;i++) inv[i]=m[i]?0:1; const d=mkDilate(inv,cols,rows,rad); for(let i=0;i<d.length;i++) d[i]=d[i]?0:1; return d; }
+function mkSub(a,b){ const o=new Uint8Array(a.length); for(let i=0;i<a.length;i++) o[i]=a[i]&&!b[i]?1:0; return o; }
+function mkDisk(cols,rows,cx,cy,rad,base){ const o=base?base.slice():new Uint8Array(cols*rows); for(let r=Math.max(0,Math.floor(cy-rad));r<=Math.min(rows-1,Math.ceil(cy+rad));r++) for(let c=Math.max(0,Math.floor(cx-rad));c<=Math.min(cols-1,Math.ceil(cx+rad));c++){ const dx=c-cx,dy=r-cy; if(dx*dx+dy*dy<=rad*rad) o[r*cols+c]=1; } return o; }
+function mkPad(m,cols,rows,pad){ /* embed into a bigger grid with pad cells around */ const C=cols+2*pad, R=rows+2*pad; const o=new Uint8Array(C*R); for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) o[(r+pad)*C+c+pad]=m[r*cols+c]; return {m:o,cols:C,rows:R}; }
+function mkCentroid(m,C,R){ let cx=0,cy=0,n=0; for(let r=0;r<R;r++) for(let c=0;c<C;c++) if(m[r*C+c]){ cx+=c; cy+=r; n++; } return n?[cx/n,cy/n]:[C/2,R/2]; }
+/* ---- colour quantising (k-means) ---- */
+function mkQuant(d,mask,cols,rows,k){ const pts=[]; for(let i=0;i<cols*rows;i+=1){ if(mask[i]) pts.push(i); } const step=Math.max(1,Math.floor(pts.length/12000)); const smp=[]; for(let j=0;j<pts.length;j+=step){ const i=pts[j]*4; smp.push([d[i],d[i+1],d[i+2]]); }
+  if(!smp.length) return {palette:[[255,255,255]],idx:new Uint8Array(cols*rows)};
+  const cents=[smp[0].slice()]; while(cents.length<k){ let best=null,bd=-1; for(const p of smp){ let md=1e9; for(const c of cents){ const dd=(p[0]-c[0])**2+(p[1]-c[1])**2+(p[2]-c[2])**2; if(dd<md) md=dd; } if(md>bd){ bd=md; best=p; } } if(!best||bd<60) break; cents.push(best.slice()); }
+  for(let it=0;it<10;it++){ const sum=cents.map(()=>[0,0,0,0]); for(const p of smp){ let bi=0,bd=1e12; for(let c=0;c<cents.length;c++){ const dd=(p[0]-cents[c][0])**2+(p[1]-cents[c][1])**2+(p[2]-cents[c][2])**2; if(dd<bd){ bd=dd; bi=c; } } const s=sum[bi]; s[0]+=p[0]; s[1]+=p[1]; s[2]+=p[2]; s[3]++; } for(let c=0;c<cents.length;c++) if(sum[c][3]) cents[c]=[sum[c][0]/sum[c][3],sum[c][1]/sum[c][3],sum[c][2]/sum[c][3]]; }
+  /* drop colours that only cover anti-aliased edges (under 0.6% of the picture; thin leftovers are merged by mkClean) */ for(let pass=0;pass<cents.length;pass++){ const cnt=cents.map(()=>0); for(const p of smp){ let bi=0,bd=1e12; for(let c=0;c<cents.length;c++){ const dd=(p[0]-cents[c][0])**2+(p[1]-cents[c][1])**2+(p[2]-cents[c][2])**2; if(dd<bd){ bd=dd; bi=c; } } cnt[bi]++; } const small=cnt.findIndex(n=>n<smp.length*0.006); if(small<0||cents.length<=2) break; cents.splice(small,1); }
+  const idx=new Uint8Array(cols*rows); for(const i of pts){ const p=[d[i*4],d[i*4+1],d[i*4+2]]; let bi=0,bd=1e12; for(let c=0;c<cents.length;c++){ const dd=(p[0]-cents[c][0])**2+(p[1]-cents[c][1])**2+(p[2]-cents[c][2])**2; if(dd<bd){ bd=dd; bi=c; } } idx[i]=bi; }
+  const palette=cents.map(c=>c.map(v=>Math.round(v))); /* lightest colour first so it can double as the backing */ const order=palette.map((c,i)=>[c[0]*0.3+c[1]*0.59+c[2]*0.11,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); const remap=new Uint8Array(palette.length); order.forEach((old,ni)=>remap[old]=ni); for(const i of pts) idx[i]=remap[idx[i]]; return {palette:order.map(i=>palette[i]),idx}; }
+const mkHex=c=>"#"+c.map(v=>v.toString(16).padStart(2,"0")).join("");
+const mkLum=c=>(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])/255;
+/* printability: colour runs narrower than k cells (under ~0.6 mm) can't be laid down as a line, so they join the colour around them */
+function mkClean(idx,mask,C,R,k){ if(k<=1) return 0; const thin=new Uint8Array(C*R);
+  for(let r=0;r<R;r++){ let c=0; while(c<C){ const i=r*C+c; if(!mask[i]){ c++; continue; } let e=c; while(e+1<C&&mask[r*C+e+1]&&idx[r*C+e+1]===idx[i]) e++; if(e-c+1<k) for(let x=c;x<=e;x++) thin[r*C+x]=1; c=e+1; } }
+  for(let c=0;c<C;c++){ let r=0; while(r<R){ const i=r*C+c; if(!mask[i]){ r++; continue; } let e=r; while(e+1<R&&mask[(e+1)*C+c]&&idx[(e+1)*C+c]===idx[i]) e++; if(e-r+1<k) for(let y=r;y<=e;y++) thin[y*C+c]=1; r=e+1; } }
+  let changed=0; for(let pass=0;pass<4;pass++){ let left=0; const upd=[]; for(let r=0;r<R;r++) for(let c=0;c<C;c++){ const i=r*C+c; if(!thin[i]||!mask[i]) continue; const cnt=new Map(); for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ if(!dx&&!dy) continue; const x=c+dx,y=r+dy; if(x<0||y<0||x>=C||y>=R) continue; const j=y*C+x; if(!mask[j]||thin[j]) continue; cnt.set(idx[j],(cnt.get(idx[j])||0)+1); } let best=-1,bn=0; for(const [v,n] of cnt) if(n>bn){ bn=n; best=v; } if(best<0){ left++; continue; } upd.push([i,best]); }
+    for(const [i,v] of upd){ if(idx[i]!==v) changed++; idx[i]=v; thin[i]=0; } if(!left||!upd.length) break; }
+  return changed; }
+/* ---- build the layout (masks + colours) used by preview and the mesh ---- */
+function mkLayout(){ const src=mkSource(); if(!src) return null; const {w,h}=lbDims(src); const res=MK.res; const cols=Math.min(600,Math.round(w/res)), rows=Math.max(4,Math.min(600,Math.round(h/res)));
+  const d=mkSample(src,cols,rows,true); let shape=mkShapeMask(d,cols,rows,src); const L={w,h,res,cols,rows,cols0:cols,rows0:rows,d,shape,parts:[],pad:0,cleaned:0,src};
+  /* see-through cells inside the outline show the white backing */ if(MK.mode!=="sign") for(let i=0;i<cols*rows;i++) if(d[i*4+3]<128){ d[i*4]=d[i*4+1]=d[i*4+2]=245; d[i*4+3]=255; }
+  const cellsOf=(mm)=>mm/res; const minRun=Math.ceil(0.6/res-1e-9);
+  if(MK.mode==="lightbox"){ const pad=Math.ceil(cellsOf(MK.gap+MK.border+MK.wallT))+2; const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; const S0=P.m;
+    const q=mkQuant(d,shape,cols,rows,MK.colors); L.cleaned=mkClean(q.idx,shape,cols,rows,minRun); const idx=new Uint8Array(C*R); for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) idx[(r+pad)*C+c+pad]=q.idx[r*cols+c];
+    const area=MK.gap>0?mkDilate(S0,C,R,cellsOf(MK.gap)):S0; const mat=mkSub(area,S0); const outer=mkDilate(area,C,R,cellsOf(MK.border+MK.wallT)); const inner=mkDilate(area,C,R,cellsOf(MK.border)); const wall=mkSub(outer,inner); const rim=mkSub(inner,area);
+    Object.assign(L,{cols:C,rows:R,pad,palette:q.palette,idx,shape:S0,outer,inner,area,mat});
+    q.palette.forEach((col,ci)=>{ const m=new Uint8Array(C*R); for(let i=0;i<C*R;i++) m[i]=S0[i]&&idx[i]===ci?1:0; L.parts.push({name:`Colour ${ci+1} ${mkHex(col)}`,color:col,mask:m,z0:0,z1:MK.imgT,mirror:true}); });
+    L.parts.push({name:"White backing",color:[245,245,245],mask:S0,z0:MK.imgT,z1:MK.imgT+MK.backT,mirror:true}); if(MK.gap>0) L.parts.push({name:"White space around picture",color:[245,245,245],mask:mat,z0:0,z1:MK.imgT+MK.backT,mirror:true});
+    L.parts.push({name:"Frame front",color:[40,40,40],mask:rim,z0:0,z1:MK.imgT+MK.backT,mirror:true,join:"wall"});
+    L.parts.push({name:"Box wall",color:[40,40,40],mask:wall,z0:0,z1:MK.depth,mirror:true,join:"wall"});
+    if(MK.lid){ /* the rim slides inside the wall: at least one cell (and 0.3 mm) of gap all round, so it fits at every detail level */
+      const cl=Math.max(1,Math.round(0.3/res)); const lipW=Math.max(2,Math.round(1.8/res)); const ring0=mkSub(mkErode(inner,C,R,cl+0.5),mkErode(inner,C,R,cl+0.5+lipW)); let plate=outer.slice(), ring=ring0;
+      L.fit=mkRound(cl*res,100);
+      if(MK.hole){ const [cx,cy]=mkCentroid(S0,C,R); const rr=cellsOf(MK_HOLE/2); const hole=mkDisk(C,R,cx,cy,rr); plate=mkSub(plate,hole); ring=mkSub(ring,hole); L.hole={cx,cy,r:rr}; }
+      L.lidPlate=plate; L.lidRing=ring;
+      L.parts.push({name:"Back cover",color:[40,40,40],mask:plate,z0:0,z1:2,lid:true}); L.parts.push({name:"Back cover rim",color:[40,40,40],mask:ring,z0:2,z1:8,lid:true}); } }
+  else if(MK.mode==="keychain"){ const pad=Math.ceil(cellsOf(MK.gap+MK.border+12))+2; const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; let S0=P.m; const q=mkQuant(d,shape,cols,rows,MK.colors); L.cleaned=mkClean(q.idx,shape,cols,rows,minRun); const idx=new Uint8Array(C*R); for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) idx[(r+pad)*C+c+pad]=q.idx[r*cols+c];
+    const area=MK.gap>0?mkDilate(S0,C,R,cellsOf(MK.gap)):S0; let base=mkDilate(area,C,R,cellsOf(MK.border)); if(MK.ring){ let cx=0,n=0,top=R; for(let r=0;r<R;r++) for(let c=0;c<C;c++) if(base[r*C+c]){ if(r<top) top=r; cx+=c; n++; } cx=n?cx/n:C/2; const cy=top-cellsOf(2.5); const tab=mkDisk(C,R,cx,cy,cellsOf(5.5)); for(let i=0;i<C*R;i++) base[i]=base[i]||tab[i]?1:0; const hole=mkDisk(C,R,cx,cy,cellsOf(2.2)); base=mkSub(base,hole); }
+    Object.assign(L,{cols:C,rows:R,pad,palette:q.palette,idx,shape:S0,outer:base,area,mat:mkSub(area,S0)});
+    q.palette.forEach((col,ci)=>{ const m=new Uint8Array(C*R); for(let i=0;i<C*R;i++) m[i]=S0[i]&&idx[i]===ci?1:0; L.parts.push({name:`Colour ${ci+1} ${mkHex(col)}`,color:col,mask:m,z0:0,z1:MK.imgT,mirror:true}); });
+    L.parts.push({name:"Base",color:[40,40,40],mask:base,z0:MK.imgT,z1:MK.keyT,mirror:true}); if(MK.gap>0) L.parts.push({name:"White space around picture",color:[245,245,245],mask:L.mat,z0:0,z1:MK.imgT,mirror:true}); const edge=mkSub(base,area); L.parts.push({name:"Base edge",color:[40,40,40],mask:edge,z0:0,z1:MK.imgT,mirror:true}); }
+  else if(MK.mode==="sign"){ const pad=Math.ceil(cellsOf(6)); const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; const letters=P.m; const plate=new Uint8Array(C*R); const rad=cellsOf(4); for(let r=0;r<R;r++) for(let c=0;c<C;c++){ const ix=Math.max(0,Math.max(rad-c,c-(C-1-rad))), iy=Math.max(0,Math.max(rad-r,r-(R-1-rad))); plate[r*C+c]=ix*ix+iy*iy<=rad*rad?1:0; }
+    Object.assign(L,{cols:C,rows:R,pad,palette:[[250,250,250],[30,30,30]],shape:letters,outer:plate,w:C*res,h:R*res,letterMm:mkRound(h*(200/300)*0.72)});
+    L.parts.push({name:"Plate",color:[30,30,30],mask:plate,z0:0,z1:MK.plateT}); L.parts.push({name:"Letters",color:[250,250,250],mask:letters,z0:MK.plateT,z1:MK.plateT+MK.textT}); }
+  return L; }
+/* ---- print check ---- */
+function mkChecks(L){ const out=[]; const ok=t=>out.push(["ok",t]), warn=t=>out.push(["warn",t]), info=t=>out.push(["info",t]);
+  if(MK.mode==="litho"){ const {w,h}=lbDims(); (Math.max(w,h)<=MK_BED?ok:warn)(`${w} × ${h} mm fits the Bambu bed standing up.`); (MK.minT>=0.6?ok:warn)(MK.minT>=0.6?`Thinnest spot ${MK.minT} mm: no see-through holes.`:`Thinnest spot ${MK.minT} mm can print with holes. Use 0.6 mm or more.`); info("Print in white PLA, 0.12 mm layers, 100% infill."); return out; }
+  const W=mkRound(L.cols*L.res), H=mkRound(L.rows*L.res), D=MK.mode==="lightbox"?MK.depth:0; (Math.max(W,H,D)<=MK_BED?ok:warn)(Math.max(W,H,D)<=MK_BED?`Fits the Bambu bed (${MK_BED} mm).`:`Too big for the Bambu bed (${MK_BED} mm). Make it smaller.`);
+  if(MK.mode==="lightbox"){ (MK.wallT>=2?ok:warn)(MK.wallT>=2?`Walls ${MK.wallT} mm thick.`:`Walls ${MK.wallT} mm can flex. 2 mm or more is sturdier.`);
+    if(MK.lid) ok(`Back cover fits inside the wall with a ${L.fit} mm gap all round.`); else info("No back cover: the back of the box is open.");
+    if(L.hole) ok(`${MK_HOLE} mm hole in the back cover for gluing in the lights and running the cable.`);
+    L.palette.forEach((c,i)=>{ if(mkLum(c)<0.12) info(`Colour ${i+1} is very dark and will look almost black when lit.`); }); }
+  if(MK.mode==="keychain") ok(`${MK.keyT} mm thick${MK.ring?", 4.4 mm ring hole":""}.`);
+  if(MK.mode==="sign") (L.letterMm>=5?ok:warn)(L.letterMm>=5?`Letters about ${L.letterMm} mm tall.`:`Letters are about ${L.letterMm} mm tall. Make the sign wider so they're at least 5 mm.`);
+  if(MK.mode!=="sign"){ for(const t of MK.texts){ if(!(t.text||"").trim()) continue; const mm=mkRound(t.size*L.h*0.7); (mm>=5?ok:warn)(mm>=5?`"${t.text}" letters about ${mm} mm tall.`:`"${t.text}" letters are about ${mm} mm tall. Make them at least 5 mm so they print clean.`); }
+    if(L.cleaned){ const pic=L.shape.reduce((s,v)=>s+v,0)||1; const pct=L.cleaned/pic; (pct>0.03?warn:info)(pct>0.03?`A lot of fine detail is thinner than 0.6 mm and was merged into nearby colours. Make it bigger or use bolder art.`:`${L.cleaned} tiny spots thinner than 0.6 mm were merged into the colour next to them so they print.`); }
+    const fil=new Set(L.palette.map(mkHex)); fil.add("frame"); if(MK.mode==="lightbox") fil.add("white"); (fil.size<=4?ok:info)(fil.size<=4?`${fil.size} filaments: fits one AMS.`:`${fil.size} filaments: needs a second AMS or a filament swap.`); }
+  if(MK.sealed&&MK.sealed.mode===MK.mode&&!MK.dirty) (MK.sealed.ok?ok:warn)(MK.sealed.ok?`All ${MK.sealed.n} parts are sealed solids (checked).`:`${MK.sealed.bad} part(s) aren't sealed. Try another detail level.`);
+  return out; }
+/* ---- preview ---- */
+let lbPrevTimer=null; function lbPreview(ms){ clearTimeout(lbPrevTimer); lbPrevTimer=setTimeout(lbPreviewNow,ms==null?150:ms); }
+function lbPreviewNow(){ const m=MK.node; if(!m) return; const st=m.querySelector("#lbStat"), pal=m.querySelector("#lbPal"), size=m.querySelector("#mkSize"), ck=m.querySelector("#mkCheck"); MK.dirty=true; MK.parts=[]; const dl=m.querySelector("#lbDl"); if(dl) dl.innerHTML=""; pal.innerHTML="";
+  const src=mkSource(); const hint=m.querySelector("#mkShapeHint"); if(hint) hint.hidden=!(MK.shape==="trace"&&src&&src.textOnly&&MK.mode!=="sign");
+  if(MK.mode==="litho"&&MK.texts.length&&!MK.imgs.length){ /* lithophanes need a photo */ }
+  const L=MK.mode==="litho"?(MK.imgs.length||MK.texts.length?mkLithoLayout():null):mkLayout(); MK.L=L;
+  m.querySelector("#mkEmpty").hidden=!!L; m.querySelector("#mkEmptyMsg").textContent=MK.mode==="sign"?"Type your sign text to start.":MK.mode==="litho"?"Upload a photo to start.":"Add a picture or some text to start.";
+  if(!L){ size.innerHTML=""; ck.innerHTML=""; st.textContent=""; mkDraw(); return; }
+  const row=(a,b)=>`<dt>${a}</dt><dd>${b}</dd>`;
+  if(MK.mode==="litho"){ size.innerHTML=row("Size",`${L.w} × ${L.h} mm`)+row("Thickness",`${MK.minT}–${mkRound(Math.max(MK.minT+0.3,MK.maxT))} mm`)+row("Prints","standing up");
+    pal.innerHTML=`<span class="sw"><i style="background:#f4f3ef"></i>White PLA</span>`; }
+  else { const W=mkRound(L.cols*L.res), H=mkRound(L.rows*L.res);
+    size.innerHTML=row("Outside",`${W} × ${H} mm`)+(MK.mode==="lightbox"?row("Depth",`${MK.depth} mm`)+row("Back cover",MK.lid?(MK.hole?`with ${MK_HOLE} mm hole`:"yes"):"none"):MK.mode==="keychain"?row("Thickness",`${MK.keyT} mm`):row("Thickness",`${MK.plateT+MK.textT} mm`))+row("Prints",MK.mode==="sign"?"face up":"face down");
+    pal.innerHTML=L.palette.map((c,i)=>`<span class="sw" title="${mkHex(c)}"><i style="background:${mkHex(c)}"></i>${MK.mode==="sign"?(i?"Plate":"Letters"):"Colour "+(i+1)}</span>`).join("")+(MK.mode==="lightbox"?`<span class="sw"><i style="background:#f5f5f5"></i>White backing${MK.gap>0?" &amp; space":""}</span><span class="sw"><i style="background:#282828"></i>Frame &amp; back cover</span>`:MK.mode==="keychain"?`<span class="sw"><i style="background:#282828"></i>Base</span>`:""); }
+  ck.innerHTML=mkChecks(L).map(([k,t])=>`<li class="${k}">${ICON[k]}<span>${esc(t)}</span></li>`).join("");
+  st.textContent=MK.mode==="litho"?"Prints standing up in white PLA.":MK.mode==="sign"?"Prints face up.":"Prints face down, colours first.";
+  mkDraw(); }
+function mkLithoLayout(){ const src=mkSource(); if(!src) return null; const {w,h}=lbDims(src); const cols=Math.min(360,Math.round(w/0.3)), rows=Math.max(8,Math.round(cols*h/w)); return {w,h,cols,rows,T:lbThick(lbGrey(src,cols,rows)),litho:true}; }
+/* ---- stage drawing: a photo-like design preview ---- */
+let mkNoise=null; function mkNoisePat(ctx){ if(!mkNoise){ mkNoise=document.createElement("canvas"); mkNoise.width=mkNoise.height=96; const c=mkNoise.getContext("2d"); const im=c.createImageData(96,96); for(let i=0;i<96*96;i++){ const v=Math.random()*255|0; im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=v; im.data[i*4+3]=255; } c.putImageData(im,0,0); } return ctx.createPattern(mkNoise,"repeat"); }
+function mkCells(cols,rows,fn){ const cv=document.createElement("canvas"); cv.width=cols; cv.height=rows; const ctx=cv.getContext("2d"); const im=ctx.createImageData(cols,rows); const d=im.data; for(let i=0;i<cols*rows;i++){ const c=fn(i); if(!c) continue; d[i*4]=c[0]; d[i*4+1]=c[1]; d[i*4+2]=c[2]; d[i*4+3]=c.length>3?c[3]:255; } ctx.putImageData(im,0,0); return cv; }
+function mkUp(src,w,h,flip){ const cv=document.createElement("canvas"); cv.width=Math.max(1,Math.round(w)); cv.height=Math.max(1,Math.round(h)); const c=cv.getContext("2d"); c.imageSmoothingEnabled=true; c.imageSmoothingQuality="high"; if(flip){ c.translate(cv.width,0); c.scale(-1,1); } c.drawImage(src,0,0,cv.width,cv.height); return cv; }
+function mkTint(src,color){ const cv=document.createElement("canvas"); cv.width=src.width; cv.height=src.height; const c=cv.getContext("2d"); c.drawImage(src,0,0); c.globalCompositeOperation="source-in"; c.fillStyle=color; c.fillRect(0,0,cv.width,cv.height); return cv; }
+function mkShade(cv,a,b,alpha){ const c=cv.getContext("2d"); c.save(); c.globalCompositeOperation="source-atop"; const g=c.createLinearGradient(0,0,cv.width,cv.height); g.addColorStop(0,a); g.addColorStop(1,b); c.globalAlpha=alpha==null?1:alpha; c.fillStyle=g; c.fillRect(0,0,cv.width,cv.height); c.restore(); return cv; }
+function mkGrain(cv,alpha){ const c=cv.getContext("2d"); c.save(); c.globalCompositeOperation="source-atop"; c.globalAlpha=alpha; c.fillStyle=mkNoisePat(c); c.fillRect(0,0,cv.width,cv.height); c.restore(); return cv; }
+function mkBg(ctx,W,H,dark){ const g=ctx.createRadialGradient(W*0.5,H*0.42,Math.min(W,H)*0.1,W*0.5,H*0.5,Math.max(W,H)*0.75); if(dark){ g.addColorStop(0,"#23262c"); g.addColorStop(1,"#0a0b0d"); } else { g.addColorStop(0,"#f3f1ec"); g.addColorStop(1,"#d4cfc5"); } ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+function mkDraw(){ const m=MK.node; if(!m) return; const cv=m.querySelector("#mkStage"); const box=cv.parentNode.getBoundingClientRect(); const dpr=Math.min(2,window.devicePixelRatio||1); const W=Math.max(10,Math.round(box.width*dpr)), H=Math.max(10,Math.round(box.height*dpr)); if(cv.width!==W) cv.width=W; if(cv.height!==H) cv.height=H;
+  const ctx=cv.getContext("2d"); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H); const L=MK.L, view=MK.view[MK.mode]; MK.vp=null;
+  const dark=(MK.mode==="lightbox"&&view==="lit")||(MK.mode==="litho"&&view==="lit"); mkBg(ctx,W,H,dark); if(!L) return;
+  try{ if(MK.mode==="litho") mkDrawLitho(ctx,W,H,L,view,dpr); else if(view==="parts") mkDrawParts(ctx,W,H,L,dpr); else if(view==="box") mkDrawBox(ctx,W,H,L,dpr); else if(view==="back") mkDrawBack(ctx,W,H,L,dpr); else mkDrawFront(ctx,W,H,L,view,dpr); }catch(e){ console.error("maker preview",e); }
+  if(MK.vp&&MK.mode!=="sign"){ const t=mkSelText(); if(t&&t._bb){ const r=mkTextRect(t); ctx.save(); ctx.strokeStyle=dark?"rgba(255,255,255,.85)":"#0e7c74"; ctx.lineWidth=1.5*dpr; ctx.setLineDash([5*dpr,4*dpr]); ctx.strokeRect(r[0]-4*dpr,r[1]-4*dpr,r[2]-r[0]+8*dpr,r[3]-r[1]+8*dpr); ctx.restore(); } }
+  cv.classList.toggle("grab",!!MK.vp&&MK.texts.length>0&&MK.mode!=="sign"); }
+function mkFit(W,H,cols,rows,extraX,extraY){ const s=Math.min((W*0.82-(extraX||0))/cols,(H*0.8-(extraY||0))/rows); const w=cols*s,h=rows*s; return {s,w,h,ox:(W-w-(extraX||0))/2,oy:(H-h+(extraY||0))/2}; }
+function mkTextRect(t){ const v=MK.vp, L=MK.L; const x=a=>v.ox+(L.pad+a*L.cols0)*v.s, y=a=>v.oy+(L.pad+a*L.rows0)*v.s; return [x(t._bb[0]),y(t._bb[1]),x(t._bb[2]),y(t._bb[3])]; }
+/* face of the print as seen from the front: lit = LEDs on in a dark room, off/front = daylight */
+function mkFaceCells(L,lit){ const C=L.cols,R=L.rows; const frame=lit?[22,23,26]:[44,45,49], white=lit?[255,248,236]:[236,234,229];
+  if(MK.mode==="sign") return {face:mkCells(C,R,i=>L.outer[i]?[34,35,38]:null),top:mkCells(C,R,i=>L.shape[i]?[244,243,239]:null)};
+  let f=null; if(lit){ const [cx,cy]=mkCentroid(L.shape,C,R); const md=Math.hypot(C,R)/2; f=i=>{ const c=i%C, r=(i-c)/C; const d=Math.hypot(c-cx,r-cy)/md; return 0.8+0.2*(1-Math.min(1,d*d)); }; }
+  const glow=(c,k)=>[0,1,2].map(j=>Math.min(255,Math.round(255*Math.pow(c[j]/255,0.62)*k*[1,0.975,0.92][j]+6)));
+  const face=mkCells(C,R,i=>{ if(L.shape[i]){ const c=L.palette[L.idx[i]]||[255,255,255]; return lit?glow(c,f(i)):c.map(v=>Math.round(v*0.94)); } if(L.mat&&L.mat[i]) return lit?glow(white,f(i)):white; if(L.outer[i]) return frame; return null; });
+  const pic=lit?mkCells(C,R,i=>{ if(L.shape[i]||(L.mat&&L.mat[i])){ const c=L.shape[i]?L.palette[L.idx[i]]:white; return glow(c,f(i)); } return null; }):null;
+  const fr=mkCells(C,R,i=>(!L.shape[i]&&!(L.mat&&L.mat[i])&&L.outer[i])?frame:null);
+  return {face,pic,fr}; }
+function mkDrawFront(ctx,W,H,L,view,dpr){ const lit=MK.mode==="lightbox"&&view==="lit"; const F=mkFit(W,H,L.cols,L.rows); MK.vp=F; const {face,pic,fr,top}=mkFaceCells(L,lit);
+  const up=mkUp(face,F.w,F.h);
+  if(MK.mode==="sign"){ mkShade(up,"rgba(255,255,255,.10)","rgba(0,0,0,.25)"); mkGrain(up,0.05); const t=mkGrain(mkUp(top,F.w,F.h),0.04);
+    ctx.save(); ctx.shadowColor="rgba(0,0,0,.3)"; ctx.shadowBlur=26*dpr; ctx.shadowOffsetY=12*dpr; ctx.drawImage(up,F.ox,F.oy); ctx.restore();
+    ctx.save(); ctx.shadowColor="rgba(0,0,0,.55)"; ctx.shadowBlur=3*dpr; ctx.shadowOffsetX=1.2*dpr; ctx.shadowOffsetY=2*dpr; ctx.drawImage(t,F.ox,F.oy); ctx.restore(); return; }
+  const frU=mkShade(mkUp(fr,F.w,F.h),lit?"rgba(255,255,255,.07)":"rgba(255,255,255,.16)","rgba(0,0,0,.30)");
+  if(lit){ const p=mkUp(pic,F.w,F.h); ctx.save(); ctx.globalCompositeOperation="screen"; ctx.globalAlpha=0.28; ctx.filter=`blur(${Math.round(46*dpr)}px)`; ctx.drawImage(p,F.ox,F.oy); ctx.restore();
+    const pu=mkGrain(mkUp(pic,F.w,F.h),0.035); ctx.drawImage(pu,F.ox,F.oy); ctx.drawImage(mkGrain(frU,0.05),F.ox,F.oy);
+    ctx.save(); ctx.globalCompositeOperation="screen"; ctx.globalAlpha=0.38; ctx.filter=`blur(${Math.round(9*dpr)}px)`; ctx.drawImage(p,F.ox,F.oy); ctx.restore(); return; }
+  mkShade(up,"rgba(255,255,255,.10)","rgba(0,0,0,.12)"); mkGrain(up,0.045);
+  ctx.save(); ctx.shadowColor="rgba(0,0,0,.30)"; ctx.shadowBlur=28*dpr; ctx.shadowOffsetY=14*dpr; ctx.drawImage(up,F.ox,F.oy); ctx.restore(); ctx.drawImage(mkGrain(frU,0.05),F.ox,F.oy); }
+/* 3/4 view: the front face with the box wall running back */
+function mkDrawBox(ctx,W,H,L,dpr){ const ang=[0.62,-0.42]; const tmp=mkFit(W,H,L.cols,L.rows); let depthPx=MK.depth/L.res*tmp.s*0.55; const F=mkFit(W,H,L.cols,L.rows,depthPx*ang[0],-depthPx*ang[1]); depthPx=MK.depth/L.res*F.s*0.55;
+  const sil=mkUp(mkCells(L.cols,L.rows,i=>L.outer[i]?[40,41,45]:null),F.w,F.h); const ext=document.createElement("canvas"); ext.width=W; ext.height=H; const ec=ext.getContext("2d"); const steps=Math.min(400,Math.ceil(depthPx));
+  for(let k=steps;k>=1;k--) ec.drawImage(sil,F.ox+ang[0]*depthPx*k/steps,F.oy+ang[1]*depthPx*k/steps);
+  ec.globalCompositeOperation="source-atop"; const g=ec.createLinearGradient(F.ox,F.oy+F.h,F.ox+F.w+depthPx*ang[0],F.oy+depthPx*ang[1]); g.addColorStop(0,"#16171a"); g.addColorStop(0.6,"#2a2c31"); g.addColorStop(1,"#4a4d54"); ec.fillStyle=g; ec.fillRect(0,0,W,H); mkGrain(ext,0.04);
+  ctx.save(); ctx.shadowColor="rgba(0,0,0,.32)"; ctx.shadowBlur=30*dpr; ctx.shadowOffsetY=16*dpr; ctx.drawImage(ext,0,0); ctx.restore();
+  const {face,fr}=mkFaceCells(L,false); const up=mkGrain(mkShade(mkUp(face,F.w,F.h),"rgba(255,255,255,.10)","rgba(0,0,0,.12)"),0.045); ctx.drawImage(up,F.ox,F.oy); ctx.drawImage(mkGrain(mkShade(mkUp(fr,F.w,F.h),"rgba(255,255,255,.16)","rgba(0,0,0,.3)"),0.05),F.ox,F.oy); }
+/* from behind: the back cover (mirrored outline) with its hole, or the open box */
+function mkDrawBack(ctx,W,H,L,dpr){ const F=mkFit(W,H,L.cols,L.rows); const C=L.cols,R=L.rows;
+  const cells=mkCells(C,R,i=>{ if(MK.lid) return L.lidPlate&&L.lidPlate[i]?[42,43,47]:(L.outer[i]?[20,20,22]:null); if(L.inner[i]) return [226,223,216]; return L.outer[i]?[42,43,47]:null; });
+  const up=mkGrain(mkShade(mkUp(cells,F.w,F.h,true),"rgba(255,255,255,.14)","rgba(0,0,0,.28)"),0.05);
+  ctx.save(); ctx.shadowColor="rgba(0,0,0,.30)"; ctx.shadowBlur=28*dpr; ctx.shadowOffsetY=14*dpr; ctx.drawImage(up,F.ox,F.oy); ctx.restore();
+  if(MK.lid&&L.hole){ const cx=F.ox+(C-0.5-L.hole.cx)*F.s, cy=F.oy+(L.hole.cy+0.5)*F.s, r=L.hole.r*F.s; ctx.save(); const g=ctx.createRadialGradient(cx,cy-r*0.3,r*0.1,cx,cy,r); g.addColorStop(0,"#1c1c1f"); g.addColorStop(1,"#050506"); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="rgba(255,255,255,.10)"; ctx.lineWidth=1.2*dpr; ctx.stroke(); ctx.restore(); } }
+function mkDrawParts(ctx,W,H,L,dpr){ const F=mkFit(W,H,L.cols,L.rows); const front=L.parts.filter(p=>!p.lid); const zmax=Math.max(...front.map(p=>p.z1)); const C=L.cols,R=L.rows; const z=new Float32Array(C*R);
+  for(const p of front) for(let i=0;i<C*R;i++) if(p.mask[i]&&p.z1>z[i]) z[i]=p.z1;
+  const cells=mkCells(C,R,i=>{ if(!z[i]) return null; const t=0.35+0.65*(z[i]/zmax); return [Math.round(70*t+60),Math.round(84*t+64),Math.round(104*t+70)]; });
+  const up=mkGrain(mkUp(cells,F.w,F.h),0.04); ctx.save(); ctx.shadowColor="rgba(0,0,0,.28)"; ctx.shadowBlur=24*dpr; ctx.shadowOffsetY=12*dpr; ctx.drawImage(up,F.ox,F.oy); ctx.restore(); }
+function mkDrawLitho(ctx,W,H,L,view,dpr){ const {cols,rows,T}=L; const F=mkFit(W,H,cols,rows); let cells;
+  if(view==="lit"){ const k=1.15; cells=mkCells(cols,rows,i=>{ const v=Math.round(255*Math.min(1,Math.exp(-k*(T[i]-MK.minT)))); return [v,Math.round(v*0.93),Math.round(v*0.78)]; }); const up=mkUp(cells,F.w,F.h); ctx.save(); ctx.globalCompositeOperation="screen"; ctx.globalAlpha=0.25; ctx.filter=`blur(${Math.round(40*dpr)}px)`; ctx.drawImage(up,F.ox,F.oy); ctx.restore(); ctx.drawImage(up,F.ox,F.oy); return; }
+  cells=mkCells(cols,rows,i=>{ const x=i%cols,y=(i-x)/cols; const dx=(T[y*cols+Math.min(cols-1,x+1)]-T[y*cols+Math.max(0,x-1)]), dy=(T[Math.min(rows-1,y+1)*cols+x]-T[Math.max(0,y-1)*cols+x]); const v=Math.round(238*Math.min(1,Math.max(0,0.82+dx*1.4-dy*1.4))); return [v,v,Math.round(v*0.98)]; });
+  const up=mkUp(cells,F.w,F.h); ctx.save(); ctx.shadowColor="rgba(0,0,0,.28)"; ctx.shadowBlur=24*dpr; ctx.shadowOffsetY=12*dpr; ctx.drawImage(up,F.ox,F.oy); ctx.restore(); }
+/* drag text on the preview */
+function mkStageEvents(){ const cv=MK.node.querySelector("#mkStage"); let drag=null;
+  const pt=e=>{ const r=cv.getBoundingClientRect(); const k=cv.width/r.width; return [(e.clientX-r.left)*k,(e.clientY-r.top)*k]; };
+  const frac=p=>{ const v=MK.vp,L=MK.L; return [((p[0]-v.ox)/v.s-L.pad)/L.cols0,((p[1]-v.oy)/v.s-L.pad)/L.rows0]; };
+  cv.addEventListener("pointerdown",e=>{ if(!MK.vp||MK.mode==="sign"||!MK.L) return; const p=pt(e); let hit=null; for(let i=MK.texts.length-1;i>=0;i--){ const t=MK.texts[i]; if(!t._bb) continue; const r=mkTextRect(t); if(p[0]>=r[0]-8&&p[0]<=r[2]+8&&p[1]>=r[1]-8&&p[1]<=r[3]+8){ hit=t; break; } }
+    if(!hit) return; MK.sel=hit.id; const f=frac(p); drag={t:hit,dx:hit.x-f[0],dy:hit.y-f[1]}; cv.setPointerCapture(e.pointerId); mkTextUI(); mkDraw(); e.preventDefault(); });
+  cv.addEventListener("pointermove",e=>{ if(!drag) return; const f=frac(pt(e)); drag.t.x=Math.min(1,Math.max(0,f[0]+drag.dx)); drag.t.y=Math.min(1,Math.max(0,f[1]+drag.dy)); MK.comp=null; lbPreview(40); });
+  const end=()=>{ if(drag){ drag=null; lbPreview(0); } }; cv.addEventListener("pointerup",end); cv.addEventListener("pointercancel",end);
+  cv.addEventListener("keydown",e=>{ const t=mkSelText(); if(!t||MK.mode==="sign") return; const s=e.shiftKey?0.05:0.01; const mv={ArrowLeft:[-s,0],ArrowRight:[s,0],ArrowUp:[0,-s],ArrowDown:[0,s]}[e.key]; if(!mv) return; e.preventDefault(); t.x=Math.min(1,Math.max(0,t.x+mv[0])); t.y=Math.min(1,Math.max(0,t.y+mv[1])); MK.comp=null; lbPreview(60); }); }
+/* ---- lithophane grey map / thickness ---- */
+function lbGrey(src,cols,rows){ const d=mkSample(src,cols,rows,true); const out=new Float32Array(cols*rows); for(let i=0;i<cols*rows;i++){ let L=(0.2126*d[i*4]+0.7152*d[i*4+1]+0.0722*d[i*4+2])/255; if(d[i*4+3]<128) L=1; if(MK.invert) L=1-L; out[i]=L; } return out; }
+function lbThick(grey){ const t=new Float32Array(grey.length); const a=MK.minT, b=Math.max(MK.minT+0.3,MK.maxT); for(let i=0;i<grey.length;i++) t[i]=a+(1-grey[i])*(b-a); return t; }
+/* ---- meshes ---- */
+function lbGridSolid(cols,rows,cell,Hfn){ const top=new Float32Array(cols*rows*3); for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ const i=(r*cols+c)*3; top[i]=c*cell; top[i+1]=r*cell; top[i+2]=Hfn(c,r); }
+  const nTop=(cols-1)*(rows-1)*2, nWall=((cols-1)*2+(rows-1)*2)*2, nBot=(cols-1)*2+(rows-1)*2; const out=new Float32Array((nTop+nBot+nWall)*9); let o=0; const put=(...v)=>{ for(let k=0;k<9;k++) out[o++]=v[k]; }; const P=(c,r)=>{ const i=(r*cols+c)*3; return [top[i],top[i+1],top[i+2]]; };
+  for(let r=0;r<rows-1;r++) for(let c=0;c<cols-1;c++){ const a=P(c,r),b=P(c+1,r),cc=P(c+1,r+1),d=P(c,r+1); put(...a,...b,...cc); put(...a,...cc,...d); }
+  /* bottom: a fan through every edge point the walls use, so the solid is sealed (no T-junctions) */
+  const W=(cols-1)*cell, Hh=(rows-1)*cell; const ring=[]; for(let c=0;c<cols-1;c++) ring.push([c*cell,0]); for(let r=0;r<rows-1;r++) ring.push([W,r*cell]); for(let c=cols-1;c>0;c--) ring.push([c*cell,Hh]); for(let r=rows-1;r>0;r--) ring.push([0,r*cell]);
+  const cx=W/2, cy=Hh/2; for(let j=0;j<ring.length;j++){ const p=ring[j], q=ring[(j+1)%ring.length]; const cz=(p[0]-cx)*(q[1]-cy)-(p[1]-cy)*(q[0]-cx); if(cz>0) put(cx,cy,0,q[0],q[1],0,p[0],p[1],0); else put(cx,cy,0,p[0],p[1],0,q[0],q[1],0); }
+  for(let c=0;c<cols-1;c++){ const a=P(c,0),b=P(c+1,0); put(a[0],a[1],0,b[0],b[1],0,...b); put(a[0],a[1],0,...b,...a); const e=P(c,rows-1),f=P(c+1,rows-1); put(e[0],e[1],0,...f,f[0],f[1],0); put(e[0],e[1],0,...e,...f); }
+  for(let r=0;r<rows-1;r++){ const a=P(0,r),b=P(0,r+1); put(a[0],a[1],0,...b,b[0],b[1],0); put(a[0],a[1],0,...a,...b); const e=P(cols-1,r),f=P(cols-1,r+1); put(e[0],e[1],0,f[0],f[1],0,...f); put(e[0],e[1],0,...f,...e); }
+  return out.subarray(0,o); }
+function lbBend(tri,W,arcDeg){ const arc=arcDeg*Math.PI/180, R=W/arc; const out=new Float32Array(tri.length); for(let i=0;i<tri.length;i+=3){ const x=tri[i],y=tri[i+1],z=tri[i+2]; const th=(x/W-0.5)*arc; const r=R+z; out[i]=r*Math.sin(th); out[i+1]=y; out[i+2]=-(r*Math.cos(th)-R); } return out; }
+function lbStandUp(tri){ for(let i=0;i<tri.length;i+=3){ const y=tri[i+1], z=tri[i+2]; tri[i+1]=-z; tri[i+2]=y; } return tri; }
+/* mask → maximal rectangles, used to keep the flat faces light */
+function mkRects(mask,cols,rows){ const used=new Uint8Array(cols*rows); const out=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ const i=r*cols+c; if(!mask[i]||used[i]) continue; let c1=c; while(c1+1<cols&&mask[r*cols+c1+1]&&!used[r*cols+c1+1]) c1++; let r1=r; outer: while(r1+1<rows){ for(let x=c;x<=c1;x++){ const j=(r1+1)*cols+x; if(!mask[j]||used[j]) break outer; } r1++; } for(let y=r;y<=r1;y++) for(let x=c;x<=c1;x++) used[y*cols+x]=1; out.push([c,r,c1+1,r1+1]); } return out; }
+/* height field → one sealed solid. hm[i] = top of the column at cell i (0 = empty), all columns start at z0.
+   Every face shares the grid points it touches (flat faces fan out from their centre through every grid point on their edge),
+   and walls are split at every height in use, so each edge belongs to exactly two triangles: watertight, no T-junctions.
+   mirror flips x so a face-down print reads right. */
+function mkField(hm,C,R,res,z0,mirror){ const lv=[...new Set([z0,...Array.from(hm).filter(v=>v>0)])].sort((a,b)=>a-b); const li=new Map(lv.map((z,i)=>[z,i]));
+  const W=C*res, H=R*res, V=[], T=[], vmap=new Map(); const X=c=>mirror?W-c*res:c*res;
+  /* where only two diagonal cells meet at a grid point (a pinch), each side gets its own vertex so no edge is shared by four faces */
+  const occ=(k,x,y)=>x>=0&&y>=0&&x<C&&y<R&&(k===0?hm[y*C+x]>0:hm[y*C+x]>=lv[k]);
+  const vx=(c,r,k,xc,xr)=>{ let sub=0; const tl=occ(k,c-1,r-1),tr=occ(k,c,r-1),bl=occ(k,c-1,r),br=occ(k,c,r);
+      if(tl&&br&&!tr&&!bl) sub=(xc===c-1&&xr===r-1)?1:2; else if(tr&&bl&&!tl&&!br) sub=(xc===c&&xr===r-1)?1:2;
+      const key=((k*(R+1)+r)*(C+1)+c)*3+sub; let v=vmap.get(key); if(v===undefined){ v=V.length/3; const e=sub?0.03:0; /* pinch copies sit a hair apart, inside their own cell */ V.push(X(c+(xc+0.5-c)*e),H-(r+(xr+0.5-r)*e)*res,lv[k]); vmap.set(key,v); } return v; };
+  const inR=(c,r,q)=>{ for(const [x,y] of [[c-1,r-1],[c,r-1],[c-1,r],[c,r]]) if(x>=q[0]&&x<q[2]&&y>=q[1]&&y<q[3]) return [x,y]; return [c,r]; };
+  const rv=(c,r,k,q)=>{ const x=inR(c,r,q); return vx(c,r,k,x[0],x[1]); };
+  const tri=(a,b,c,nx,ny,nz)=>{ const ax=V[a*3],ay=V[a*3+1],az=V[a*3+2]; const ux=V[b*3]-ax,uy=V[b*3+1]-ay,uz=V[b*3+2]-az,wx=V[c*3]-ax,wy=V[c*3+1]-ay,wz=V[c*3+2]-az; const cx=uy*wz-uz*wy,cy=uz*wx-ux*wz,cz=ux*wy-uy*wx; const fx=mirror?-nx:nx, fy=-ny; if(cx*fx+cy*fy+cz*nz<0) T.push(a,c,b); else T.push(a,b,c); };
+  const face=(m,k,dir)=>{ for(const q of mkRects(m,C,R)){ const [c0,r0,c1,r1]=q; const ring=[]; for(let c=c0;c<c1;c++) ring.push(rv(c,r0,k,q)); for(let r=r0;r<r1;r++) ring.push(rv(c1,r,k,q)); for(let c=c1;c>c0;c--) ring.push(rv(c,r1,k,q)); for(let r=r1;r>r0;r--) ring.push(rv(c0,r,k,q));
+    const ci=V.length/3; V.push(X((c0+c1)/2),H-(r0+r1)/2*res,lv[k]); for(let j=0;j<ring.length;j++) tri(ci,ring[j],ring[(j+1)%ring.length],0,0,dir); } };
+  for(let k=1;k<lv.length;k++){ const m=new Uint8Array(C*R); for(let i=0;i<C*R;i++) m[i]=hm[i]===lv[k]?1:0; face(m,k,1); }
+  { const m=new Uint8Array(C*R); for(let i=0;i<C*R;i++) m[i]=hm[i]>0?1:0; face(m,0,-1); }
+  const nb=[[-1,0],[1,0],[0,-1],[0,1]];
+  for(let r=0;r<R;r++) for(let c=0;c<C;c++){ const h=hm[r*C+c]; if(!(h>0)) continue;
+    for(const [dc,dr] of nb){ const nc=c+dc, nr=r+dr; const hn=(nc<0||nr<0||nc>=C||nr>=R)?0:hm[nr*C+nc]; if(hn>=h) continue; const lo=li.get(hn>0?hn:z0), hi=li.get(h);
+      const p=dc===-1?[c,r]:dc===1?[c+1,r]:dr===-1?[c,r]:[c,r+1], q=dc===-1?[c,r+1]:dc===1?[c+1,r+1]:dr===-1?[c+1,r]:[c+1,r+1];
+      for(let k=lo;k<hi;k++){ const a=vx(p[0],p[1],k,c,r), b=vx(q[0],q[1],k,c,r), cc=vx(q[0],q[1],k+1,c,r), d=vx(p[0],p[1],k+1,c,r); tri(a,b,cc,dc,dr,0); tri(a,cc,d,dc,dr,0); } } }
+  return {verts:V,tris:T}; }
+function mkMesh(part,L){ const hm=new Float32Array(L.cols*L.rows); for(let i=0;i<hm.length;i++) if(part.mask[i]) hm[i]=part.z1; const f=mkField(hm,L.cols,L.rows,L.res,part.z0,!!part.mirror); return {verts:f.verts,tris:f.tris,name:part.name,color:part.color}; }
+/* all the given parts as one sealed solid (for a one-colour STL): each column runs from 0 to its highest part */
+function mkUnion(parts,L){ const hm=new Float32Array(L.cols*L.rows); for(const p of parts) for(let i=0;i<hm.length;i++) if(p.mask[i]&&p.z1>hm[i]) hm[i]=p.z1; const f=mkField(hm,L.cols,L.rows,L.res,0,!!(parts[0]&&parts[0].mirror)); return f; }
+/* every edge used by exactly two triangles = sealed */
+function mkSealed(mesh){ const n=mesh.verts.length/3, cnt=new Map(); const T=mesh.tris; for(let i=0;i<T.length;i+=3) for(let k=0;k<3;k++){ const a=T[i+k], b=T[i+(k+1)%3]; const key=a<b?a*n+b:b*n+a; cnt.set(key,(cnt.get(key)||0)+1); } for(const v of cnt.values()) if(v!==2) return false; return T.length>0; }
+function mkTriArray(mesh){ const o=new Float32Array(mesh.tris.length*3); for(let i=0;i<mesh.tris.length;i++){ const v=mesh.tris[i]*3; o[i*3]=mesh.verts[v]; o[i*3+1]=mesh.verts[v+1]; o[i*3+2]=mesh.verts[v+2]; } return o; }
+function lbSTL(tri,name){ const n=tri.length/9; const buf=new ArrayBuffer(84+n*50); const dv=new DataView(buf); const hdr=("Charleston 3D maker "+(name||"")).slice(0,79); for(let i=0;i<hdr.length;i++) dv.setUint8(i,hdr.charCodeAt(i)&127); dv.setUint32(80,n,true); let o=84;
+  for(let t=0;t<n;t++){ const i=t*9; const ux=tri[i+3]-tri[i],uy=tri[i+4]-tri[i+1],uz=tri[i+5]-tri[i+2],vx=tri[i+6]-tri[i],vy=tri[i+7]-tri[i+1],vz=tri[i+8]-tri[i+2]; const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx; const l=Math.hypot(nx,ny,nz)||1; dv.setFloat32(o,nx/l,true); dv.setFloat32(o+4,ny/l,true); dv.setFloat32(o+8,nz/l,true); o+=12; for(let k=0;k<9;k++){ dv.setFloat32(o,tri[i+k],true); o+=4; } dv.setUint16(o,0,true); o+=2; }
+  return new Blob([buf],{type:"model/stl"}); }
+/* ---- 3MF (zip, stored) with one object per part, named by colour ---- */
+const MK_CRC=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function mkCrc(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++) c=MK_CRC[(c^u8[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function mkZip(files){ const enc=new TextEncoder(); const parts=[], cd=[]; let off=0; const le16=v=>[v&255,(v>>8)&255], le32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+  for(const f of files){ const name=enc.encode(f.name), data=typeof f.data==="string"?enc.encode(f.data):f.data; const crc=mkCrc(data); const hdr=new Uint8Array([0x50,0x4b,3,4,...le16(20),...le16(0),...le16(0),...le16(0),...le16(0),...le32(crc),...le32(data.length),...le32(data.length),...le16(name.length),...le16(0),...name]); parts.push(hdr,data);
+    cd.push(new Uint8Array([0x50,0x4b,1,2,...le16(20),...le16(20),...le16(0),...le16(0),...le16(0),...le16(0),...le32(crc),...le32(data.length),...le32(data.length),...le16(name.length),...le16(0),...le16(0),...le16(0),...le16(0),...le32(0),...le32(off),...name])); off+=hdr.length+data.length; }
+  const cdLen=cd.reduce((s,a)=>s+a.length,0); const end=new Uint8Array([0x50,0x4b,5,6,...le16(0),...le16(0),...le16(files.length),...le16(files.length),...le32(cdLen),...le32(off),...le16(0)]); return new Blob([...parts,...cd,end],{type:"model/3mf"}); }
+function mk3MF(meshes,title){ const esc1=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); let objs="", items="";
+  meshes.forEach((m,i)=>{ const id=i+1; const v=[]; for(let k=0;k<m.verts.length;k+=3) v.push(`<vertex x="${m.verts[k].toFixed(3)}" y="${m.verts[k+1].toFixed(3)}" z="${m.verts[k+2].toFixed(3)}"/>`); const t=[]; for(let k=0;k<m.tris.length;k+=3) t.push(`<triangle v1="${m.tris[k]}" v2="${m.tris[k+1]}" v3="${m.tris[k+2]}"/>`);
+    objs+=`<object id="${id}" name="${esc1(m.name)}" type="model"><mesh><vertices>${v.join("")}</vertices><triangles>${t.join("")}</triangles></mesh></object>`; items+=`<item objectid="${id}"/>`; });
+  const model=`<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">${esc1(title)}</metadata><metadata name="Application">Charleston 3D Maker</metadata><resources>${objs}</resources><build>${items}</build></model>`;
+  return mkZip([{name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`},{name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`},{name:"3D/3dmodel.model",data:model}]); }
+function lbSlug(s){ return String(s||"maker").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48)||"maker"; }
+async function lbBuild(){ if(MK.busy) return; if(MK.mode==="litho"&&!MK.imgs.length&&!MK.texts.length||MK.mode!=="sign"&&MK.mode!=="litho"&&!MK.imgs.length&&!MK.texts.some(t=>(t.text||"").trim())){ toast("Add a picture or some text first."); if(mkPhone()) mkTool("picture",true); return; }
+  clearTimeout(lbPrevTimer); lbPreviewNow();
+  MK.busy=true; const m=MK.node, st=m.querySelector("#lbStat"), btns=[m.querySelector("#lbBuild"),m.querySelector("#mkTopDl")]; btns.forEach(b=>b.disabled=true); st.textContent="Building the print files…"; await new Promise(r=>setTimeout(r,30));
+  try{ const name=MK.name||mkTitle(); const slug=lbSlug(name); const parts=[]; MK.meta={}; let sealed={ok:true,n:0,bad:0,mode:MK.mode};
+    if(MK.mode==="litho"){ const src=mkSource(); const {w,h}=lbDims(src); const cell=MK.lres; const cols=Math.round(w/cell)+1, rows=Math.round(h/cell)+1; const T=lbThick(lbGrey(src,cols,rows)); let tri=lbGridSolid(cols,rows,cell,(c,r)=>T[(rows-1-r)*cols+c]); if(MK.arc>0) tri=lbBend(tri,(cols-1)*cell,MK.arc); tri=lbStandUp(tri); parts.push({name:slug+"-lithophane.stl",blob:lbSTL(tri,name),label:"Lithophane STL"}); sealed.n=1; MK.meta={w,h}; }
+    else { const L=mkLayout(); if(!L) throw new Error("no source"); const fp=L.parts.filter(p=>!p.lid), lp=L.parts.filter(p=>p.lid); const front=fp.map(p=>mkMesh(p,L)), lid=lp.map(p=>mkMesh(p,L));
+      const one=mkUnion(fp,L), oneLid=lp.length?mkUnion(lp,L):null;
+      for(const x of [...front,...lid,one,...(oneLid?[oneLid]:[])]){ sealed.n++; if(!mkSealed(x)){ sealed.ok=false; sealed.bad++; } } sealed.n=front.length+lid.length;
+      parts.push({name:slug+".3mf",blob:mk3MF(front,name),label:"3MF for Bambu Studio (multi-colour)"}); if(lid.length) parts.push({name:slug+"-back-cover.3mf",blob:mk3MF(lid,name+" back cover"),label:"Back cover 3MF"});
+      parts.push({name:slug+"-one-colour.stl",blob:lbSTL(mkTriArray(one),name),label:"One-colour STL"}); if(oneLid) parts.push({name:slug+"-back-cover.stl",blob:lbSTL(mkTriArray(oneLid),name+" back cover"),label:"Back cover STL"});
+      MK.meta={w:mkRound(L.cols*L.res),h:mkRound(L.rows*L.res),palette:L.palette.map(mkHex),parts:L.parts.length}; }
+    MK.parts=parts; MK.dirty=false; MK.sealed=sealed; const tot=parts.reduce((s,p)=>s+p.blob.size,0);
+    const ck=m.querySelector("#mkCheck"); if(MK.L&&ck) ck.innerHTML=mkChecks(MK.L).map(([k,t])=>`<li class="${k}">${ICON[k]}<span>${esc(t)}</span></li>`).join("");
+    st.textContent=MK.mode==="litho"?`Ready · ${(tot/1048576).toFixed(1)} MB · Bambu Studio: white PLA, 0.12 mm layers, 100% infill, print standing.`:`Ready · ${(tot/1048576).toFixed(1)} MB · Open the 3MF in Bambu Studio, say Yes to "load as one object with multiple parts", then pick a filament for each part (names show the colour).`;
+    const dl=m.querySelector("#lbDl"); dl.innerHTML=`<button type="button" class="btn block" data-lbdlall>Download all again (.zip)</button>`+parts.map((p,i)=>`<button type="button" class="btn sm block" data-lbdl="${i}">${esc(p.label||p.name)} only</button>`).join("");
+    dl.querySelector("[data-lbdlall]").onclick=()=>lbDownloadZip(MK.parts,slug+"-print-files.zip");
+    dl.querySelectorAll("[data-lbdl]").forEach(b=>b.onclick=()=>lbDownloadZip([MK.parts[+b.dataset.lbdl]],MK.parts[+b.dataset.lbdl].name.replace(/\.\w+$/,"")+".zip"));
+    await lbDownloadZip(parts,slug+"-print-files.zip");
+  }catch(e){ console.error("maker build",e); st.textContent="Couldn't build that: "+String(e&&e.message||e).slice(0,120)+". Try a smaller size or less detail."; }
+  MK.busy=false; btns.forEach(b=>b.disabled=false); }
+async function lbDownloadZip(list,zipName){ try{ const files=[]; for(const p of list) files.push({name:p.name,data:new Uint8Array(await p.blob.arrayBuffer())}); files.push({name:"HOW TO PRINT.txt",data:MK.mode==="litho"?"Open the .stl in Bambu Studio. White PLA, 0.12 mm layers, 100% infill, print standing up.\r\n":"Open the .3mf in Bambu Studio and say Yes to 'load as one object with multiple parts'. Pick a filament for each part; part names show the colour. Prints face down (colours first).\r\n"+(MK.mode==="lightbox"?"Print the back cover on its own, flat side down. Glue the lights to the inside through the back, then press the cover in.\r\n":"")});
+  const z=mkZip(files); await lbDownload({name:zipName,blob:new Blob([z],{type:"application/zip"})}); }catch(e){ console.error("maker zip",e); toast("Couldn't package the files. Try again."); } }
+async function lbDownload(p){ if(!p||!p.blob) return; return dlBlob(p.name,p.blob); }
+
+lbMount();
+</script>
+</body>
+</html>
