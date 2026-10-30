@@ -17,6 +17,9 @@ the accounts and connections map and the Master Links sheet. The same links are 
   the newest art, and one card per brand when all brands are showing.
 - **Shirt designer:** the product editor from the console (tool rail, canvas on a real shirt photo,
   properties). It exports a 300 dpi print file and a mockup photo, and saves designs to the library.
+- **3D makers:** the Light Box Maker (light boxes, keychains, signs and lithophanes; a copy of the console's
+  `tools/maker/index.html` with a back bar), the Hype Chain Maker and the Nameplate Maker. Each builds Bambu-ready
+  files in the browser.
 - **Library:** search, filter (all, in the shirt apps, private), sort and categories, with a details
   panel to rename, move to another brand, tag, show in the shirt apps, download or delete.
 - **Top bar:** the brand switcher (All, Charleston 3D, Elevated Designs, EPIX3D), search that jumps to
