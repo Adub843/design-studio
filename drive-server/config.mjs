@@ -21,6 +21,10 @@ export const ROOTS = [
   { src: "lab", brand: "ed", path: path.join(os.homedir(), "Aaron-Data", "02 Elevated Designs", "Design Lab Images"), skip: [] },
   { src: "lab", brand: "c3d", path: path.join(os.homedir(), "Aaron-Data", "01 Charleston3D", "Design Lab Images"), skip: [] },
 ];
+// The top folders on E: whose pictures customers see in the Elevated Designs shirt app (design.elevatedshirts.com).
+// Everything else on E: stays private to the Studio. Change the list here, then restart the library server.
+export const SHIRT_APP_FOLDERS = ["Design Images", "DTF Ready Prints", "SVG FILES", "Vector files", "Mega bundle",
+  "cancer awareness big bundle 2023 all", "Car Designs", "Logo Library"];
 // Kittl projects and images, listed from Kittl (thumbnails come from Kittl's own image server).
 export const KITTL_FILE = path.join(DATA_DIR, "kittl.json");
 export const KITTL_HOSTS = new Set(["cache.kittl.com", "assets.kittl.com", "kittl.com"]);

@@ -5,12 +5,13 @@
 //   GET /stats                                     counts per brand and kind
 //   GET /thumb/:id                                  a small WebP preview (made once, then cached)
 //   GET /file/:id                                   the original file, as a download
+//   GET /public?q=&page=&per=                       one page of the pictures the shirt app may show (SHIRT_APP_FOLDERS)
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { CURRENT_FILE, DATA_DIR, THUMB_DIR, ROOTS, PORT, KITTL_HOSTS } from "./config.mjs";
-import { ID_RE, THUMB_EXTS, CONTENT_TYPES, verifySig } from "./lib.mjs";
+import { CURRENT_FILE, DATA_DIR, THUMB_DIR, ROOTS, PORT, KITTL_HOSTS, SHIRT_APP_FOLDERS } from "./config.mjs";
+import { ID_RE, THUMB_EXTS, CONTENT_TYPES, verifySig, shirtSearch } from "./lib.mjs";
 import { readKey } from "./key.mjs";
 
 const KEY = readKey();
@@ -95,6 +96,7 @@ const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, "http://local");
     if (u.pathname === "/search") return json(res, 200, search(u.searchParams));
     if (u.pathname === "/stats") return json(res, 200, stats());
+    if (u.pathname === "/public") return json(res, 200, shirtSearch(db, ROOTS, SHIRT_APP_FOLDERS, u.searchParams));
     const m = u.pathname.match(/^\/(thumb|file)\/([0-9a-f]+)$/);
     if (!m || !ID_RE.test(m[2])) return json(res, 404, { error: "Not found" });
     const r = row(m[2]);

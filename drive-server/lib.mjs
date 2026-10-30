@@ -46,3 +46,24 @@ export const CONTENT_TYPES = {
   ".png": "image/png", ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif",
   ".pdf": "application/pdf", ".stl": "model/stl", ".3mf": "model/3mf", ".obj": "model/obj", ".step": "model/step", ".stp": "model/step",
 };
+
+// The shirt app's share: Elevated Designs pictures (no source files, no 3D) from the E: folders in SHIRT_APP_FOLDERS.
+const SHIRT_EXTS = [".png", ".svg", ".jpg", ".jpeg", ".webp"];
+export function shirtSearch(db, roots, shirtFolders, q) {
+  const eRoot = roots.findIndex((r) => r.src === "e");
+  const per = Math.min(1000, Math.max(1, Number(q.get("per")) || 500));
+  const page = Math.max(0, Number(q.get("page")) || 0);
+  const words = (q.get("q") ?? "").toLowerCase().split(/\s+/).filter(Boolean).slice(0, 6);
+  const esc = (w) => w.replace(/[\\%_]/g, (c) => "\\" + c);
+  // a folder and everything under it: "<folder>\\" (an escaped backslash) then any path
+  const folders = shirtFolders.map((f) => `${esc(f.toLowerCase())}\\\\%`);
+  const where = ["root = ?", "brand = 'ed'", "kind IN ('image', 'svg', 'dtf', 'logo')", `ext IN (${SHIRT_EXTS.map(() => "?").join(", ")})`,
+    `(${folders.map(() => "lower(rel) LIKE ? ESCAPE '\\'").join(" OR ") || "0"})`];
+  const args = [eRoot, ...SHIRT_EXTS, ...folders];
+  for (const w of words) { where.push("(lower(name) LIKE ? ESCAPE '\\' OR lower(folder) LIKE ? ESCAPE '\\')"); args.push(`%${esc(w)}%`, `%${esc(w)}%`); }
+  const sql = `FROM items WHERE ${where.join(" AND ")}`;
+  const total = db.prepare(`SELECT COUNT(*) n ${sql}`).get(...args).n;
+  const items = db.prepare(`SELECT id, name, folder, ext, kind FROM items WHERE ${where.join(" AND ")} ORDER BY folder COLLATE NOCASE, name COLLATE NOCASE LIMIT ? OFFSET ?`)
+    .all(...args, per, page * per);
+  return { page, per, total, items };
+}

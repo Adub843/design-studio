@@ -137,6 +137,7 @@ function fakePC(seen) {
   return async (u, init) => {
     const url = new URL(u);
     seen.push({ path: url.pathname + url.search, ok: verifySig(KEY, init.headers["x-drive-exp"], init.headers["x-drive-sig"], url.pathname + url.search) });
+    if (url.pathname === "/public") return Response.json({ page: 0, per: 500, total: 2, items: [{ id: ID, name: "skull.png", folder: "DTF Ready Prints", ext: ".png", kind: "dtf", rel: "E:\\secret" }, { id: "../etc", name: "bad" }] });
     if (url.pathname === "/search") return Response.json({ total: 1, items: [{ id: ID, name: "skull.svg", thumb: true, src: "e", brand: "ed" }] });
     if (url.pathname.startsWith("/thumb/")) return new Response(new Uint8Array([1, 2, 3]), { headers: { "content-type": "image/webp" } });
     return new Response("x", { headers: { "content-type": "model/stl", "content-disposition": "attachment; filename=a.stl" } });
@@ -181,6 +182,50 @@ await test("drive: a switched-off PC reads as offline, and it's read only", asyn
   assert.equal((await thrown.json()).code, "pc_offline");
   assert.equal((await dcall("/api/drive/search", { method: "POST", headers: { "x-console-key": KEY } })).status, 405);
   assert.equal((await handleDrive(new Request("https://studio.test/api/drive/search"), { env: (k) => k === "CONSOLE_KEY" ? KEY : undefined })).status, 503);
+});
+
+await test("drive: the shirt app's public list needs no key, has absolute signed links and CORS for the app only", async () => {
+  const seen = [];
+  const app = { origin: "https://design.elevatedshirts.com" };
+  const res = await dcall("/api/drive/public?q=skull&brand=c3d&per=50", { headers: app }, { fetchImpl: fakePC(seen) });
+  assert.equal(res.status, 200);
+  assert.equal(seen[0].path, "/public?q=skull&per=50", "the brand can't be chosen from outside");
+  assert.equal(seen[0].ok, true);
+  assert.equal(res.headers.get("access-control-allow-origin"), "https://design.elevatedshirts.com");
+  const body = await res.json();
+  assert.equal(body.items.length, 1, "bad ids are dropped");
+  assert.deepEqual(Object.keys(body.items[0]).sort(), ["ext", "fileUrl", "folder", "id", "kind", "name", "thumbUrl"], "nothing about the PC's paths");
+  assert.match(body.items[0].thumbUrl, /^https:\/\/studio\.test\/api\/drive\/thumb\/0123456789abcdef0123\?exp=\d+&sig=/);
+  const t = await dcall(new URL(body.items[0].fileUrl).pathname + new URL(body.items[0].fileUrl).search, { headers: app }, { fetchImpl: fakePC(seen) });
+  assert.equal(t.status, 200);
+  assert.equal(t.headers.get("access-control-allow-origin"), "https://design.elevatedshirts.com", "the app can read the file to print it");
+  const evil = await dcall("/api/drive/public", { headers: { origin: "https://evil.example" } }, { fetchImpl: fakePC(seen) });
+  assert.equal(evil.headers.get("access-control-allow-origin"), null);
+  const search = await dcall("/api/drive/search", { headers: app }, { fetchImpl: fakePC(seen) });
+  assert.equal(search.status, 401, "the full search still needs the key");
+  assert.equal(search.headers.get("access-control-allow-origin"), null);
+  const off = await dcall("/api/drive/public", { headers: app }, { fetchImpl: async () => new Response("", { status: 530 }) });
+  assert.equal(off.status, 503);
+  assert.equal(off.headers.get("access-control-allow-origin"), "https://design.elevatedshirts.com", "the app can tell the PC is off");
+});
+
+await test("drive: the shirt app only gets Elevated Designs pictures from the chosen E: folders", async () => {
+  const { shirtSearch } = await import("../drive-server/lib.mjs");
+  const { DatabaseSync } = await import("node:sqlite");
+  const db = new DatabaseSync(":memory:");
+  db.exec("CREATE TABLE items (id TEXT PRIMARY KEY, src TEXT, root INTEGER, rel TEXT, name TEXT, folder TEXT, ext TEXT, brand TEXT, kind TEXT)");
+  const add = db.prepare("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+  const rows = [["a", 0, "DTF Ready Prints\\skull.png", ".png", "ed", "dtf"], ["b", 0, "Fraud Account\\id.png", ".png", "ed", "image"],
+    ["c", 0, "SVG FILES\\boats\\anchor.svg", ".svg", "ed", "svg"], ["d", 0, "SVG FILES\\boats\\anchor.ai", ".ai", "ed", "source"],
+    ["e", 0, "Design Images_old\\p.png", ".png", "ed", "image"], ["f", 1, "DTF Ready Prints\\lab.png", ".png", "ed", "image"],
+    ["g", 0, "DTF Ready Prints\\boat.png", ".png", "c3d", "image"], ["h", 0, "loose.png", ".png", "ed", "image"]];
+  for (const [id, root, rel, ext, brand, kind] of rows) add.run(id, root ? "lab" : "e", root, rel, rel.split("\\").at(-1), rel.split("\\").slice(0, -1).join("\\"), ext, brand, kind);
+  const roots = [{ src: "e" }, { src: "lab" }];
+  const got = (q = "") => shirtSearch(db, roots, ["Design Images", "DTF Ready Prints", "SVG FILES"], new URLSearchParams(q)).items.map((i) => i.id);
+  assert.deepEqual(got(), ["a", "c"], "only pictures, only Elevated Designs, only inside the chosen folders on E:");
+  assert.deepEqual(got("q=anchor"), ["c"]);
+  assert.deepEqual(got("q=100%25"), [], "search text can't widen the match");
+  assert.deepEqual(shirtSearch(db, roots, [], new URLSearchParams()).items, [], "no folders chosen: nothing is public");
 });
 
 await test("drive: the PC rejects unsigned, forged, replayed-path and stale requests", () => {
