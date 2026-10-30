@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>License Plate Maker | Custom 3D Printed Plate Frames</title>
+<meta name="description" content="Design a custom license plate frame or novelty plate with your own text, see a design preview, and download a print-ready 3MF or STL. 3D printed in Charleston, SC.">
+<meta name="theme-color" content="#15223f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@700&family=Anton&family=Archivo+Black&family=Montserrat:wght@800&family=Roboto+Slab:wght@800&family=Bebas+Neue&display=swap">
+<style>
+:root {
+  --bg: #f7f5f0; --surface: #fff; --sunk: #f0ede6; --line: #e3ded3; --line-strong: #cfc8b9;
+  --fg: #15223f; --muted: #5b6274; --accent: #1d3566; --accent-fg: #fff; --accent-soft: #e5e8f0; --focus: #2f5bd3;
+  --ok: #1d7a3a; --warn: #9a5800; --bad: #b4232a; --note: #4b5568;
+  --stage: #e9e6df; --stage-2: #dcd8cf;
+  --shadow: 0 1px 2px rgba(21, 34, 63, .06), 0 1px 1px rgba(21, 34, 63, .03);
+  --f-ui: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --bar-h: 52px; --rail-w: 76px; --panel-w: 312px; --props-w: 292px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1222; --surface: #121b30; --sunk: #18233c; --line: #243252; --line-strong: #33446a;
+  --fg: #eef0f5; --muted: #a3acc0; --accent: #d9b25c; --accent-fg: #15223f; --accent-soft: #2e2a1c; --focus: #8fb0ff;
+  --ok: #5fd27f; --warn: #f0a94a; --bad: #ff7b81; --note: #a3acc0;
+  --stage: #1a2236; --stage-2: #141b2c; --chip: #33446a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0b1222; --surface: #121b30; --sunk: #18233c; --line: #243252; --line-strong: #33446a;
+  --fg: #eef0f5; --muted: #a3acc0; --accent: #d9b25c; --accent-fg: #15223f; --accent-soft: #2e2a1c; --focus: #8fb0ff;
+  --ok: #5fd27f; --warn: #f0a94a; --bad: #ff7b81; --note: #a3acc0;
+  --stage: #1a2236; --stage-2: #141b2c; --chip: #33446a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.45 var(--f-ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.app { display: grid; height: 100dvh; grid-template-rows: var(--bar-h) 1fr; grid-template-columns: var(--rail-w) var(--panel-w) 1fr var(--props-w);
+  grid-template-areas: "bar bar bar bar" "rail panel stage props"; }
+
+/* Top bar */
+#ds-back-bar { grid-area: bar; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: #15223f; color: #f7f2e8; }
+#ds-back-bar a { color: #f7f2e8; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; }
+#ds-back-bar a:hover { text-decoration: underline; }
+#ds-back-bar .sep { width: 1px; height: 22px; background: rgba(247, 242, 232, .25); }
+#ds-back-bar h1 { min-width: 0; font-size: 15px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ds-back-bar .sub { color: rgba(247, 242, 232, .7); font-weight: 400; }
+#ds-back-bar .spacer { flex: 1; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--fg); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--sunk); }
+.btn.primary { background: #b8892a; border-color: #b8892a; color: #fff; }
+.btn.primary:hover { background: #a37823; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn svg { width: 16px; height: 16px; }
+.bar-btn { height: 34px; }
+.bar-btn.ghost { background: transparent; color: #f7f2e8; border-color: rgba(247, 242, 232, .35); }
+.bar-btn.ghost:hover { background: rgba(247, 242, 232, .1); }
+
+/* Tool rail */
+.rail { grid-area: rail; display: flex; flex-direction: column; gap: 4px; padding: 10px 8px; background: var(--surface); border-right: 1px solid var(--line); }
+.rail button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 2px; border: 0; border-radius: 10px; background: none; color: var(--muted);
+  font-size: 11.5px; font-weight: 500; cursor: pointer; }
+.rail button svg { width: 22px; height: 22px; }
+.rail button:hover { background: var(--sunk); color: var(--fg); }
+.rail button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+/* Tool panel */
+.panel { grid-area: panel; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; padding: 18px 18px 28px; }
+.panel h2 { font-size: 16px; margin: 0 0 4px; }
+.panel .lead { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+.sheet-head { display: none; }
+.lbl { display: block; font-weight: 600; font-size: 13px; margin: 0 0 6px; }
+.lbl .opt { color: var(--muted); font-weight: 400; }
+.inp, select.inp { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font-size: 15px; }
+.inp:focus { border-color: var(--focus); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent); }
+.field-group { padding: 0 0 16px; margin: 0 0 16px; border-bottom: 1px solid var(--line); }
+.field-group:last-child { border-bottom: 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.mini { display: block; font-size: 12px; color: var(--muted); }
+.mini output { float: right; color: var(--fg); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; margin: 6px 0 0; accent-color: var(--accent); }
+.block { margin: 0 0 20px; }
+.check { display: flex; align-items: center; gap: 9px; font-size: 13.5px; cursor: pointer; margin: 0 0 8px; }
+.check input { width: 17px; height: 17px; accent-color: var(--accent); margin: 0; }
+
+.cards { display: grid; gap: 10px; }
+.card { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; text-align: left; padding: 12px; border: 1px solid var(--line-strong);
+  border-radius: 10px; background: var(--surface); cursor: pointer; }
+.card:hover { border-color: var(--muted); }
+.card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.card strong { display: block; font-size: 14px; }
+.card span { color: var(--muted); font-size: 12.5px; }
+.card svg { width: 64px; height: 36px; }
+
+.segs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+.segs button { border: 0; border-left: 1px solid var(--line-strong); background: var(--surface); padding: 8px 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.segs button:first-child { border-left: 0; }
+.segs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.choices { display: grid; gap: 8px; }
+.choice { display: block; text-align: left; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); cursor: pointer; }
+.choice strong { display: block; font-size: 13.5px; }
+.choice span { color: var(--muted); font-size: 12.5px; }
+.choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+
+.swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.sw { aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .18); background: var(--c); cursor: pointer; padding: 0; box-shadow: inset 0 -3px 6px rgba(0, 0, 0, .12), inset 0 2px 4px rgba(255, 255, 255, .25); }
+.sw[aria-checked="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw-name { color: var(--muted); font-weight: 400; }
+
+/* Stage */
+.stage-wrap { grid-area: stage; position: relative; min-width: 0; min-height: 0; background: radial-gradient(120% 90% at 50% 35%, var(--stage) 0%, var(--stage-2) 100%); }
+#stage { position: absolute; inset: 0; }
+#preview { display: block; }
+.chip { position: absolute; top: 14px; left: 14px; padding: 5px 10px; border-radius: 999px; background: var(--chip, rgba(21, 34, 63, .82)); color: #f7f2e8; font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+#dims { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+/* Properties */
+.props { grid-area: props; background: var(--surface); border-left: 1px solid var(--line); overflow-y: auto; padding: 18px 18px 28px; }
+.props h2, .sub-h { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.checks { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
+.chk { display: grid; grid-template-columns: 18px 1fr; gap: 8px; font-size: 13px; line-height: 1.4; }
+.chk svg { width: 18px; height: 18px; margin-top: 1px; }
+.chk.ok svg { color: var(--ok); } .chk.warn svg { color: var(--warn); } .chk.bad svg { color: var(--bad); } .chk.note svg { color: var(--note); }
+.chk.bad span { color: var(--bad); }
+.details { margin: 0 0 20px; display: grid; gap: 6px; }
+.details div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.details dt { color: var(--muted); } .details dd { margin: 0; text-align: right; font-weight: 500; }
+.dl { display: grid; gap: 8px; }
+.dl .btn { width: 100%; height: 42px; }
+.dl-status { min-height: 18px; color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+.fine { color: var(--muted); font-size: 12px; margin: 14px 0 0; }
+.linkish { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 12.5px; }
+.print-extra { display: none; }
+
+/* Tablet: no right column; checks and downloads move into the Print panel. */
+@media (max-width: 1180px) {
+  .app { grid-template-columns: var(--rail-w) var(--panel-w) 1fr; grid-template-areas: "bar bar bar" "rail panel stage"; }
+  .props { display: none; }
+  .print-extra { display: block; }
+}
+/* Phone: preview on top, tools in a bottom bar, panels in a sheet. */
+@media (max-width: 760px) {
+  :root { --bar-h: 52px; }
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--bar-h) 1fr 64px; grid-template-areas: "bar" "stage" "rail"; }
+  #ds-back-bar { padding: 0 12px; gap: 10px; }
+  #ds-back-bar .lg, #ds-back-bar .sep, #ds-back-bar .sub, .bar-btn.ghost { display: none; }
+  #ds-back-bar h1 { font-size: 14px; }
+  .rail { flex-direction: row; justify-content: space-around; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--line); z-index: 3; }
+  .rail button { flex: 1; padding: 6px 2px; }
+  .panel { position: fixed; left: 0; right: 0; bottom: 64px; max-height: 58dvh; z-index: 2; border: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 32px rgba(21, 34, 63, .18); transform: translateY(110%); transition: transform .22s ease; padding-top: 8px; }
+  body.sheet-open .panel { transform: none; }
+  .sheet-head { display: flex; justify-content: center; position: sticky; top: -8px; background: var(--surface); padding: 6px 0 8px; margin: 0 0 4px; }
+  .sheet-head button { width: 44px; height: 5px; border-radius: 3px; background: var(--line-strong); border: 0; padding: 0; cursor: pointer; }
+  #ds-back-bar a > span { display: none; }
+  .panel { height: 52dvh; max-height: none; }
+  body.sheet-open #stage { bottom: calc(52dvh - 64px); }
+  body.sheet-open #dims { display: none; }
+  .chip { top: 10px; left: 10px; }
+  #dims { bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .panel { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header id="ds-back-bar">
+    <a href="/#makers" aria-label="Back to Design Studio"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5L7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="lg">Back to </span>Design Studio</span></a>
+    <span class="sep" aria-hidden="true"></span>
+    <h1><span id="title">License plate frame</span> <span class="sub">· License Plate Maker</span></h1>
+    <span class="spacer"></span>
+    <button class="btn bar-btn ghost" type="button" data-download="stl">STL</button>
+    <button class="btn bar-btn primary" type="button" data-download="3mf"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="lg">Download </span>3MF</span></button>
+  </header>
+
+  <nav class="rail" aria-label="Tools">
+    <button type="button" data-tool="product" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="6" y="9" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Product</button>
+    <button type="button" data-tool="text"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5V5h14v1.5M12 5v14m-3 0h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Text</button>
+    <button type="button" data-tool="style"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 100 17c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6 0-1 .8-1.7 1.9-1.7h2.1a3.7 3.7 0 003.7-3.7C20.5 6.9 16.7 3.5 12 3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.8" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1.2" fill="currentColor"/><circle cx="15" cy="7.8" r="1.2" fill="currentColor"/></svg>Style</button>
+    <button type="button" data-tool="print"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z M4 7.5l8 4.5 8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Print</button>
+  </nav>
+
+  <aside class="panel" aria-label="Tool options">
+    <div class="sheet-head"><button type="button" id="sheet-close" aria-label="Close options"></button></div>
+
+    <section class="tool-panel" data-panel="product">
+      <h2>Product</h2>
+      <p class="lead">Pick what you're making. Both are 3D printed in Charleston, SC.</p>
+      <div class="cards" data-seg="product">
+        <button type="button" class="card" data-v="frame"><svg viewBox="0 0 64 36" aria-hidden="true"><rect x="1" y="1" width="62" height="34" rx="3" fill="currentColor" opacity=".85"/><rect x="4" y="7" width="56" height="20" rx="1.5" fill="var(--surface)"/></svg><div><strong>Plate frame</strong><span>Fits a standard 12 × 6 in US plate. Your text on the top and bottom bars.</span></div></button>
+        <button type="button" class="card" data-v="plate"><svg viewBox="0 0 64 36" aria-hidden="true"><rect x="1" y="2" width="62" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="5" y="9" width="54" height="14" rx="1" fill="currentColor" opacity=".85"/></svg><div><strong>Novelty plate</strong><span>12 × 6 in plate with big raised text, for walls and garages. Not for road use.</span></div></button>
+      </div>
+    </section>
+
+    <section class="tool-panel" data-panel="text" hidden>
+      <h2>Text</h2>
+      <p class="lead">Short lines print best. Long lines shrink to fit.</p>
+      <div class="block">
+        <label class="lbl" for="font">Font</label>
+        <select id="font" class="inp"></select>
+        <label class="check" style="margin-top:10px"><input type="checkbox" id="upper"> All capitals</label>
+      </div>
+      <div id="text-lines"></div>
+    </section>
+
+    <section class="tool-panel" data-panel="style" hidden>
+      <h2>Style</h2>
+      <p class="lead">Two filament colours: one for the body, one for the raised text and edge.</p>
+      <div class="block"><span class="lbl">Body colour <span class="sw-name" id="sw-base-name"></span></span><div class="swatches" id="sw-base" role="radiogroup" aria-label="Body colour"></div></div>
+      <div class="block"><span class="lbl">Text and edge colour <span class="sw-name" id="sw-accent-name"></span></span><div class="swatches" id="sw-accent" role="radiogroup" aria-label="Text and edge colour"></div></div>
+      <div class="block"><span class="lbl">Edge</span>
+        <div class="segs" data-seg="edge"><button type="button" data-v="raised">Raised edge</button><button type="button" data-v="flat">Flat</button></div></div>
+      <div class="block"><span class="lbl">Text height</span>
+        <div class="segs" data-seg="textH"><button type="button" data-v="0.8">0.8 mm</button><button type="button" data-v="1.2">1.2 mm</button><button type="button" data-v="1.6">1.6 mm</button></div></div>
+      <div class="block">
+        <label class="check"><input type="checkbox" id="mounted"> <span id="mounted-label">Show it on a plate with screws</span></label>
+      </div>
+    </section>
+
+    <section class="tool-panel" data-panel="print" hidden>
+      <h2>Print</h2>
+      <p class="lead">Files are made in your browser and open in Bambu Studio as-is.</p>
+      <div class="block"><span class="lbl">Printer bed</span>
+        <div class="choices" data-seg="bed">
+          <button type="button" class="choice" data-v="two"><strong>Two pieces · 256 mm bed</strong><span>X1, P1 and A1. Dovetail joint, glued.</span></button>
+          <button type="button" class="choice" data-v="one"><strong>One piece · 350 mm bed</strong><span>H2D. No joint.</span></button>
+        </div>
+        <label class="check" id="seam-row" style="margin-top:10px"><input type="checkbox" id="seam"> Show where it splits</label>
+      </div>
+      <div class="print-extra">
+        <h3 class="sub-h">Print check</h3>
+        <ul class="checks"></ul>
+        <h3 class="sub-h">Details</h3>
+        <dl class="details"></dl>
+        <div class="dl">
+          <button class="btn primary" type="button" data-download="3mf">Download 3MF</button>
+          <button class="btn" type="button" data-download="stl">Download STL</button>
+        </div>
+        <p class="dl-status" role="status"></p>
+      </div>
+      <button type="button" class="linkish" id="reset">Start over</button>
+    </section>
+  </aside>
+
+  <main class="stage-wrap" aria-label="Design preview">
+    <div id="stage"><canvas id="preview" role="img" aria-label="Design preview of your plate"></canvas></div>
+    <span class="chip">Design preview</span>
+    <div id="dims"></div>
+  </main>
+
+  <aside class="props" aria-label="Print check and download">
+    <h2>Print check</h2>
+    <ul class="checks"></ul>
+    <h2>Details</h2>
+    <dl class="details"></dl>
+    <div class="dl">
+      <button class="btn primary" type="button" data-download="3mf">Download 3MF</button>
+      <button class="btn" type="button" data-download="stl">Download STL</button>
+    </div>
+    <p class="dl-status" role="status"></p>
+    <p class="fine">3MF keeps both colours (filament 1 body, filament 2 text and edge). STL is one shape for a single colour.</p>
+  </aside>
+</div>
+<script src="earcut.min.js"></script>
+<script src="geom.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

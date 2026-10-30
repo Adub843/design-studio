@@ -195,7 +195,7 @@ const ART = [
         // Their own tab: the makers load three.js from public CDNs, which this test's sandbox may block,
         // so their script errors are not the studio's.
         const page = await ctx.newPage();
-        for (const [name, slug] of [["Light Box Maker", "lightbox"], ["Hype Chain Maker", "hype-chain"], ["Nameplate Maker", "nameplate"]]) {
+        for (const [name, slug] of [["Light Box Maker", "lightbox"], ["Hype Chain Maker", "hype-chain"], ["Nameplate Maker", "nameplate"], ["License Plate Maker", "license-plate"]]) {
           await page.goto(`${BASE}#makers`);
           await page.locator(".maker a", { hasText: name }).click();
           await page.waitForURL(`**/makers/${slug}/`);
@@ -203,7 +203,7 @@ const ART = [
           assert.match(res.headers()["content-security-policy"], /cdnjs\.cloudflare\.com/);
           assert.equal(res.headers()["x-frame-options"], "DENY");
           const bar = page.locator("#ds-back-bar a");
-          assert.match(await bar.innerText(), /Back to Design Studio/);
+          assert.match((await bar.getAttribute("aria-label")) || (await bar.innerText()), /Back to Design Studio/);
           if (scheme === "light") await shot(page, `${tag}-${slug}`);
           await bar.click();
           await page.waitForSelector(".maker-grid");
