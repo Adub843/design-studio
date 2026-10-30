@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { handleRequest, SITE_HEADERS, HQ_URL } from "../worker/index.mjs";
 import { requireKey, MIN_KEY_LENGTH } from "../lib/auth.mjs";
 import { brandOf, canBePublic } from "../lib/images.mjs";
+import { pickPlateOrder, variantFor, STORE } from "../lib/plate-order.mjs";
 
 // A Workers KV stand-in with the calls lib/kv-store.mjs makes.
 function memoryKV() {
@@ -134,6 +135,41 @@ await test("/hq is a short link to the main console", async () => {
     assert.equal(r.status, 302);
     assert.equal(r.headers.get("location"), HQ_URL);
   }
+});
+
+const feed = (products, url = "https://charleston3d.com/products.json") => async () => Object.defineProperty(new Response(JSON.stringify({ products })), "url", { value: url });
+const requestProduct = { id: 1, handle: "custom-request", title: "Custom request", tags: [], variants: [{ id: 11, title: "Default Title", price: "0.00", available: true }] };
+
+await test("plate order: quote through the free request product, never a priced product by handle", () => {
+  assert.deepEqual(pickPlateOrder([requestProduct], STORE), { mode: "quote", store: STORE, title: "Custom request", variants: [{ id: 11, title: "", price: 0 }] });
+  const priced = { ...requestProduct, variants: [{ id: 12, price: "5.00" }] };
+  assert.equal(pickPlateOrder([priced], STORE).mode, "none");
+  assert.equal(pickPlateOrder([], STORE).mode, "none");
+});
+
+await test("plate order: a plate-maker product sells at the store's own prices", () => {
+  const sale = { id: 2, handle: "anything", title: "License plate print", tags: "Plate-Maker, c3d", variants: [
+    { id: 21, title: "Frame", price: "34.00", available: true }, { id: 22, title: "Novelty plate", price: "29.50", available: true }, { id: 23, title: "Gone", price: "9.00", available: false }] };
+  const o = pickPlateOrder([requestProduct, sale], STORE);
+  assert.equal(o.mode, "buy");
+  assert.deepEqual(o.variants.map((v) => [v.id, v.price]), [[21, 3400], [22, 2950]]);
+  assert.equal(variantFor(o, "frame").id, 21);
+  assert.equal(variantFor(o, "plate").id, 22);
+});
+
+await test("/api/plate-order reads the store feed and follows its primary domain", async () => {
+  const r = await handleRequest(new Request("https://studio.test/api/plate-order"), env(), feed([requestProduct], "https://www.charleston3d.com/products.json?limit=250&page=1"));
+  const o = await r.json();
+  assert.equal(o.mode, "quote"); assert.equal(o.store, "https://www.charleston3d.com");
+  const down = await handleRequest(new Request("https://studio.test/api/plate-order"), env(), async () => new Response("no", { status: 503 }));
+  assert.equal((await down.json()).mode, "none");
+});
+
+await test("the license plate maker may post to the Charleston3D cart; other pages may not", async () => {
+  const e = env();
+  const plate = await call(e, "/makers/license-plate/");
+  assert.match(plate.headers.get("content-security-policy"), /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com/);
+  for (const p of ["/makers/nameplate/", "/"]) assert.match((await call(e, p)).headers.get("content-security-policy"), /form-action 'self'$/);
 });
 
 console.log(`\n${passed} API tests passed`);

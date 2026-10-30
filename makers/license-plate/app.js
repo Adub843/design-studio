@@ -353,7 +353,7 @@
     }).join("");
     for (const ul of $$(".checks")) ul.innerHTML = html;
     const off = list.some((c) => c.bad);
-    for (const b of $$("[data-download]")) b.disabled = off;
+    for (const b of $$("[data-download], [data-order]")) b.disabled = off;
     const m = model();
     const filaments = [color(S.base)];
     if (m.parts.some((p) => p.color === "accent")) filaments.push(color(S.accent));
@@ -366,6 +366,7 @@
       ["Files", "3MF for Bambu Studio, or STL"],
     ];
     for (const dl of $$(".details")) dl.innerHTML = det.map(([k, v]) => `<div><dt>${k}</dt><dd>${escHTML(v)}</dd></div>`).join("");
+    renderOrder();
   }
 
   function textFields() {
@@ -462,37 +463,121 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
+  // Builds the print file: one 3MF/STL, or a zip of both pieces with a short README.
+  async function printFile(kind) {
+    await document.fonts.ready;
+    const pieces = buildPieces();
+    if (!pieces.every((p) => p.closed)) throw new Error("open mesh");
+    const base = slug(), cols = [color(S.base), color(S.accent)];
+    const title = S.product === "frame" ? "License plate frame" : "Novelty license plate";
+    const file = (p) => kind === "3mf"
+      ? G.to3MF(p.parts, p.name ? `${title} (${p.name} piece)` : title, cols)
+      : new Blob([G.toSTL(p.parts.map((q) => (q.filament === 1 ? q.mesh : G.sink(q.mesh, 0.02))), title)], { type: "model/stl" });
+    const tris = pieces.reduce((s, p) => s + p.parts.reduce((t, q) => t + q.mesh.f.length / 3, 0), 0);
+    if (pieces.length === 1) return { blob: file(pieces[0]), name: `${base}.${kind}`, pieces: 1, tris };
+    const enc = new TextEncoder();
+    const files = [];
+    for (const p of pieces) files.push({ name: `${base}-${p.name}.${kind}`, data: new Uint8Array(await file(p).arrayBuffer()) });
+    files.push({ name: "README.txt", data: enc.encode(`Two pieces that fit a 256 mm bed. Print both, slide the dovetails together and glue with CA glue.\nFilament 1: ${cols[0].name}. Filament 2: ${cols[1].name}.\nMade with the EPIX3D License Plate Maker.\n`) });
+    return { blob: G.zip(files), name: `${base}-2-pieces-${kind}.zip`, pieces: pieces.length, tris };
+  }
+  const busy = (on) => { for (const b of $$("[data-download], [data-order]")) b.disabled = on; };
+  const say = (t) => { for (const s of $$(".dl-status")) s.textContent = t; };
+
   async function download(kind) {
     if (blocked()) return;
-    const btns = $$("[data-download]");
-    btns.forEach((b) => (b.disabled = true));
-    const status = $$(".dl-status");
-    status.forEach((s) => (s.textContent = "Building the print file…"));
+    busy(true);
+    say("Building the print file…");
     await new Promise((r) => setTimeout(r, 30));
     try {
-      await document.fonts.ready;
-      const pieces = buildPieces();
-      if (!pieces.every((p) => p.closed)) throw new Error("open mesh");
-      const base = slug(), cols = [color(S.base), color(S.accent)];
-      const title = S.product === "frame" ? "License plate frame" : "Novelty license plate";
-      const file = (p) => kind === "3mf"
-        ? G.to3MF(p.parts, p.name ? `${title} (${p.name} piece)` : title, cols)
-        : new Blob([G.toSTL(p.parts.map((q) => (q.filament === 1 ? q.mesh : G.sink(q.mesh, 0.02))), title)], { type: "model/stl" });
-      if (pieces.length === 1) save_(file(pieces[0]), `${base}.${kind}`);
-      else {
-        const enc = new TextEncoder();
-        const files = [];
-        for (const p of pieces) files.push({ name: `${base}-${p.name}.${kind}`, data: new Uint8Array(await file(p).arrayBuffer()) });
-        files.push({ name: "README.txt", data: enc.encode(`Two pieces that fit a 256 mm bed. Print both, slide the dovetails together and glue with CA glue.\nFilament 1: ${cols[0].name}. Filament 2: ${cols[1].name}.\nMade with the EPIX3D License Plate Maker.\n`) });
-        save_(G.zip(files), `${base}-2-pieces-${kind}.zip`);
-      }
-      const tris = pieces.reduce((s, p) => s + p.parts.reduce((t, q) => t + q.mesh.f.length / 3, 0), 0);
-      status.forEach((s) => (s.textContent = `Ready: ${pieces.length} piece${pieces.length > 1 ? "s" : ""}, closed meshes, ${tris.toLocaleString()} triangles.`));
+      const f = await printFile(kind);
+      save_(f.blob, f.name);
+      say(`Ready: ${f.pieces} piece${f.pieces > 1 ? "s" : ""}, closed meshes, ${f.tris.toLocaleString()} triangles.`);
     } catch (e) {
       console.error(e);
-      status.forEach((s) => (s.textContent = "The print file couldn't be built. Try again, or change the text."));
+      say("The print file couldn't be built. Try again, or change the text.");
     } finally {
-      renderChecks();
+      busy(false); renderChecks();
+    }
+  }
+
+  /* ---------- Ordering a print (lib/plate-order.mjs on the server picks the product) ---------- */
+
+  const MAX_FILE = 20 * 1024 * 1024; // Shopify's limit for a file on a cart line
+  let order = null;
+  const money = (c) => `$${(c / 100).toFixed(2)}`;
+  const orderVariant = () => {
+    const vs = order?.variants ?? [];
+    if (vs.length <= 1) return vs[0] ?? null;
+    return vs.find((v) => (S.product === "frame" ? /frame/i.test(v.title) : /plate/i.test(v.title) && !/frame/i.test(v.title))) ?? null;
+  };
+  function renderOrder() {
+    const v = order && order.mode !== "none" ? orderVariant() : null;
+    document.body.classList.toggle("can-order", !!v);
+    if (v) for (const b of $$(".bar-order")) b.textContent = order.mode === "buy" ? "Order print" : "Request print";
+    for (const box of $$(".order")) {
+      box.hidden = !v;
+      if (!v) continue;
+      $(".order-note", box).textContent = order.mode === "buy"
+        ? `${money(v.price)} each, printed in Charleston, SC. Shipping and tax are added at checkout.`
+        : "Free request. We print it in Charleston, SC and reply with a price within 1-2 business days. You pay nothing now.";
+      $("[data-order]", box).textContent = order.mode === "buy" ? "Order this print" : "Request this print";
+    }
+  }
+  async function loadOrder() {
+    try {
+      const r = await fetch("/api/plate-order", { headers: { accept: "application/json" } });
+      order = r.ok ? await r.json() : null;
+    } catch { order = null; }
+    renderOrder();
+  }
+  const previewBlob = () => new Promise((res) => cv.toBlob(res, "image/png"));
+  function fileInput(name, blob, filename) {
+    const dt = new DataTransfer();
+    dt.items.add(new File([blob], filename, { type: blob.type || "application/octet-stream" }));
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.name = name; inp.files = dt.files;
+    return inp;
+  }
+  async function placeOrder() {
+    const v = orderVariant();
+    if (!v || blocked()) return;
+    busy(true);
+    say("Building the print file…");
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const f = await printFile("3mf");
+      const png = await previewBlob();
+      if (f.blob.size > MAX_FILE || (png && png.size > MAX_FILE)) throw new Error("too big");
+      const cols = [color(S.base), color(S.accent)];
+      const m = model();
+      const fields = {
+        id: String(v.id), quantity: "1",
+        "properties[Item]": m.frame ? "License plate frame" : "Novelty license plate",
+        "properties[Text]": lines().map((k) => S[S.product][k].text.trim()).filter(Boolean).join(" / ") || "(no text)",
+        "properties[Font]": FONTS.find((x) => x.id === S.font)?.label ?? S.font,
+        "properties[Colors]": m.parts.some((p) => p.color === "accent") ? `${cols[0].name} with ${cols[1].name}` : cols[0].name,
+        "properties[Size]": `${m.w.toFixed(1)} x ${m.h.toFixed(1)} mm`,
+        "properties[Pieces]": S.bed === "one" ? "1" : "2, dovetailed",
+        "properties[_Source]": "epix3d-license-plate-maker",
+        return_to: "/cart",
+      };
+      const form = document.createElement("form");
+      form.method = "post"; form.enctype = "multipart/form-data"; form.action = `${order.store}/cart/add`; form.hidden = true;
+      for (const [k, val] of Object.entries(fields)) {
+        const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = val; form.append(i);
+      }
+      form.append(fileInput("properties[Print file]", f.blob, f.name));
+      if (png) form.append(fileInput("properties[Design preview]", png, `${slug()}-preview.png`));
+      document.body.append(form);
+      say("Uploading your design and opening the cart…");
+      form.submit();
+      // If the store is slow or they come back with the back button, let them try again.
+      setTimeout(() => { busy(false); renderChecks(); form.remove(); }, 20000);
+    } catch (e) {
+      console.error(e);
+      say(e.message === "too big" ? "This design is too large to send with the order. Download the 3MF instead." : "The order couldn't be started. Try again.");
+      busy(false); renderChecks();
     }
   }
 
@@ -509,6 +594,8 @@
     for (const b of $$("[data-tool]")) b.addEventListener("click", () => openTool(b.dataset.tool, true));
     $("#sheet-close").addEventListener("click", () => { document.body.classList.remove("sheet-open"); setPressed(""); });
     for (const b of $$("[data-download]")) b.addEventListener("click", () => download(b.dataset.download));
+    for (const b of $$("[data-order]")) b.addEventListener("click", placeOrder);
+    loadOrder();
     $("#reset").addEventListener("click", () => { S = structuredClone(DEFAULTS); textFields(); syncControls(); changed(true); });
     textFields(); syncControls();
     openTool("product");
@@ -528,6 +615,6 @@
     let overlap = 0; for (let i = 0; i < L.a.length; i++) if (L.a[i] >= 128 && R.a[i] >= 128) overlap++;
     return { overlap };
   }
-  window.LPM = { state: () => S, buildPieces, checks, jointCheck, set: (patch) => { merge(S, patch); textFields(); syncControls(); changed(true); } };
+  window.LPM = { state: () => S, order: () => order, buildPieces, checks, jointCheck, set: (patch) => { merge(S, patch); textFields(); syncControls(); changed(true); } };
   init();
 })();
