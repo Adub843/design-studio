@@ -9,13 +9,11 @@ import { BRANDS, BRAND_KEYS, currentBrand, setBrand, onBrand, brandName } from "
 import { consoleKey, askForKey, onKeyChange } from "./api.js";
 
 export { el, store, toast };
-export const CONSOLE_URL = "https://business-console.business-console.workers.dev";
 export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
 // Everywhere the team works, one click from any page: the Go to menu in the top bar and the jump palette.
 export const GO_TO = [
   { group: "Back office", links: [
-    { label: "Creative Lab Studios", note: "Main console: team, marketing, Holo, money", url: HQ_URL, icon: "console" },
-    { label: "Store engine", note: "Price sync, Shopify publishing, promotions", url: CONSOLE_URL, icon: "console" }] },
+    { label: "Creative Lab Studios", note: "Main console: team, marketing, Holo, money", url: HQ_URL, icon: "console" }] },
   { group: "Sites", links: [
     { label: "Charleston 3D shop", note: "charleston3d.com", url: "https://charleston3d.com", icon: "store" },
     { label: "Charleston 3D order app", note: "app.charleston3d.com", url: "https://app.charleston3d.com", icon: "phone" },
