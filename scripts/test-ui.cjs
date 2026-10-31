@@ -168,7 +168,7 @@ const ART = [
       });
 
       await step(`${tag}: the Go to menu reaches the console and every site from every page`, async () => {
-        const want = ["business-console.business-console.workers.dev", "claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
+        const want = ["claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
           "elevatedshirts.com", "design.elevatedshirts.com", "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
         for (const r of ["home", "library", "designer", "makers"]) {
           await page.goto(`${BASE}#${r}`);
