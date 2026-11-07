@@ -111,12 +111,6 @@ html.side-min .side-toggle .ico { transform: rotate(180deg); }
 .go-out { width: 14px; height: 14px; opacity: .6; }
 
 main { width: 100%; max-width: 1200px; margin: 0 auto; padding: 28px 32px 64px; display: grid; gap: 20px; align-content: start; outline: none; }
-html[data-route="designer"] main { max-width: none; padding: 0; }
-html[data-route="designer"] .editor { border: 0; border-radius: 0; min-height: calc(100vh - var(--top-h)); }
-@media (min-width: 1181px) {
-  html[data-route="designer"] .editor { height: calc(100vh - var(--top-h)); min-height: 600px; }
-  html[data-route="designer"] .ed-panel, html[data-route="designer"] .ed-side, html[data-route="designer"] .ed-canvas { max-height: none; overflow-y: auto; }
-}
 
 /* ---------- building blocks ---------- */
 .page-head { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; justify-content: space-between; }
@@ -223,7 +217,7 @@ html[data-route="designer"] .editor { border: 0; border-radius: 0; min-height: c
 .keydlg .field { width: 100%; }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; z-index: 30; font-size: 14px; max-width: calc(100% - 32px); box-shadow: var(--shadow-lg); }
 
-/* studio: a product editor (tool rail, tool panel, the shirt, properties), the shirt a real photo */
+/* editor layout pieces (tool rail, panels); the category chips are used by the library */
 .editor { display: grid; grid-template-columns: 76px minmax(250px, 300px) minmax(0, 1fr) minmax(220px, 250px); gap: 0; align-items: stretch;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; min-height: min(760px, calc(100vh - 170px)); }
 .ed-rail { display: flex; flex-direction: column; gap: 4px; padding: 10px 8px; background: var(--sunk); border-right: 1px solid var(--line); }
@@ -350,10 +344,8 @@ html[data-route="designer"] .editor { border: 0; border-radius: 0; min-height: c
   .go-btn { padding: 7px; }
   .go-btn-label { display: none; }
   main { padding: 20px 16px calc(84px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
-  html[data-route="designer"] main { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   html[data-route="makers"] main { padding: 0 0 calc(64px + env(safe-area-inset-bottom, 0px)); }
   .maker-frame { height: calc(100dvh - var(--top-h) - 64px - env(safe-area-inset-bottom, 0px)); min-height: 480px; }
-  html[data-route="designer"] .ed-rail { top: var(--top-h); }
   .page-head { align-items: stretch; }
   .page-head > .row { width: 100%; }
   .page-head > .row > .btn { flex: 1; }

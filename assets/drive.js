@@ -1,20 +1,19 @@
 // E: drive: every design file on Aaron's E: drive (plus Kittl and the old design lab), searchable with
 // previews. The files never leave the drive: they're read from his PC through the Cloudflare Tunnel, so this
-// page works while the PC is on. Elevated Designs and Charleston3D each see only their own files.
+// page works while the PC is on. 3D files only (Charleston 3D): the shirt art on E: never shows here.
 import { el, toast, icon, pageHeader } from "./app.js";
-import { currentBrand, brandName } from "./brands.js";
+import { brandName } from "./brands.js";
 import { askForKey, consoleKey } from "./api.js";
 
 const PER = 60;
 const KINDS = {
-  ed: [["", "All"], ["image", "Images"], ["svg", "SVG"], ["dtf", "DTF and halftone"], ["logo", "Logos"], ["source", "Source files"], ["kittl", "Kittl"]],
   c3d: [["", "All"], ["3d", "3D models"], ["image", "Photos and art"], ["logo", "Logos"], ["source", "Source files"], ["kittl", "Kittl"]],
 };
 const size = (b) => b == null ? "" : b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`;
 const extLabel = (e = "") => e.replace(".", "").toUpperCase() || "Kittl";
 
 export async function renderDrive() {
-  const brand = currentBrand() === "c3d" ? "c3d" : "ed";
+  const brand = "c3d";
   const state = { q: "", kind: "", page: 0, total: 0, items: [], busy: false, seq: 0 };
 
   const search = el("input", { class: "field", type: "search", placeholder: "Search file and folder names", "aria-label": "Search the E: drive" });
@@ -94,9 +93,7 @@ export async function renderDrive() {
   search.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { state.q = search.value.trim(); state.page = 0; load(); }, 300); });
 
   const page = el("div", { class: "lib-page stack" },
-    pageHeader(brandName(brand), "E: drive", brand === "c3d"
-      ? "Every Charleston3D 3D model and file on the E: drive. Private to the team. Opens while Aaron's PC is on."
-      : "Every Elevated Designs image, SVG, DTF print, logo and source file on the E: drive, plus Kittl. Opens while Aaron's PC is on.",
+    pageHeader(brandName(brand), "E: drive", "Every Charleston 3D 3D model and file on the E: drive. Private to the team. Opens while Aaron's PC is on.",
       [el("button", { class: "btn", type: "button", onclick: () => { load().then(() => toast("Refreshed")); } }, "Refresh")]),
     el("div", { class: "toolbar" }, search), kinds, count, grid, pager);
   draw();
