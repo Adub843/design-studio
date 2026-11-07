@@ -4,7 +4,7 @@
 import { handleImages } from "../lib/images.mjs";
 import { kvBlobStore } from "../lib/kv-store.mjs";
 import { handleDrive } from "../lib/drive.mjs";
-import { loadPlateOrder } from "../lib/plate-order.mjs";
+import { loadPlateOrder, NAMEPLATE_TAG } from "../lib/plate-order.mjs";
 
 export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
 
@@ -24,7 +24,7 @@ export const MAKER_HEADERS = {
   "x-frame-options": "SAMEORIGIN",
   "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self'",
 };
-// The License Plate Maker also posts orders to the Charleston3D store's cart (lib/plate-order.mjs).
+// The License Plate and Nameplate Makers also post orders to the Charleston3D store's cart (lib/plate-order.mjs).
 export const PLATE_HEADERS = {
   ...MAKER_HEADERS,
   "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("form-action 'self'", "form-action 'self' https://charleston3d.com https://www.charleston3d.com"),
@@ -49,6 +49,10 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
       try { return json(await loadPlateOrder(fetchImpl)); }
       catch (e) { console.error("plate order lookup failed", e?.message); return json({ mode: "none", error: "The store couldn't be reached." }); }
     }
+    if (pathname === "/api/nameplate-order" && req.method === "GET") {
+      try { return json(await loadPlateOrder(fetchImpl, undefined, NAMEPLATE_TAG)); }
+      catch (e) { console.error("nameplate order lookup failed", e?.message); return json({ mode: "none", error: "The store couldn't be reached." }); }
+    }
     if (pathname === "/api" || pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
   } catch (e) {
     console.error("studio api error", pathname, e?.name);
@@ -57,7 +61,7 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(req);
   const out = new Response(res.body, res);
-  const headers = pathname.startsWith("/makers/license-plate") ? PLATE_HEADERS : pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
+  const headers = pathname.startsWith("/makers/license-plate") || pathname.startsWith("/makers/nameplate") ? PLATE_HEADERS : pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }
