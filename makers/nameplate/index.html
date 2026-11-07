@@ -4726,7 +4726,114 @@ ${parts.map((p, i) => { const pl = plan.find((q) => q.slot === p.slot); const m 
     if (tb) comps.push(...ramp("accent", S.offset(S.poly([[tb[0] + 2, tb[1] - 3.2], [tx1, tb[1] - 3.2], [tx1 - 2.4, tb[1] - 5.0], [tb[0], tb[1] - 5.0]]), 0.1), T, T + 0.9 * k, 0.3 * k, 0.3, 2));
     return { components: comps, shape, bbox: [-X, -Y, X, Y], textGroups: nb.groups, textHeight: nb.h || Infinity, avoid: hasIcon ? S.circle(ix, 0, R + 2) : S.EMPTY };
   });
-  NP.REFINED = ["signature", "monogram", "sportline"];
+  /* =================================================================
+     v23: five more refined styles, our own takes on the shapes people buy
+     most (round nursery and door signs, cut-out name signs, initial-and-name
+     signs, arched house plaques and office name bars). Same build rules as
+     the refined family: rounded rims, fine bevels, at most three colours
+     plus metal, letters 5 mm or taller.
+     ================================================================= */
+  // Round Sign: a disc with a polished ring and a raised banner across the middle that carries the name
+  DESIGNS.roundsign = refDesign("Round Sign", "Circle & banner", { base: "Plate & banner", accent: "Ring & edges", letters: "Lettering", chrome: "Spare" }, "varsity", (o) => {
+    const W = o.width, T = o.base, k = o.k, X = W / 2;
+    const R = Math.max(W * 0.28, Math.min(W * 0.36, hgt(o, W * 0.72) / 2));
+    const bh = R * (o.sub ? 0.56 : 0.44), br = Math.min(5, bh * 0.18);
+    const disc = S.circle(0, 0, R), band = S.box(0, 0, X, bh / 2, br);
+    const shape = S.memo(S.union(disc, band));
+    const comps = [{ slot: "base", f: shape, z0: 0, z1: T }];
+    const rim = Math.max(3, Math.min(5, R * 0.07)), clear = S.offset(band, 1.6);
+    comps.push(...ramp("accent", S.sub(S.inter(disc, (x, y) => -(disc(x, y) + rim)), clear), T, T + 1.3 * k, 0.7 * k, Math.min(1.2, rim * 0.4), 4));
+    comps.push(...ramp("accent", S.sub(S.shell(S.circle(0, 0, R - rim - 3), 0.8), clear), T, T + 0.55 * k, 0.2 * k, 0.15, 2));
+    comps.push(...ramp("base", band, T, T + 1.0 * k, 0.45 * k, 0.8, 4));
+    comps.push(...ramp("accent", S.inter(band, (x, y) => -(band(x, y) + 1.6)), T + 1.0 * k - 0.01, T + 1.5 * k, 0.25 * k, 0.25, 2));
+    const hasIcon = o.icon && o.icon !== "none" && I[o.icon];
+    const room = R - rim - 5 - bh / 2;
+    if (hasIcon && room > 9) for (const sy of [1, -1]) if (sy > 0 || !o.sub) {
+      comps.push(...ramp("accent", S.xf(I[o.icon](), 0, sy * (bh / 2 + room / 2 + 1), room * 0.36), T, T + 1.2 * k, 0.35 * k, 0.3, 3, { h: 0.18 }));
+    }
+    const nb = NP.nameBlock(o, o.font || "varsity", { cx: 0, cy: 0, w: W - 2 * br - 14, h: bh - 7 }, { track: 0.08 });
+    comps.push(...textRamp("letters", nb.groups, T + 1.0 * k - 0.01, T + 2.0 * k, 0.5 * k, 0.4));
+    return { components: comps, shape, bbox: [-X, -R, X, R], textGroups: nb.groups, textHeight: nb.h || Infinity, avoid: S.EMPTY };
+  });
+
+  // Cut Out: the plate follows the outline of the name, with a second inner layer under the letters
+  DESIGNS.cutout = refDesign("Cut Out", "Shaped to your name", { base: "Back layer", accent: "Middle layer", letters: "Lettering", chrome: "Spare" }, "block", (o) => {
+    const W = o.width, H = hgt(o, W * (o.sub ? 0.4 : 0.3)), T = o.base, k = o.k;
+    const m = Math.max(4.5, Math.min(8, H * 0.13)), m2 = m * 0.5;
+    const nb = NP.nameBlock(o, o.font || "block", { cx: 0, cy: 0, w: W - 2 * m - 2, h: H - 2 * m - 2 }, { track: 0.07 });
+    const tb = groupsBBox(nb.groups) || [-W / 2 + m, -H / 2 + m, W / 2 - m, H / 2 - m];
+    const tf = textField(nb.groups, m + 4);
+    // a bar behind the middle of the letters keeps every word joined in one piece
+    const cx = (tb[0] + tb[2]) / 2, cy = (tb[1] + tb[3]) / 2, bw = (tb[2] - tb[0]) / 2 - 2, bhh = Math.max(2.5, (tb[3] - tb[1]) * 0.2);
+    const bar = S.box(cx, cy, bw, bhh, 1);
+    const shape = S.memo(S.union(S.offset(tf, m), S.offset(bar, m)));
+    const mid = S.memo(S.union(S.offset(tf, m2), S.offset(bar, m2)));
+    const comps = [{ slot: "base", f: shape, z0: 0, z1: T }];
+    comps.push(...ramp("accent", mid, T, T + 1.0 * k, 0.45 * k, Math.min(1, m2 * 0.35), 3, { minArea: 2 }));
+    comps.push(...textRamp("letters", nb.groups, T + 1.0 * k - 0.01, T + 2.2 * k, 0.5 * k, 0.4));
+    return { components: comps, shape, bbox: [tb[0] - m, tb[1] - m, tb[2] + m, tb[3] + m], textGroups: nb.groups, textHeight: nb.h || Infinity, avoid: S.EMPTY };
+  });
+
+  // Initial Name: a large initial set low behind the name, cut clear around the letters so the name reads cleanly
+  DESIGNS.initialname = refDesign("Initial Name", "Big initial behind", { base: "Plate", accent: "Rim & initial", letters: "Lettering", chrome: "Spare" }, "sport", (o) => {
+    const W = o.width, H = hgt(o, W * 0.46), X = W / 2, Y = H / 2, T = o.base, k = o.k;
+    const shape = S.memo(S.box(0, 0, X, Y, Math.min(Y * 0.3, 12)));
+    const comps = [{ slot: "base", f: shape, z0: 0, z1: T }];
+    const rim = Math.max(3, Math.min(5, H * 0.06));
+    comps.push(...roundRim(shape, rim, T, T + 1.3 * k));
+    const ch = ((o.text || "N").replace(/[^A-Za-z0-9]/g, "")[0] || "N").toUpperCase();
+    const ini = fitText(ch, "varsity", { cx: 0, cy: 0, w: W * 0.6, h: H - 2 * rim - 8 });
+    const nb = NP.nameBlock(o, o.font || "sport", { cx: 0, cy: o.sub ? -H * 0.02 : 0, w: W - 2 * rim - 18, h: H * (o.sub ? 0.46 : 0.34) }, { track: 0.05 });
+    const knock = S.offset(textField(nb.groups, 4), 1.8);
+    comps.push(...ramp("accent", S.sub(textField(ini.groups, 3), knock), T, T + 0.8 * k, 0.3 * k, 0.3, 2, { minArea: 3, h: 0.18 }));
+    comps.push(...textRamp("letters", nb.groups, T, T + 1.9 * k, 0.55 * k, 0.45));
+    return { components: comps, shape, bbox: [-X, -Y, X, Y], textGroups: nb.groups, textHeight: nb.h || Infinity, avoid: S.EMPTY };
+  });
+
+  // Arched Plaque: a door or house plaque with an arched top, polished rim, inner keyline and an optional emblem in the arch
+  DESIGNS.archplaque = refDesign("Arched Plaque", "Door & house sign", { base: "Plate", accent: "Rim & keyline", letters: "Lettering", chrome: "Emblem" }, "varsity", (o) => {
+    const W = o.width, H = hgt(o, W * 0.62), X = W / 2, Y = H / 2, T = o.base, k = o.k;
+    const ry = Math.min(H * 0.32, X * 0.6), rc = 7;
+    // exact outline: an elliptical arch over a straight-sided body, then grown by rc so every corner is rounded
+    const ax = X - rc, ay = ry - rc * 0.6, pts = [];
+    for (let i = 0; i <= 40; i++) { const t = (Math.PI * i) / 40; pts.push([ax * Math.cos(t), Y - ry + ay * Math.sin(t)]); }
+    pts.push([-ax, -Y + rc], [ax, -Y + rc]);
+    const core = S.memo(S.poly(pts));
+    const outline = (d) => S.offset(core, rc - d);
+    const shape = S.memo(outline(0));
+    const comps = [{ slot: "base", f: shape, z0: 0, z1: T }];
+    const rim = Math.max(3, Math.min(5, H * 0.06));
+    comps.push(...roundRim(shape, rim, T, T + 1.3 * k));
+    comps.push(...ramp("accent", S.shell(outline(rim + 3), 0.8), T, T + 0.55 * k, 0.2 * k, 0.15, 2));
+    const hasIcon = o.icon && o.icon !== "none" && I[o.icon];
+    const archY = Y - ry, top = Y - rim - 5;
+    let tTop = hasIcon ? archY - 2 : top - 4;
+    if (hasIcon) {
+      const r = Math.min((top - archY) * 0.5, X * 0.2), iy = archY + r + 1;
+      comps.push(...ramp("chrome", S.circle(0, iy, r), T, T + 1.0 * k, 0.45 * k, 0.8, 4));
+      comps.push(...ramp("base", S.xf(I[o.icon](), 0, iy, r * 0.62), T + 1.0 * k - 0.01, T + 1.5 * k, 0.25 * k, 0.25, 2, { h: 0.18 }));
+      tTop = iy - r - 4;
+    }
+    const tBot = -Y + rim + 8, tw = 2 * (X - rim - 9);
+    const nb = NP.nameBlock(o, o.font || "varsity", { cx: 0, cy: (tTop + tBot) / 2, w: tw, h: tTop - tBot }, { track: 0.09 });
+    comps.push(...textRamp("letters", nb.groups, T, T + 1.7 * k, 0.55 * k, 0.45));
+    return { components: comps, shape, bbox: [-X, -Y, X, Y], textGroups: nb.groups, textHeight: nb.h || Infinity, avoid: S.EMPTY };
+  });
+
+  // Executive: a slim office name bar, crisp corners, a fine metal rule above and below the name and title
+  DESIGNS.executive = refDesign("Executive", "Name & title bar", { base: "Plate", accent: "Rim", letters: "Lettering", chrome: "Rules" }, "varsity", (o) => {
+    const W = o.width, H = hgt(o, W * (o.sub ? 0.27 : 0.22)), X = W / 2, Y = H / 2, T = o.base, k = o.k;
+    const shape = S.memo(S.box(0, 0, X, Y, Math.min(Y * 0.18, 4)));
+    const comps = [{ slot: "base", f: shape, z0: 0, z1: T }];
+    const rim = Math.max(2.6, Math.min(4, H * 0.06));
+    comps.push(...roundRim(shape, rim, T, T + 1.1 * k));
+    const ry = Y - rim - 3.4, rw = X - rim - 8;
+    for (const sy of [1, -1]) comps.push(...ramp("chrome", S.box(0, sy * ry, rw, 0.65, 0.3), T, T + 0.8 * k, 0.25 * k, 0.2, 2));
+    const nb = NP.nameBlock(o, o.font || "varsity", { cx: 0, cy: 0, w: 2 * rw - 6, h: 2 * (ry - 3.4) }, { track: 0.14 });
+    comps.push(...textRamp("letters", nb.groups, T, T + 1.6 * k, 0.5 * k, 0.42));
+    return { components: comps, shape, bbox: [-X, -Y, X, Y], textGroups: nb.groups, textHeight: nb.h || Infinity, avoid: S.EMPTY };
+  });
+  NP.REFINED = ["signature", "monogram", "sportline", "roundsign", "cutout", "initialname", "archplaque", "executive"];
   Object.assign(PALETTES, {
     navycream: { label: "Navy & cream", base: P("pla:blue"), accent: P("pla:cream"), panel: P("pla:cream"), bold: P("pla:black"), letters: P("pla:cream"), chrome: P("pla:grey"), refined: true },
     charcoal: { label: "Charcoal & silver", base: P("pro:black"), accent: P("pla:grey"), panel: P("pla:grey"), bold: P("pla:black"), letters: P("pla:cold-white"), chrome: P("pla:grey"), refined: true },
