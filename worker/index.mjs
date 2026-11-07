@@ -1,14 +1,12 @@
 // The Design Studio Worker: serves the app's files (dist/, built from index.html and assets/) and the
 // image library API. The library lives in the same Workers KV namespace as the Business Console's
-// (wrangler.toml), so a design saved here is listed from the console and read by the shirt apps.
+// (wrangler.toml); the studio only shows and changes Charleston 3D and EPIX3D art (lib/images.mjs).
 import { handleImages } from "../lib/images.mjs";
 import { kvBlobStore } from "../lib/kv-store.mjs";
 import { handleDrive } from "../lib/drive.mjs";
 import { loadPlateOrder, NAMEPLATE_TAG } from "../lib/plate-order.mjs";
 
-// Where the console's hourly Kittl sync keeps its last result, in the same namespace.
 export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
-export const SYNC_STATE_KEY = "sync:kittl";
 
 export const SITE_HEADERS = {
   "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
@@ -47,11 +45,6 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
       return await handleImages(req, { blobs: kvBlobStore(env.IMAGES), env: envReader(env) });
     }
     if (pathname === "/api/drive" || pathname.startsWith("/api/drive/")) return await handleDrive(req, { env: envReader(env) });
-    if (pathname === "/api/library-sync" && req.method === "GET") {
-      const last = env?.IMAGES ? await env.IMAGES.get(SYNC_STATE_KEY, "json") : null;
-      const { failed = [], ...rest } = last ?? {};
-      return json(last ? { ...rest, failed: failed.length } : { ok: false, error: "No sync has run yet." });
-    }
     if (pathname === "/api/plate-order" && req.method === "GET") {
       try { return json(await loadPlateOrder(fetchImpl)); }
       catch (e) { console.error("plate order lookup failed", e?.message); return json({ mode: "none", error: "The store couldn't be reached." }); }

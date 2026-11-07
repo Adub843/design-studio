@@ -1,14 +1,14 @@
 // Library: every image for the chosen brand, the way an asset manager shows them. Search, filter and sort
-// on top, a grid of cards, and a details panel on the right to rename, move to another brand, tag, show in
-// the shirt apps, download or delete. The same images the shirt apps and the Business Console read.
+// on top, a grid of cards, and a details panel on the right to rename, move to another brand, tag, download
+// or delete. Charleston 3D and EPIX3D art only: epix3d.com is for 3D work, never shirts.
 import { el, store, toast, go, icon, pageHeader } from "./app.js";
-import { BRANDS, currentBrand, brandName, inBrand, uploadBrand, canBePublic } from "./brands.js";
+import { BRANDS, currentBrand, brandName, inBrand, uploadBrand } from "./brands.js";
 import { askForKey, consoleKey } from "./api.js";
 import { confirmButton } from "./confirm.js";
-import { listImages, imageUrl, libraryScope, upload, remove, patchImage } from "./studio.js";
+import { listImages, imageUrl, libraryScope, upload, remove, patchImage } from "./images.js";
 
 const PAGE = 60;
-const FILTERS = [["all", "All"], ["public", "In shirt apps"], ["private", "Private"]];
+const FILTERS = [["all", "All"], ["public", "Public"], ["private", "Private"]];
 const SORTS = [["new", "Newest first"], ["old", "Oldest first"], ["name", "Name A to Z"], ["big", "Largest file"]];
 const size = (b) => b == null ? "" : b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`;
 const when = (t) => t ? new Date(t).toLocaleDateString([], { dateStyle: "medium" }) : "";
@@ -24,19 +24,14 @@ export async function renderLibrary() {
   const fileIn = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif,image/svg+xml", multiple: true, hidden: true });
   const upBrand = el("select", { class: "field", "aria-label": "Brand for new uploads" }, Object.entries(BRANDS).map(([k, b]) => el("option", { value: k }, b.name)));
   upBrand.value = uploadBrand();
-  const upPublic = el("input", { type: "checkbox", checked: true });
   const upTags = el("input", { class: "field", type: "text", placeholder: "Tags, e.g. halloween, logo", "aria-label": "Tags for new uploads" });
   const upNote = el("p", { class: "muted small", role: "status" });
   const uploader = el("section", { class: "panel uploader", hidden: !store.get("ds-open-upload", false), "aria-label": "Upload art" },
     el("div", { class: "panel-head" }, el("h2", {}, "Upload art"), el("button", { class: "btn ghost icon-btn", type: "button", "aria-label": "Close upload", onclick: () => { uploader.hidden = true; } }, icon("close"))),
     el("div", { class: "drop" }, "Drop images here or ", el("button", { class: "btn ghost", type: "button", onclick: () => fileIn.click() }, "choose files")), fileIn,
     el("div", { class: "up-grid" }, el("label", { class: "lfield" }, el("span", { class: "eyebrow" }, "Brand"), upBrand), el("label", { class: "lfield" }, el("span", { class: "eyebrow" }, "Tags"), upTags)),
-    el("label", { class: "check-row small" }, upPublic, el("span", {}, "Show in the shirt app library (Elevated Designs and EPIX3D only)")),
     el("p", { class: "muted small" }, "PNG with a transparent background prints best. Up to 20 MB each."), upNote);
   store.set("ds-open-upload", false);
-  const syncUpPublic = () => { const ok = canBePublic(upBrand.value); upPublic.disabled = !ok; if (!ok) upPublic.checked = false; };
-  upBrand.addEventListener("change", syncUpPublic);
-  syncUpPublic();
   const openUpload = () => { uploader.hidden = false; uploader.scrollIntoView({ block: "nearest" }); fileIn.click(); };
 
   async function uploadFiles(files) {
@@ -47,7 +42,7 @@ export async function renderLibrary() {
     let cloud = 0, local = 0, failed = 0, reason = "";
     for (const [n, f] of list.entries()) {
       upNote.textContent = `Uploading ${n + 1} of ${list.length}…`;
-      try { (await upload(f, upTags.value.trim(), upPublic.checked, upBrand.value)).saved === "cloud" ? cloud++ : local++; }
+      try { (await upload(f, upTags.value.trim(), upBrand.value)).saved === "cloud" ? cloud++ : local++; }
       catch (e) { failed++; reason ||= e.message; if (e.key) { consoleKey.clear(); break; } }
     }
     upNote.textContent = "";
@@ -94,14 +89,14 @@ export async function renderLibrary() {
       onclick: () => { state.cat = c; state.shown = PAGE; drawCats(); draw(); } }, c || "All categories")));
   }
   function card(i) {
-    const b = i.brand ?? "ed";
+    const b = i.brand;
     return el("button", { class: "acard", type: "button", "data-key": i.key, onclick: () => openDetails(i) },
       el("span", { class: "checker" }, el("img", { src: imageUrl(i), alt: "", loading: "lazy" })),
       el("span", { class: "a-meta" },
         el("span", { class: "a-name" }, i.name),
         el("span", { class: "row a-pills" },
-          brand === "all" ? el("span", { class: `pill b-${b}` }, BRANDS[b]?.short ?? "ED") : null,
-          el("span", { class: `pill ${i.local ? "s-attn" : i.public ? "s-live" : "s-empty"}` }, i.local ? "This browser" : i.public ? "Shirt apps" : "Private"),
+          brand === "all" ? el("span", { class: `pill b-${b}` }, BRANDS[b]?.short) : null,
+          el("span", { class: `pill ${i.local ? "s-attn" : i.public ? "s-live" : "s-empty"}` }, i.local ? "This browser" : i.public ? "Public" : "Private"),
           el("span", { class: "muted small" }, [typeName(i.type), size(i.size)].filter(Boolean).join(" · ")))));
   }
   function draw() {
@@ -127,28 +122,25 @@ export async function renderLibrary() {
     const canEdit = !i.local && libraryScope === "all";
     const name = el("input", { class: "field", type: "text", value: i.name ?? "", maxlength: "200", disabled: !canEdit });
     const brandSel = el("select", { class: "field", disabled: !canEdit }, Object.entries(BRANDS).map(([k, b]) => el("option", { value: k }, b.name)));
-    brandSel.value = i.brand ?? "ed";
+    brandSel.value = i.brand;
     const cat = el("input", { class: "field", type: "text", value: i.category ?? "", maxlength: "60", placeholder: "e.g. Holidays", disabled: !canEdit });
     const tags = el("input", { class: "field", type: "text", value: i.tags ?? "", maxlength: "200", placeholder: "Comma separated", disabled: !canEdit });
-    const pub = el("input", { type: "checkbox", checked: !!i.public, disabled: !canEdit || !canBePublic(brandSel.value) });
-    brandSel.addEventListener("change", () => { const ok = canBePublic(brandSel.value); pub.disabled = !ok; if (!ok) pub.checked = false; });
     const saveBtn = el("button", { class: "btn primary", type: "submit", disabled: !canEdit }, "Save changes");
     const form = el("form", { class: "stack" },
       el("label", { class: "lfield" }, el("span", { class: "eyebrow" }, "Name"), name),
       el("div", { class: "up-grid" }, el("label", { class: "lfield" }, el("span", { class: "eyebrow" }, "Brand"), brandSel), el("label", { class: "lfield" }, el("span", { class: "eyebrow" }, "Category"), cat)),
       el("label", { class: "lfield" }, el("span", { class: "eyebrow" }, "Tags"), tags),
-      el("label", { class: "check-row small" }, pub, el("span", {}, "Show in the shirt app library (Elevated Designs and EPIX3D only)")),
       canEdit ? saveBtn : el("p", { class: "muted small" }, i.local ? "This image is only saved in this browser. Upload it again to put it online."
         : el("span", {}, "Changes need the studio key. ", el("button", { class: "linkbtn", type: "button", onclick: async () => { sheet.close(); await unlock(); const n = state.items.find((x) => x.key === i.key); if (n) openDetails(n); } }, "Unlock"))));
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       saveBtn.disabled = true;
       try {
-        const out = await patchImage(i, { name: name.value.trim() || i.name, brand: brandSel.value, category: cat.value.trim(), tags: tags.value.trim(), public: pub.checked });
+        const out = await patchImage(i, { name: name.value.trim() || i.name, brand: brandSel.value, category: cat.value.trim(), tags: tags.value.trim() });
         const at = state.items.findIndex((x) => x.key === i.key);
         if (at >= 0) state.items[at] = { ...state.items[at], ...out };
         sheet.close(); drawCats(); draw();
-        toast(out.brand !== (i.brand ?? "ed") ? `Moved to ${brandName(out.brand)}` : "Saved");
+        toast(out.brand !== i.brand ? `Moved to ${brandName(out.brand)}` : "Saved");
       } catch (err) { toast(err.message); if (err.key) { sheet.close(); await refresh(); } }
       finally { saveBtn.disabled = false; }
     });
@@ -161,10 +153,9 @@ export async function renderLibrary() {
       el("div", { class: "sheet-head" }, el("h2", { id: "sh-title", class: "wrap" }, i.name),
         el("button", { class: "btn ghost icon-btn", type: "button", "aria-label": "Close", onclick: () => sheet.close() }, icon("close"))),
       el("div", { class: "checker sheet-img" }, el("img", { src: imageUrl(i), alt: i.name })),
-      el("p", { class: "muted small" }, [BRANDS[i.brand ?? "ed"]?.name, typeName(i.type), size(i.size), when(i.added) && `added ${when(i.added)}`].filter(Boolean).join(" · ")),
+      el("p", { class: "muted small" }, [BRANDS[i.brand]?.name, typeName(i.type), size(i.size), when(i.added) && `added ${when(i.added)}`].filter(Boolean).join(" · ")),
       el("div", { class: "row" },
-        el("button", { class: "btn primary", type: "button", onclick: () => { sheet.close(); store.set("ds-add", i.key); go("designer"); } }, icon("designer"), "Use in designer"),
-        el("a", { class: "btn", href: imageUrl(i), download: i.name }, icon("download"), "Download")),
+        el("a", { class: "btn primary", href: imageUrl(i), download: i.name }, icon("download"), "Download")),
       el("hr"), form, el("hr"),
       canEdit || i.local ? el("div", { class: "row" }, del) : null);
     sheet.showModal();
@@ -176,7 +167,7 @@ export async function renderLibrary() {
   page.addEventListener("drop", (e) => { if (e.dataTransfer.files.length) { e.preventDefault(); uploadFiles(e.dataTransfer.files); } });
 
   page.append(
-    pageHeader(brandName(brand), "Library", "Each brand's art for the shirt apps and the designer. Click an image to edit, move or delete it.",
+    pageHeader(brandName(brand), "Library", "Each brand's 3D art. Click an image to edit, move or delete it.",
       [el("button", { class: "btn primary", type: "button", onclick: openUpload }, icon("upload"), "Upload")]),
     uploader,
     el("div", { class: "toolbar" }, search, filterSeg, sortSel),

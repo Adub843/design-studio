@@ -1,28 +1,27 @@
 # Design Studio
 
-The design side of the business: every brand's art library and the shirt designer, in one place.
-The Business Console keeps the business side (products, insights, marketing, promotions). Both read and
-write the same image library, so a design saved here is ready to list from the console and shows in the
-shirt apps when it's marked public.
+The 3D design side of the business: Maker Studio and the Charleston 3D and EPIX3D art libraries.
+**epix3d.com is for 3D designs only. Nothing here has anything to do with shirts** (Aaron, 2026-11-07).
+Shirt design lives only in the Business Console and the Elevated Designs shirt app (design.elevatedshirts.com).
+The studio shares the console's image namespace, but Elevated Designs (shirt) art never shows here and
+can't be read, changed or deleted from here.
 
 It lives at **https://epix3d.com** (and www.epix3d.com). The backup address is
 https://design-studio.business-console.workers.dev.
 
-The **Go to** button in the top bar of every page opens the Business Console, both shops, both apps,
+The **Go to** button in the top bar of every page opens the main console, the Charleston 3D shop and app,
 the accounts and connections map and the Master Links sheet. The same links are in the search palette.
 
 ## What's in it
 
-- **Home:** the numbers for the chosen brand, quick-start tiles that open the designer on a real blank,
-  the newest art, and one card per brand when all brands are showing.
-- **Shirt designer:** the product editor from the console (tool rail, canvas on a real shirt photo,
-  properties). It exports a 300 dpi print file and a mockup photo, and saves designs to the library.
+- **Home:** the numbers for the chosen brand, the newest art, and one card per brand when both are showing.
 - **Maker Studio** (`makers/index.html`, a copy of the console's `tools/maker-studio/`): one page with a tab for
   every 3D maker: Nameplate, Hype chain, Light box & keychain (a copy of the console's `tools/maker/index.html`
   with a back bar) and License plate. Each builds Bambu-ready files in the browser.
-- **Library:** search, filter (all, in the shirt apps, private), sort and categories, with a details
-  panel to rename, move to another brand, tag, show in the shirt apps, download or delete.
-- **Top bar:** the brand switcher (All, Charleston 3D, Elevated Designs, EPIX3D), search that jumps to
+- **Library:** search, filter (all, public, private), sort and categories, with a details
+  panel to rename, move to another brand, tag, download or delete.
+- **E: drive:** the Charleston 3D 3D models and files on Aaron's E: drive, while his PC is on.
+- **Top bar:** the brand switcher (All, Charleston 3D, EPIX3D), search that jumps to
   any page, brand, action or image (press `/`), and Unlock for the studio key.
 
 ### How the layout was put together
@@ -36,28 +35,25 @@ It takes the strongest part of each of the top-ranked dashboards from the resear
 | Command palettes (Linear, Polaris) | One search box for pages, brands, actions and images, opened with `/` |
 | Tabler | Stat tiles and quiet cards |
 | Shopify Files | Asset cards on a light checkerboard, so dark art stays visible in dark mode |
-| Canva, Printful | Full-height editor with a tool rail, canvas and properties; a bottom bar on phones |
 
 ## Brands
 
-Every image belongs to one brand: `c3d`, `ed` or `epix3d` (images from before brands existed count as
-`ed`). The switcher narrows the whole studio to one brand. New uploads go to the chosen brand, or to
-Elevated Designs when all brands are showing.
-
-Charleston 3D art is never public, so it can't reach an Elevated Designs shirt app. The server enforces
-this on upload and on every change, and the page turns the option off.
+The studio works with two brands: `c3d` and `epix3d`. Images in the shared namespace marked `ed` (and old
+images with no brand, which count as `ed`) are Elevated Designs shirt art and are left out of everything here.
+The switcher narrows the studio to one brand. New uploads go to the chosen brand, or to EPIX3D when both are
+showing, and are always private. Charleston 3D art is never public.
 
 ## API
 
 | Call | Key? | What it does |
 |---|---|---|
-| `GET /api/images?public=1[&brand=ed]` | no | The public art the shirt apps use |
+| `GET /api/images?public=1[&brand=epix3d]` | no | The public Charleston 3D and EPIX3D art |
 | `GET /api/images` | yes | Every image, with signed links for private ones |
 | `GET /api/images/:key` | public, signed link, or key | One image file |
-| `POST /api/images` | yes | Upload one image (`x-filename`, `x-brand`, `x-tags`, `x-public`, `x-category`) |
-| `PATCH /api/images/:key` | yes | Change name, tags, category, brand or public |
+| `POST /api/images` | yes | Upload one image (`x-filename`, `x-brand`, `x-tags`, `x-category`), private |
+| `PATCH /api/images/:key` | yes | Change name, tags, category or brand |
 | `DELETE /api/images/:key` | yes | Delete one image |
-| `GET /api/library-sync` | no | When the console's Kittl sync last ran |
+| `GET /api/drive/search`, `/stats` | yes | The E: drive's Charleston 3D files |
 
 The key is sent as `x-console-key` and is the same `CONSOLE_KEY` secret the Business Console uses.
 

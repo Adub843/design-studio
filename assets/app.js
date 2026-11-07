@@ -3,7 +3,7 @@
 // - a top bar with the brand switcher and a jump-anywhere search (Shopify Polaris store switcher, command palette),
 // - page headers with the title on the left and actions on the right (Polaris),
 // - quiet cards, stat tiles and resource lists (Tabler),
-// - a full-width product editor: tool rail, canvas, properties, bottom bar on phones (Canva, Printful).
+// epix3d.com is for 3D designs only: nothing here has anything to do with shirts.
 import { el, store, toast } from "./util.js";
 import { BRANDS, BRAND_KEYS, currentBrand, setBrand, onBrand, brandName } from "./brands.js";
 import { consoleKey, askForKey, onKeyChange } from "./api.js";
@@ -16,9 +16,7 @@ export const GO_TO = [
     { label: "Creative Lab Studios", note: "Main console: team, marketing, Holo, money", url: HQ_URL, icon: "console" }] },
   { group: "Sites", links: [
     { label: "Charleston 3D shop", note: "charleston3d.com", url: "https://charleston3d.com", icon: "store" },
-    { label: "Charleston 3D order app", note: "app.charleston3d.com", url: "https://app.charleston3d.com", icon: "phone" },
-    { label: "Elevated Designs shop", note: "elevatedshirts.com", url: "https://elevatedshirts.com", icon: "store" },
-    { label: "Elevated Designs shirt app", note: "design.elevatedshirts.com", url: "https://design.elevatedshirts.com", icon: "phone" }] },
+    { label: "Charleston 3D order app", note: "app.charleston3d.com", url: "https://app.charleston3d.com", icon: "phone" }] },
   { group: "Reference", links: [
     { label: "Accounts and connections", note: "Every account and what connects to what", url: "https://claude.ai/artifact/Xek7W6RMuhNjUHaPmoRtuY", icon: "map" },
     { label: "Master links", note: "Every link in one sheet", url: "https://docs.google.com/spreadsheets/d/11SqwifuaDQjHgIGcuaZNRkdkG7JxfQacmT-7sEAH7Y4/edit", icon: "list" }] },
@@ -28,7 +26,6 @@ export const GO_TO = [
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PATHS = {
   home: "M4 11l8-7 8 7v9h-5v-6H9v6H4z",
-  designer: "M8 3l-5 3 2 5 3-1v11h8V10l3 1 2-5-5-3c-1 2-2.3 3-4 3S9 5 8 3z",
   library: "M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v6H4zM13 14h7v6h-7z",
   search: "M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4",
   plus: "M12 5v14M5 12h14",
@@ -59,7 +56,6 @@ export const icon = (name, cls = "ico") => {
 // ---------- pages ----------
 export const PAGES = [
   { route: "home", label: "Home", short: "Home", icon: "home", load: () => import("./home.js").then((m) => m.renderHome()) },
-  { route: "designer", label: "Shirt designer", short: "Design", icon: "designer", load: () => import("./studio.js").then((m) => m.renderDesigner()) },
   { route: "library", label: "Library", short: "Library", icon: "library", load: () => import("./library.js").then((m) => m.renderLibrary()) },
   { route: "drive", label: "E: drive", short: "E: drive", icon: "drive", load: () => import("./drive.js").then((m) => m.renderDrive()) },
   { route: "makers", label: "Maker Studio", short: "Makers", icon: "makers", load: () => import("./makers.js").then((m) => m.renderMakers()) },
@@ -80,7 +76,7 @@ const applyCollapse = (v) => document.documentElement.classList.toggle("side-min
 applyCollapse(store.get("ds-side-min", false));
 side.append(
   el("a", { class: "logo", href: "#home" }, el("span", { class: "logo-mark", "aria-hidden": "true" }, "DS"), el("span", { class: "side-label" }, "Design Studio")),
-  el("a", { class: "btn primary side-new", href: "#designer", title: "New design" }, icon("plus"), el("span", { class: "side-label" }, "New design")),
+  el("a", { class: "btn primary side-new", href: "#makers", title: "New design" }, icon("plus"), el("span", { class: "side-label" }, "New design")),
   el("nav", { class: "side-nav", "aria-label": "Studio" }, PAGES.map((p) =>
     el("a", { class: "nav", href: `#${p.route}`, "data-route": p.route, title: p.label }, icon(p.icon),
       el("span", { class: "nav-long side-label" }, p.label), el("span", { class: "nav-short", "aria-hidden": "true" }, p.short)))),
@@ -155,7 +151,7 @@ function drawPal() {
 }
 export async function openPalette() {
   palQ.value = ""; drawPal(); pal.showModal(); palQ.focus();
-  try { palImages = await (await import("./studio.js")).listImages(); drawPal(); } catch { /* images are optional here */ }
+  try { palImages = await (await import("./images.js")).listImages(); drawPal(); } catch { /* images are optional here */ }
 }
 palQ.addEventListener("input", drawPal);
 palQ.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); palList.querySelector("button")?.click(); } });
@@ -183,6 +179,6 @@ export async function render() {
   window.scrollTo(0, 0);
 }
 addEventListener("hashchange", render);
-// Home and Library follow the brand switcher; the designer redraws its own library in place.
-onBrand(() => { if (!["designer", "makers"].includes(document.documentElement.dataset.route)) render(); });
+// Home, Library and E: drive follow the brand switcher; Maker Studio keeps its place.
+onBrand(() => { if (document.documentElement.dataset.route !== "makers") render(); });
 render();

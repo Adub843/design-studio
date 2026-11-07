@@ -49,7 +49,7 @@
 | Charleston3D store | charleston3d.com | Adub843/charleston3d-site (live branch `claude/shopify-theme`, connected to Shopify GitHub) | Shopify, custom hand-coded OS 2.0 theme |
 | Elevated Designs store | elevatedshirts.com | Adub843/elevated-designs-site (theme uploaded by hand until GitHub is connected) | Shopify, custom theme |
 | ED shirt app | design.elevatedshirts.com | Adub843/elevated-shirt-app (public export) + elevated-shirt-app-private (source with costs) | GitHub Pages |
-| EPIX3D shirt app | epix3d.com | Adub843/epix3d-shirt-app | GitHub Pages (repo must be public for free Pages) |
+| EPIX3D 3D Design Studio | epix3d.com | Adub843/design-studio | Cloudflare Worker. 3D designs only, never shirts (Aaron, 2026-11-07) |
 | Charleston3D order app | app.charleston3d.com | Adub843/charleston3d-app | GitHub Pages |
 | Business Console | business-console.business-console.workers.dev | Adub843/Business-console | Cloudflare Worker + KV |
 | Backups | n/a | elevated-designs-legacy, cloudflare-sites (14 old Cloudflare sites), elevated-shirt-app-private | GitHub (private) |
@@ -183,10 +183,10 @@ The skills live in project files `agent-skills-catalog/skills/` and on the Deskt
 
 ## This repo: design-studio
 
-- The Design Studio: one Cloudflare Worker (`design-studio`) with static assets, for every brand's art and the shirt designer. Aaron chose one studio for all brands (2026-10-27), with a separate library per brand: every image carries `brand` (c3d, ed or epix3d; old images count as ed).
-- It shares the console's IMAGES KV namespace (`a4c25d0fee6e45448ada053a44b19bcc`), so designs saved here show up in the console and the shirt apps. Charleston 3D art can never be public, so it never reaches an Elevated Designs shirt app (enforced in `lib/images.mjs`).
+- **epix3d.com is for 3D designs, not shirts** (Aaron, 2026-11-07: "nothing on epix3d should have anything to do with shirts"). Shirt design lives only in the Business Console and the Elevated Designs shirt app (design.elevatedshirts.com). Never add a shirt designer, shirt blanks, shirt-app toggles, shirt-app CORS or a feed for the shirt app here.
+- The Design Studio: one Cloudflare Worker (`design-studio`) with static assets: Maker Studio (the 3D makers), the Charleston 3D and EPIX3D art libraries, and the E: drive's Charleston 3D files.
+- It shares the console's IMAGES KV namespace (`a4c25d0fee6e45448ada053a44b19bcc`), but Elevated Designs art (brand `ed`, and old images with no brand) is left out of every list here and answers 404 to reads, changes and deletes (`lib/images.mjs`).
 - The studio key is the same `CONSOLE_KEY` secret as the console. Aaron sets it himself with `npx.cmd wrangler secret put CONSOLE_KEY`.
-- The Kittl sync cron stays in the console; the studio only reads its result (`sync:kittl`).
 - Deploy by hand from Aaron's PC: `npx.cmd wrangler deploy` in the repo folder, after `npm run check`, `npm test` and `npm run test:ui` pass. A production deploy needs Aaron's typed OK.
-- The studio is live at https://epix3d.com and www.epix3d.com (the epix3d.com DNS zone moved from Wix to Cloudflare on 2026-10-27 with Aaron's typed OK; the registration stays at Wix). Backup address: design-studio.business-console.workers.dev. Both custom domains are declared in `wrangler.toml`.
-- Every page has a "Go to" menu in the top bar (the Business Console, both shops, both apps, the accounts map and the Master Links sheet). Keep it in step with the console's own Go to menu.
+- The studio is live at https://epix3d.com and www.epix3d.com (the DNS zone is on Cloudflare; the registration stays at Wix). Backup address: design-studio.business-console.workers.dev. Both custom domains are declared in `wrangler.toml`.
+- Every page has a "Go to" menu in the top bar (the main console, the Charleston 3D shop and app, the accounts map and the Master Links sheet).
