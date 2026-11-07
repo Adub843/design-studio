@@ -118,6 +118,10 @@ await test("routing: unknown API paths, missing KV, sync state and site headers"
   assert.equal(page.status, 200);
   for (const [k, v] of Object.entries(SITE_HEADERS)) assert.equal(page.headers.get(k), v, k);
   assert.match(page.headers.get("content-security-policy"), /frame-ancestors 'none'/);
+  // Maker Studio frames the makers and the studio frames Maker Studio: this site only, nobody else.
+  const maker = await call(e, "/makers/hype-chain/");
+  assert.equal(maker.headers.get("x-frame-options"), "SAMEORIGIN");
+  assert.match(maker.headers.get("content-security-policy"), /frame-ancestors 'self'/);
 });
 
 await test("CORS: only the shirt app origins, only on reads", async () => {

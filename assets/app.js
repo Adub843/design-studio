@@ -62,7 +62,7 @@ export const PAGES = [
   { route: "designer", label: "Shirt designer", short: "Design", icon: "designer", load: () => import("./studio.js").then((m) => m.renderDesigner()) },
   { route: "library", label: "Library", short: "Library", icon: "library", load: () => import("./library.js").then((m) => m.renderLibrary()) },
   { route: "drive", label: "E: drive", short: "E: drive", icon: "drive", load: () => import("./drive.js").then((m) => m.renderDrive()) },
-  { route: "makers", label: "3D makers", short: "Makers", icon: "makers", load: () => import("./makers.js").then((m) => m.renderMakers()) },
+  { route: "makers", label: "Maker Studio", short: "Makers", icon: "makers", load: () => import("./makers.js").then((m) => m.renderMakers()) },
 ];
 
 // A Polaris-style page header: where you are, the title, and the page's actions on the right.
@@ -184,5 +184,5 @@ export async function render() {
 }
 addEventListener("hashchange", render);
 // Home and Library follow the brand switcher; the designer redraws its own library in place.
-onBrand(() => { if (document.documentElement.dataset.route !== "designer") render(); });
+onBrand(() => { if (!["designer", "makers"].includes(document.documentElement.dataset.route)) render(); });
 render();

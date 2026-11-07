@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maker Studio · Charleston 3D</title>
+<meta name="robots" content="noindex">
+<!-- Copy of tools/maker-studio/index.html from Adub843/Business-console, in the studio's navy, with the four makers here. -->
+<style>
+  :root { --bar:#15223f; --ink:#f7f2e8; --muted:#b9c0cf; --line:#2c3a5c; --accent:#b8892a; --accent-ink:#15223f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bar); color: var(--ink); font: 15px/1.4 Inter, "Segoe UI", system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  .bar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--bar); }
+  .bar h1 { margin: 0; font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-size: 14px; white-space: nowrap; }
+  .back:hover { text-decoration: underline; }
+  html.framed .back { display: none; }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs a { flex: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600; white-space: nowrap; }
+  .tabs a:hover { color: var(--ink); }
+  .tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .tabs a:focus-visible, .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  iframe { flex: 1; width: 100%; border: 0; display: block; background: #fff; }
+  @media (max-width: 600px) { .bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 12px; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="back" href="/#home" aria-label="Back to Design Studio"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5L7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Design Studio</a>
+  <h1>Maker Studio</h1>
+  <nav class="tabs" aria-label="Makers" id="tabs"></nav>
+</header>
+<iframe id="view" title="Maker"></iframe>
+<script>
+  if (window.top !== window) document.documentElement.classList.add("framed");
+  // Every maker, shown as-is. A new maker gets a line here.
+  const MAKERS = [
+    { id: "nameplate", name: "Nameplate", src: "nameplate/" },
+    { id: "hypechain", name: "Hype chain", src: "hype-chain/" },
+    { id: "lightbox", name: "Light box & keychain", src: "lightbox/" },
+    { id: "licenseplate", name: "License plate", src: "license-plate/" },
+  ];
+  const tabs = document.getElementById("tabs"), view = document.getElementById("view");
+  for (const m of MAKERS) {
+    const a = document.createElement("a");
+    a.href = "#" + m.id; a.textContent = m.name; a.dataset.id = m.id;
+    tabs.append(a);
+  }
+  function show() {
+    const m = MAKERS.find((x) => "#" + x.id === location.hash) || MAKERS[0];
+    for (const a of tabs.children) a.toggleAttribute("aria-current", false), a.dataset.id === m.id && a.setAttribute("aria-current", "page");
+    if (view.getAttribute("src") !== m.src) { view.setAttribute("src", m.src); view.title = m.name + " maker"; hideBackBar(); }
+  }
+  // Each maker carries its own "Back to Design Studio" bar for when it's opened alone; inside the studio the tabs replace it.
+  // Checked as the maker page is read, not only at its load, which waits for the 3D libraries.
+  let watch = 0;
+  function hideBackBar() {
+    clearInterval(watch);
+    let tries = 0;
+    watch = setInterval(() => {
+      if (++tries > 200) return clearInterval(watch);
+      try {
+        const doc = view.contentDocument;
+        const bar = doc && doc.location.href !== "about:blank" && doc.getElementById("ds-back-bar");
+        if (!bar) return;
+        clearInterval(watch);
+        if (bar.tagName === "DIV") { bar.remove(); return; }
+        const back = bar.querySelector('a[href="/#makers"]');
+        if (back) { const sep = back.nextElementSibling; back.remove(); if (sep && sep.classList.contains("sep")) sep.remove(); }
+      } catch { clearInterval(watch); }
+    }, 50);
+  }
+  view.addEventListener("load", hideBackBar);
+  addEventListener("hashchange", show);
+  show();
+</script>
+</body>
+</html>
