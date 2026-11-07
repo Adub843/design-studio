@@ -11,7 +11,16 @@ export const consoleKey = {
 const keyListeners = new Set();
 export const onKeyChange = (fn) => keyListeners.add(fn);
 
-let dlg = null, asking = null;
+let dlg = null, asking = null, settle = null;
+// Settles the open question right away. Waiting for the dialog's close event left a short gap
+// where a second request (say, a retry right after Cancel) got the old, already cancelled answer.
+function finishKey(v) {
+  const done = settle;
+  settle = null; asking = null;
+  if (dlg) dlg.returnValue = "";
+  if (v) { consoleKey.set(v); for (const fn of keyListeners) fn(true); }
+  done?.(v || null);
+}
 export function askForKey(reason = "Changes to the library need the studio key (the CONSOLE_KEY value, the same as the Business Console's).") {
   // Two calls at once share one prompt.
   if (asking) return asking;
@@ -26,20 +35,16 @@ export function askForKey(reason = "Changes to the library need the studio key (
       el("div", { class: "row", style: "justify-content:flex-end" }, cancel, el("button", { class: "btn primary", type: "submit", id: "key-save" }, "Use key")));
     dlg = el("dialog", { class: "palette keydlg", "aria-labelledby": "key-title", "aria-describedby": "key-msg" }, form);
     document.body.append(dlg);
-    cancel.addEventListener("click", () => dlg.close(""));
-    form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value.trim(); if (v) dlg.close(v); });
+    cancel.addEventListener("click", () => { dlg.close(""); finishKey(null); });
+    form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value.trim(); if (v) { dlg.close(v); finishKey(v); } });
+    // Escape closes the dialog without a button; a newer prompt that is already open is left alone.
+    dlg.addEventListener("close", () => { if (!dlg.open && settle) finishKey(dlg.returnValue); });
   }
   dlg.querySelector("#key-msg").textContent = reason;
   const input = dlg.querySelector("#key-in");
   input.value = "";
   asking = new Promise((resolve) => {
-    dlg.addEventListener("close", () => {
-      const v = dlg.returnValue;
-      dlg.returnValue = "";
-      if (v) { consoleKey.set(v); for (const fn of keyListeners) fn(true); }
-      asking = null;
-      resolve(v || null);
-    }, { once: true });
+    settle = resolve;
     dlg.showModal();
     input.focus();
   });
