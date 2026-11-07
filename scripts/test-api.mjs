@@ -295,11 +295,20 @@ await test("/api/plate-order reads the store feed and follows its primary domain
   assert.match(String(sent["user-agent"] ?? ""), /\S/);
 });
 
-await test("the license plate maker may post to the Charleston3D cart; other pages may not", async () => {
+await test("the license plate and nameplate makers may post to the Charleston3D cart; other pages may not", async () => {
   const e = env();
-  const plate = await call(e, "/makers/license-plate/");
-  assert.match(plate.headers.get("content-security-policy"), /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com/);
-  for (const p of ["/makers/nameplate/", "/"]) assert.match((await call(e, p)).headers.get("content-security-policy"), /form-action 'self'$/);
+  for (const p of ["/makers/license-plate/", "/makers/nameplate/"])
+    assert.match((await call(e, p)).headers.get("content-security-policy"), /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com/);
+  for (const p of ["/makers/lightbox/", "/"]) assert.match((await call(e, p)).headers.get("content-security-policy"), /form-action 'self'$/);
+});
+
+await test("/api/nameplate-order sells a nameplate-maker product, never the plate product", async () => {
+  const plateSale = { id: 3, handle: "plate", title: "License plate print", tags: "plate-maker", variants: [{ id: 31, title: "Frame", price: "15.00" }] };
+  const nameSale = { id: 4, handle: "nameplate", title: "Custom nameplate", tags: "nameplate-maker", variants: [{ id: 41, title: "Default Title", price: "20.00" }] };
+  const only = await (await handleRequest(new Request("https://studio.test/api/nameplate-order"), env(), feed([requestProduct, plateSale]))).json();
+  assert.equal(only.mode, "quote"); // no nameplate product yet: it comes in as a free request
+  const both = await (await handleRequest(new Request("https://studio.test/api/nameplate-order"), env(), feed([requestProduct, plateSale, nameSale]))).json();
+  assert.deepEqual([both.mode, both.variants[0].id], ["buy", 41]);
 });
 
 console.log(`\n${passed} API tests passed`);
