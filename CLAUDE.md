@@ -31,6 +31,7 @@
 15. **Don't waste his usage.** Don't redo work, re-ask settled questions, poll, or write long replies. If you're unsure, start on the most likely reading and say which one you chose.
 16. **Never say "done" unless you checked it live yourself:** the live site, store, app or console, not another thread's report.
 17. **No personal Gmail as a public contact** on any site. Use hello@charleston3d.com (ImprovMX), hello@elevatedshirts.com (forwarding) or the store contact form.
+18. **Check before you ask Aaron for anything.** Aaron, 2026-11-07, after saying it many times: never ask him to do, connect, sign in to or set up anything until you have checked (a) project memory, (b) the console database, and (c) the live service in Claude in Chrome or through its connector, and confirmed you cannot do it yourself. Holo, Kittl, Shopify, Cloudflare and GitHub are already connected. If you must ask, say what you checked and give a direct link. Only secrets, payment methods, Publish/Deploy presses and typed OKs for irreversible steps are truly his.
 
 ## 2. How Aaron wants to work
 
