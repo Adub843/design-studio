@@ -206,7 +206,10 @@ const ART = [
         assert.equal(await studio.locator(".back").isVisible(), false, "inside the studio, its sidebar is the way back");
         for (const [name, slug] of [["Nameplate", "nameplate"], ["Hype chain", "hype-chain"], ["Light box & keychain", "lightbox"], ["License plate", "license-plate"]]) {
           await studio.locator("#tabs a", { hasText: name }).click();
-          assert.equal(await studio.locator("#view").getAttribute("src"), `${slug}/`);
+          // The tab sets the frame's src from its click handler, so wait for it rather than read it at once.
+          let src = null;
+          for (let i = 0; i < 50 && src !== `${slug}/`; i++) { src = await studio.locator("#view").getAttribute("src"); if (src !== `${slug}/`) await page.waitForTimeout(100); }
+          assert.equal(src, `${slug}/`);
           const maker = studio.frameLocator("#view");
           await maker.locator("body").waitFor();
           // The maker's own "Back to Design Studio" link goes once it's in the studio (polled: no page scripts under its policy).
