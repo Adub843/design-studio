@@ -23,6 +23,7 @@ const step = async (name, fn) => {
 function memoryKV() {
   const m = new Map();
   return {
+    m,
     async list({ prefix = "" } = {}) { return { keys: [...m].filter(([k]) => k.startsWith(prefix)).map(([name, v]) => ({ name, metadata: v.metadata })), list_complete: true }; },
     async getWithMetadata(k) { const v = m.get(k); return v ? { value: v.value, metadata: v.metadata } : { value: null, metadata: null }; },
     async get(k, type) { const v = m.get(k); return v == null ? null : type === "json" ? JSON.parse(v.value) : v.value; },
@@ -39,12 +40,16 @@ const ASSETS = { async fetch(req) {
 } };
 
 // Print-style art with transparent backgrounds, drawn by the browser so the test needs no image files.
+// The "ed" rows are Elevated Designs shirt art the Business Console saved in the shared library: the studio
+// (epix3d.com, 3D only) must never show them.
 const ART = [
-  ["Lowcountry Sunrise", "ed", true, "Coastal", "#b8892a", "Playfair Display", "LOWCOUNTRY"],
-  ["Holy City Script", "ed", true, "Charleston", "#15223f", "Pacifico", "Holy City"],
-  ["Pluff Mud Club", "ed", false, "Coastal", "#3d3f43", "Oswald", "PLUFF MUD CLUB"],
+  ["Shirt Art Sunrise", "ed", true, "Coastal", "#b8892a", "Playfair Display", "SUNRISE"],
+  ["Shirt Art Script", "ed", false, "Charleston", "#15223f", "Pacifico", "Script"],
+  ["Lowcountry Sunrise", "epix3d", false, "Coastal", "#b8892a", "Playfair Display", "LOWCOUNTRY"],
+  ["Holy City Script", "epix3d", false, "Charleston", "#15223f", "Pacifico", "Holy City"],
+  ["Pluff Mud Club", "c3d", false, "Coastal", "#3d3f43", "Oswald", "PLUFF MUD CLUB"],
   ["Rainbow Row Badge", "c3d", false, "Charleston", "#0e7c74", "Bebas Neue", "RAINBOW ROW"],
-  ["Print Cube Mark", "c3d", false, "Logos", "#15223f", "Archivo Black", "C3D"],
+  ["Print Cube Mark", "epix3d", false, "Logos", "#15223f", "Archivo Black", "C3D"],
   ["Neon Grid Tiger", "epix3d", true, "Animals", "#5b47a8", "Anton", "EPIX"],
   ["Stay Curious", "epix3d", true, "Words", "#b3262e", "Permanent Marker", "Stay curious"],
 ];
@@ -68,14 +73,16 @@ const ART = [
   const browser = await chromium.launch();
   const shot = async (page, name) => { if (SCREENS) await page.screenshot({ path: path.join(SCREENS, `${name}.png`), fullPage: false }); };
 
-  await step("seed the library through the upload API", async () => {
+  await step("seed the library (studio art through the upload API, shirt art straight into the shared namespace)", async () => {
     const p = await browser.newPage();
     await p.route("https://fonts.googleapis.com/**", (r) => r.abort());
     for (const [name, brand, pub, cat, color, font, text] of ART) {
       await p.setContent(`<body style="margin:0;background:transparent"><div id="a" style="display:inline-block;padding:24px 32px;font:700 88px '${font}',Georgia,serif;color:${color};letter-spacing:.02em;border:6px solid ${color};border-radius:18px">${text}</div></body>`);
       const png = await p.locator("#a").screenshot({ omitBackground: true });
-      const r = await fetch(`${BASE}api/images`, { method: "POST", body: png, headers: { "content-type": "image/png", "x-filename": `${name}.png`, "x-brand": brand, "x-category": cat, "x-console-key": KEY, ...(pub ? { "x-public": "1" } : {}) } });
+      if (brand === "ed") { await env.IMAGES.put(`image:shirt-0000000${env.IMAGES.m.size}`, png, { metadata: { name: `${name}.png`, type: "image/png", size: png.length, brand, category: cat, public: pub, added: Date.now() } }); continue; }
+      const r = await fetch(`${BASE}api/images`, { method: "POST", body: png, headers: { "content-type": "image/png", "x-filename": `${name}.png`, "x-brand": brand, "x-category": cat, "x-console-key": KEY } });
       assert.equal(r.status, 201, name);
+      if (pub) { const { item } = await r.json(); const v = env.IMAGES.m.get(`image:${item.key}`); v.metadata = { ...v.metadata, public: true }; }
     }
     await p.close();
   });
@@ -93,10 +100,10 @@ const ART = [
         await page.goto(BASE);
         await page.waitForSelector(".kpis");
         assert.equal(await page.locator(".bs[aria-pressed=true]").innerText().then((t) => t.trim()), width > 1100 ? "All brands" : "All");
-        assert.equal(await page.locator(".kpi b").first().innerText(), "4"); // public only: 2 ED + 2 EPIX3D
-        assert.equal(await page.locator(".start").count(), 6);
-        if (width > 760) assert.equal(await page.locator(".bcard").count(), 3);
-        await page.waitForFunction(() => [...document.querySelectorAll(".start img")].every((i) => i.complete && i.naturalWidth > 0));
+        assert.equal(await page.locator(".kpi b").first().innerText(), "2"); // public only: 2 EPIX3D, never the public shirt art
+        assert.equal(await page.locator(".start").count(), 0, "no shirt quick starts");
+        if (width > 760) assert.equal(await page.locator(".bcard").count(), 2);
+        assert.doesNotMatch(await page.locator("#view").innerText(), /shirt/i);
         await shot(page, `${tag}-home-locked`);
       });
 
@@ -114,6 +121,7 @@ const ART = [
         await page.waitForFunction(() => document.querySelector(".kpi b")?.textContent === "2");
         assert.equal(await page.evaluate(() => document.documentElement.dataset.brand), "c3d");
         assert.equal(await page.locator(".bcard").count(), 0);
+        assert.equal(await page.locator(".bs-ed").count(), 0, "no Elevated Designs brand here");
         await page.locator(".bs-all").click();
         await page.waitForFunction(() => document.querySelector(".kpi b")?.textContent === "7");
       });
@@ -122,8 +130,9 @@ const ART = [
         await page.goto(`${BASE}#library`);
         await page.waitForSelector(".acard");
         assert.equal(await page.locator(".acard").count(), 7);
+        assert.equal(await page.locator(".acard", { hasText: "Shirt Art" }).count(), 0, "the shirt art never shows");
         await page.locator(".seg-btn[data-f=private]").click();
-        assert.equal(await page.locator(".acard").count(), 3);
+        assert.equal(await page.locator(".acard").count(), 5);
         await page.locator(".seg-btn[data-f=all]").click();
         await page.fill(".toolbar input[type=search]", "holy");
         assert.equal(await page.locator(".acard").count(), 1);
@@ -134,27 +143,23 @@ const ART = [
         await page.waitForSelector("dialog.sheet[open]");
         await page.waitForTimeout(300); // let the slide-in finish
         await shot(page, `${tag}-library-sheet`);
-        // Moving art to Charleston 3D turns off the shirt-app option.
         const sheet = page.locator("dialog.sheet[open]");
+        assert.deepEqual(await sheet.locator("select option").evaluateAll((o) => o.map((x) => x.value)), ["c3d", "epix3d"]);
+        assert.equal(await sheet.locator("input[type=checkbox]").count(), 0, "no shirt-app option");
+        assert.doesNotMatch(await sheet.innerText(), /shirt|designer/i);
         await sheet.locator("select").selectOption("c3d");
-        assert.equal(await sheet.locator("input[type=checkbox]").isDisabled(), true);
-        assert.equal(await sheet.locator("input[type=checkbox]").isChecked(), false);
-        await sheet.locator("select").selectOption("ed");
-        await sheet.locator("input[type=checkbox]").check();
-        await sheet.locator("input.field").first().fill("Lowcountry Sunrise Tee");
+        await sheet.locator("select").selectOption("epix3d");
+        await sheet.locator("input.field").first().fill("Lowcountry Sunrise Plate");
         await sheet.locator("button[type=submit]").click();
         await page.waitForSelector("dialog.sheet[open]", { state: "detached", timeout: 3000 }).catch(() => {});
-        await page.waitForFunction(() => [...document.querySelectorAll(".acard .a-name")].some((n) => n.textContent === "Lowcountry Sunrise Tee"));
+        await page.waitForFunction(() => [...document.querySelectorAll(".acard .a-name")].some((n) => n.textContent === "Lowcountry Sunrise Plate"));
       });
 
-      await step(`${tag}: use in designer puts the art on the shirt photo`, async () => {
-        await page.locator(".acard", { hasText: "Holy City Script" }).click();
-        await page.locator("dialog.sheet[open] button", { hasText: "Use in designer" }).click();
-        await page.waitForSelector(".editor .layer");
-        await page.waitForFunction(() => document.querySelector(".ed-stage")?.classList.contains("is-ready"));
-        assert.equal(await page.locator(".editor .layer").count() >= 1, true);
-        await page.waitForTimeout(300);
-        await shot(page, `${tag}-designer`);
+      await step(`${tag}: there is no shirt designer`, async () => {
+        assert.equal(await page.locator('.nav[data-route="designer"]').count(), 0);
+        assert.equal(await page.locator('.side-new').getAttribute("href"), "#makers");
+        const res = await page.request.get(`${BASE}assets/blanks/blanks.json`);
+        assert.equal(res.status(), 404, "no shirt photos");
       });
 
       await step(`${tag}: the search palette finds images and pages`, async () => {
@@ -173,13 +178,14 @@ const ART = [
 
       await step(`${tag}: the Go to menu reaches the console and every site from every page`, async () => {
         const want = ["claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
-          "elevatedshirts.com", "design.elevatedshirts.com", "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
-        for (const r of ["home", "library", "designer", "makers"]) {
+          "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
+        for (const r of ["home", "library", "makers"]) {
           await page.goto(`${BASE}#${r}`);
           await page.locator(".go-btn").click();
           await page.waitForSelector("#go-menu:popover-open");
           const hrefs = await page.locator("#go-menu a").evaluateAll((as) => as.map((a) => [a.href, a.target, a.rel]));
           for (const w of want) assert.ok(hrefs.some(([h]) => h.includes(w)), `${r}: Go to is missing ${w}`);
+          assert.ok(!hrefs.some(([h]) => h.includes("elevatedshirts")), `${r}: Go to links a shirt site`);
           for (const [h, t, rel] of hrefs) { assert.match(h, /^https:\/\//); assert.equal(t, "_blank"); assert.match(rel, /noopener/); }
           const box = await page.locator("#go-menu").boundingBox();
           assert.ok(box.x >= 0 && box.x + box.width <= width, `${r}: Go to menu runs off the screen`);
@@ -261,7 +267,7 @@ const ART = [
       });
 
       await step(`${tag}: no horizontal scroll on any page`, async () => {
-        for (const r of ["home", "library", "designer", "makers"]) {
+        for (const r of ["home", "library", "makers"]) {
           await page.goto(`${BASE}#${r}`);
           await page.waitForTimeout(250);
           const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
