@@ -6903,11 +6903,18 @@ ${parts.map((p, i) => { const pl = plan.find((q) => q.slot === p.slot); const m 
       if (state.mode === "blank") renderShapes();
       buildFull(); buildThumbs();
     },
-    thumb() {
-      const src = [...document.querySelectorAll("#stage canvas")].filter((c) => c.width > 40 && c.offsetParent !== null).sort((a, b) => b.width * b.height - a.width * a.height)[0];
-      if (!src) return "";
-      const t = document.createElement("canvas"); const k = Math.min(1, 480 / src.width); t.width = Math.round(src.width * k); t.height = Math.round(src.height * k);
-      const x = t.getContext("2d"); x.fillStyle = "#f2efe8"; x.fillRect(0, 0, t.width, t.height); x.drawImage(src, 0, 0, t.width, t.height); return t.toDataURL("image/jpeg", 0.8);
+    // The arrange preview is an SVG: draw it into a picture (selection outlines left out).
+    async thumb() {
+      const svg = document.querySelector("#arrange svg"); if (!svg) return "";
+      const copy = svg.cloneNode(true);
+      for (const el of copy.querySelectorAll("[stroke-dasharray]")) el.remove();
+      const vb = svg.viewBox.baseVal; const W = 480, H = Math.max(1, Math.round(W * vb.height / vb.width));
+      copy.setAttribute("width", W); copy.setAttribute("height", H);
+      const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(copy));
+      const im = new Image(); await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
+      const t = document.createElement("canvas"); t.width = W; t.height = H; const x = t.getContext("2d");
+      x.fillStyle = "#2b3139"; x.fillRect(0, 0, W, H); x.drawImage(im, 0, 0, W, H);
+      return t.toDataURL("image/jpeg", 0.82);
     },
     async buildPrintFile() {
       if (!state.full) throw new Error("The design isn't ready yet.");

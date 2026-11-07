@@ -152,7 +152,9 @@ p { margin: 0 0 1em; }
 .plan .btn { width: 100%; }
 .plan.platinum .btn-primary:disabled { background: #4a4566; border-color: #4a4566; color: #d9d4e6; opacity: 1; }
 .plan-note { font-size: 14px; margin: 12px 0 0; text-align: center; }
-.plan .swirl { position: absolute; right: -60px; top: -70px; width: 220px; height: 220px; opacity: .9; }
+.plan .swirl { position: absolute; right: -90px; top: -110px; width: 220px; height: 220px; opacity: .9; z-index: 0; pointer-events: none; }
+.plan > :not(.swirl) { position: relative; z-index: 1; }
+@media (max-width: 760px) { .plan .swirl { width: 150px; height: 150px; right: -70px; top: -85px; } }
 @media (max-width: 760px) { .plans { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- FAQ ---------- */

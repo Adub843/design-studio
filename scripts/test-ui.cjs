@@ -97,7 +97,8 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
         assert.match(await page.title(), /EPIX3D/, p);
         const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.ok(over <= 0, `${p} scrolls sideways by ${over}px`);
-        await until(page, () => [...document.images].every((i) => i.complete && i.naturalWidth > 0) || document.readyState === "complete");
+        await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } scrollTo(0, 0); });
+        await until(page, () => [...document.images].every((i) => i.complete && i.naturalWidth > 0));
         await shot((p.replace(/\//g, "-").replace(/^-|-$/g, "") || "home") + "-signed-out");
       }
     });
@@ -269,6 +270,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
         assert.match(await page.title(), /EPIX3D/);
         assert.match(r.headers()["content-security-policy"], /form-action 'self' https:\/\/charleston3d\.com/);
         await page.waitForTimeout(m === "license-plate" ? 300 : 2500);
+        if (m === "nameplate") { await until(page, () => !!document.querySelector("#arrange svg")); const th = await page.evaluate(() => window.EPIX_MAKER.thumb()); assert.ok(th.startsWith("data:image/jpeg;base64,") && th.length > 8000, "the nameplate thumbnail is a real picture"); }
         await shot(`maker-${m}`, false);
       }
     });
