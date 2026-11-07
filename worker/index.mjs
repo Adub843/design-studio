@@ -18,10 +18,12 @@ export const SITE_HEADERS = {
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
 };
 // The 3D makers (makers/) are self-contained pages that load three.js and JSZip from public CDNs and
-// run their own inline scripts, so they get their own policy. They still can't be framed elsewhere.
+// run their own inline scripts, so they get their own policy. Maker Studio (makers/index.html) shows them
+// in a frame and the studio shows Maker Studio in one, so they may be framed by this site only.
 export const MAKER_HEADERS = {
   ...SITE_HEADERS,
-  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  "x-frame-options": "SAMEORIGIN",
+  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self'",
 };
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
