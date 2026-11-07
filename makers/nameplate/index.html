@@ -6878,9 +6878,6 @@ ${parts.map((p, i) => { const pl = plan.find((q) => q.slot === p.slot); const m 
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; btn.hidden = false; });
   btn.addEventListener("click", async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; btn.hidden = true; });
   window.addEventListener("appinstalled", () => { btn.hidden = true; });
-  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
-    window.addEventListener("load", () => (function(){})("/sw.js").catch(() => {}));
-  }
 })();
 </script>
 <script>(function(){try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:"hqmaker",app:"nameplate",ev:"ready"},"*");}catch(e){}})();</script></body>

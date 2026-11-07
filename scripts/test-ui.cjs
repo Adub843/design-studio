@@ -172,7 +172,7 @@ const ART = [
       });
 
       await step(`${tag}: the Go to menu reaches the console and every site from every page`, async () => {
-        const want = ["business-console.business-console.workers.dev", "claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
+        const want = ["claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
           "elevatedshirts.com", "design.elevatedshirts.com", "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
         for (const r of ["home", "library", "designer", "makers"]) {
           await page.goto(`${BASE}#${r}`);
@@ -195,23 +195,38 @@ const ART = [
         assert.equal(await page.locator("#palette[open]").count(), 0);
       });
 
-      await step(`${tag}: the 3D makers open and come back to the studio`, async () => {
+      await step(`${tag}: Maker Studio holds every maker in tabs`, async () => {
         // Their own tab: the makers load three.js from public CDNs, which this test's sandbox may block,
-        // so their script errors are not the studio's.
+        // so their script errors are not the studio's. This checks the studio, the tabs and the framing.
         const page = await ctx.newPage();
-        for (const [name, slug] of [["Light Box Maker", "lightbox"], ["Hype Chain Maker", "hype-chain"], ["Nameplate Maker", "nameplate"], ["License Plate Maker", "license-plate"]]) {
-          await page.goto(`${BASE}#makers`);
-          await page.locator(".maker a", { hasText: name }).click();
-          await page.waitForURL(`**/makers/${slug}/`);
+        await page.goto(`${BASE}#makers`);
+        const studio = page.frameLocator("iframe.maker-frame");
+        await studio.locator("#tabs a").first().waitFor();
+        assert.equal(await studio.locator("#tabs a").count(), 4);
+        assert.equal(await studio.locator(".back").isVisible(), false, "inside the studio, its sidebar is the way back");
+        for (const [name, slug] of [["Nameplate", "nameplate"], ["Hype chain", "hype-chain"], ["Light box & keychain", "lightbox"], ["License plate", "license-plate"]]) {
+          await studio.locator("#tabs a", { hasText: name }).click();
+          assert.equal(await studio.locator("#view").getAttribute("src"), `${slug}/`);
+          const maker = studio.frameLocator("#view");
+          await maker.locator("body").waitFor();
+          // The maker's own "Back to Design Studio" link goes once it's in the studio (polled: no page scripts under its policy).
+          let gone = 0;
+          for (let i = 0; i < 100 && gone < 3; i++) {
+            gone = (await maker.locator("script").count()) && !(await maker.locator('a[href="/#makers"]').count()) ? gone + 1 : 0;
+            await page.waitForTimeout(100);
+          }
+          assert.equal(gone, 3, `${slug}: the maker's back link still shows inside Maker Studio`);
           const res = await page.request.get(`${BASE}makers/${slug}/`);
-          assert.match(res.headers()["content-security-policy"], /cdnjs\.cloudflare\.com/);
-          assert.equal(res.headers()["x-frame-options"], "DENY");
-          const bar = page.locator("#ds-back-bar a");
-          assert.match((await bar.getAttribute("aria-label")) || (await bar.innerText()), /Back to Design Studio/);
+          assert.equal(res.status(), 200);
+          assert.match(res.headers()["content-security-policy"], /frame-ancestors 'self'/);
+          assert.equal(res.headers()["x-frame-options"], "SAMEORIGIN");
           if (scheme === "light") await shot(page, `${tag}-${slug}`);
-          await bar.click();
-          await page.waitForSelector(".maker-grid");
         }
+        const alone = await ctx.newPage();
+        await alone.goto(`${BASE}makers/#licenseplate`);
+        assert.equal(await alone.locator(".back").getAttribute("aria-label"), "Back to Design Studio");
+        assert.equal(await alone.locator('#tabs a[aria-current="page"]').innerText(), "License plate");
+        await alone.close();
         const site = await page.request.get(BASE);
         assert.doesNotMatch(site.headers()["content-security-policy"], /cdnjs/); // the studio itself keeps the strict policy
         await page.close();

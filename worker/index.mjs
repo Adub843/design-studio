@@ -3,6 +3,7 @@
 // (wrangler.toml), so a design saved here is listed from the console and read by the shirt apps.
 import { handleImages } from "../lib/images.mjs";
 import { kvBlobStore } from "../lib/kv-store.mjs";
+import { handleDrive } from "../lib/drive.mjs";
 import { loadPlateOrder } from "../lib/plate-order.mjs";
 
 // Where the console's hourly Kittl sync keeps its last result, in the same namespace.
@@ -18,10 +19,12 @@ export const SITE_HEADERS = {
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
 };
 // The 3D makers (makers/) are self-contained pages that load three.js and JSZip from public CDNs and
-// run their own inline scripts, so they get their own policy. They still can't be framed elsewhere.
+// run their own inline scripts, so they get their own policy. Maker Studio (makers/index.html) shows them
+// in a frame and the studio shows Maker Studio in one, so they may be framed by this site only.
 export const MAKER_HEADERS = {
   ...SITE_HEADERS,
-  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  "x-frame-options": "SAMEORIGIN",
+  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self'",
 };
 // The License Plate Maker also posts orders to the Charleston3D store's cart (lib/plate-order.mjs).
 export const PLATE_HEADERS = {
@@ -43,6 +46,7 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
         return json({ error: "The image library isn't set up yet: add the IMAGES KV namespace binding (see the README).", code: "storage_not_set_up" }, 503);
       return await handleImages(req, { blobs: kvBlobStore(env.IMAGES), env: envReader(env) });
     }
+    if (pathname === "/api/drive" || pathname.startsWith("/api/drive/")) return await handleDrive(req, { env: envReader(env) });
     if (pathname === "/api/library-sync" && req.method === "GET") {
       const last = env?.IMAGES ? await env.IMAGES.get(SYNC_STATE_KEY, "json") : null;
       const { failed = [], ...rest } = last ?? {};

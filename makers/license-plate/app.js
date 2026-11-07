@@ -564,6 +564,7 @@
       };
       const form = document.createElement("form");
       form.method = "post"; form.enctype = "multipart/form-data"; form.action = `${order.store}/cart/add`; form.hidden = true;
+      form.target = "_top"; // Maker Studio shows this page in a frame; the cart opens in the whole window
       for (const [k, val] of Object.entries(fields)) {
         const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = val; form.append(i);
       }
