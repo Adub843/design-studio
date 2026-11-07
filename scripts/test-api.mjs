@@ -289,6 +289,10 @@ await test("/api/plate-order reads the store feed and follows its primary domain
   assert.equal(o.mode, "quote"); assert.equal(o.store, "https://www.charleston3d.com");
   const down = await handleRequest(new Request("https://studio.test/api/plate-order"), env(), async () => new Response("no", { status: 503 }));
   assert.equal((await down.json()).mode, "none");
+  // Shopify returns 403 when no User-Agent is sent, so the feed request must carry one.
+  let sent;
+  await handleRequest(new Request("https://studio.test/api/plate-order"), env(), async (url, init) => { sent = init?.headers ?? {}; return feed([requestProduct])(); });
+  assert.match(String(sent["user-agent"] ?? ""), /\S/);
 });
 
 await test("the license plate maker may post to the Charleston3D cart; other pages may not", async () => {
