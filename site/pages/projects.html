@@ -1,0 +1,27 @@
+<!--{"path": "/projects/", "title": "My projects | EPIX3D", "description": "Your saved EPIX3D designs.", "nav": "projects", "index": false, "bodyClass": "page-projects"}-->
+<section class="page-head">
+  <div class="wrap">
+    <h1>My projects</h1>
+    <p class="lead">Designs you saved from the makers. Open one to keep working, order a print, or download it with Platinum.</p>
+  </div>
+</section>
+<section>
+  <div class="wrap" data-projects>
+    <p class="muted" data-projects-loading>Loading your projects…</p>
+    <div class="empty" data-projects-signedout hidden>
+      <h2>Sign in to see your projects</h2>
+      <p class="muted">Projects are saved to your free EPIX3D account, so you can open them from any device.</p>
+      <div class="cta" style="justify-content:center"><a class="btn btn-primary" href="/account/?next=%2Fprojects%2F">Sign in</a><a class="btn" href="/account/?mode=signup&amp;next=%2Fprojects%2F">Create an account</a></div>
+    </div>
+    <div class="empty" data-projects-empty hidden>
+      <h2>Nothing saved yet</h2>
+      <p class="muted">Open a maker, make something, and press Save at the top of the page.</p>
+      <div class="cta" style="justify-content:center"><a class="btn btn-primary" href="/makers/">Choose a maker</a></div>
+    </div>
+    <div data-projects-list hidden>
+      <div class="proj-bar"><p class="muted" style="margin:0" data-projects-count></p><a class="btn btn-sm" href="/makers/">New design</a></div>
+      <p class="form-msg" data-projects-msg role="status" aria-live="polite"></p>
+      <ul class="projects" data-projects-grid></ul>
+    </div>
+  </div>
+</section>

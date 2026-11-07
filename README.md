@@ -1,81 +1,96 @@
-# Design Studio
+# EPIX3D (epix3d.com)
 
-The design side of the business: every brand's art library and the shirt designer, in one place.
-The Business Console keeps the business side (products, insights, marketing, promotions). Both read and
-write the same image library, so a design saved here is ready to list from the console and shows in the
-shirt apps when it's marked public.
+A standalone site where anyone can use our 3D makers: design in the browser, save projects to a free
+account, order a print made in Charleston, SC, or pay for Platinum ($15 a month) to download the
+3MF/STL files and print at home. Orders and Platinum check out on the Charleston3D Shopify store.
+The makers live only here and in the Business Console.
 
-It lives at **https://epix3d.com** (and www.epix3d.com). The backup address is
-https://design-studio.business-console.workers.dev.
+One Cloudflare Worker (`design-studio`, `worker/index.mjs`) serves the site, its API and, unchanged,
+the image library and E: drive APIs that the Elevated Designs shirt app and the console use.
+Backup address: https://design-studio.business-console.workers.dev.
 
-The **Go to** button in the top bar of every page opens the Business Console, both shops, both apps,
-the accounts and connections map and the Master Links sheet. The same links are in the search palette.
+## What was removed (the Design Studio, 7 Nov 2026)
 
-## What's in it
+The studio's own pages are gone from epix3d.com: home, library, shirt designer, brand switcher, Go to
+menu and Maker Studio tabs (`index.html`, `assets/app.js`, `api.js`, `brands.js`, `home.js`,
+`library.js`, `studio.js`, `confirm.js`, `drive.js`, `makers.js`, `util.js`, `styles.css`,
+`assets/blanks/`, `assets/brand/`, `makers/index.html`). Art is managed in the Business Console.
 
-- **Home:** the numbers for the chosen brand, quick-start tiles that open the designer on a real blank,
-  the newest art, and one card per brand when all brands are showing.
-- **Shirt designer:** the product editor from the console (tool rail, canvas on a real shirt photo,
-  properties). It exports a 300 dpi print file and a mockup photo, and saves designs to the library.
-- **Maker Studio** (`makers/index.html`, a copy of the console's `tools/maker-studio/`): one page with a tab for
-  every 3D maker: Nameplate, Hype chain, Light box & keychain (a copy of the console's `tools/maker/index.html`
-  with a back bar) and License plate. Each builds Bambu-ready files in the browser.
-- **Library:** search, filter (all, in the shirt apps, private), sort and categories, with a details
-  panel to rename, move to another brand, tag, show in the shirt apps, download or delete.
-- **Top bar:** the brand switcher (All, Charleston 3D, Elevated Designs, EPIX3D), search that jumps to
-  any page, brand, action or image (press `/`), and Unlock for the studio key.
+## What stays exactly as it was (other apps depend on it)
 
-### How the layout was put together
-
-It takes the strongest part of each of the top-ranked dashboards from the research:
-
-| From | What it gives the studio |
+| Call | Used by |
 |---|---|
-| shadcn blocks, Linear | Quiet sidebar that collapses to icons, with one primary action ("New design") |
-| Shopify Polaris | Brand switcher in the top bar, page headers with actions on the right, a side panel for details |
-| Command palettes (Linear, Polaris) | One search box for pages, brands, actions and images, opened with `/` |
-| Tabler | Stat tiles and quiet cards |
-| Shopify Files | Asset cards on a light checkerboard, so dark art stays visible in dark mode |
-| Canva, Printful | Full-height editor with a tool rail, canvas and properties; a bottom bar on phones |
+| `/api/images` and `/api/images/:key` (GET/POST/PATCH/DELETE, CONSOLE_KEY) | shirt apps, console |
+| `/api/drive/*` (E: drive library through DRIVE_ORIGIN) | ED shirt app, console |
+| `/api/library-sync` | console |
+| `/api/plate-order` | License Plate Maker |
+| `/hq` (short link to the main console) | Aaron |
 
-## Brands
+## The site
 
-Every image belongs to one brand: `c3d`, `ed` or `epix3d` (images from before brands existed count as
-`ed`). The switcher narrows the whole studio to one brand. New uploads go to the chosen brand, or to
-Elevated Designs when all brands are showing.
+| Page | Source |
+|---|---|
+| Home `/`, Makers `/makers/`, Pricing, FAQ, Privacy, Terms, 404 | `site/pages/*.html` wrapped in `site/layout.html` |
+| Account `/account/`, My projects `/projects/` | same, filled in by `assets/site.js` |
+| The makers `/makers/lightbox/` (also `?mode=keychain`, `sign`, `litho`), `/makers/license-plate/`, `/makers/nameplate/`, `/makers/hype-chain/` | `makers/` |
 
-Charleston 3D art is never public, so it can't reach an Elevated Designs shirt app. The server enforces
-this on upload and on every change, and the page turns the option off.
+`scripts/build.mjs` builds `dist/` (pages, `assets/`, `makers/`, `sitemap.xml`, `robots.txt`, `llms.txt`).
+The maker cards come from `site/makers.json`; their pictures (`assets/img/makers/`) are real renders
+from the makers themselves. Look: warm off-white, Fredoka + Inter, tangerine / sun / mint / berry / sky.
 
-## API
+Each maker loads `assets/epix-bridge.js`, which adds the EPIX3D bar (Save, Order a print, account),
+saves and opens projects, sends orders, and puts the Platinum gate on every download button. Each maker
+tells the bridge how to read and restore its design and build its print file (`window.EPIX_MAKER`).
 
-| Call | Key? | What it does |
+## Site API
+
+| Call | Who | What |
 |---|---|---|
-| `GET /api/images?public=1[&brand=ed]` | no | The public art the shirt apps use |
-| `GET /api/images` | yes | Every image, with signed links for private ones |
-| `GET /api/images/:key` | public, signed link, or key | One image file |
-| `POST /api/images` | yes | Upload one image (`x-filename`, `x-brand`, `x-tags`, `x-public`, `x-category`) |
-| `PATCH /api/images/:key` | yes | Change name, tags, category, brand or public |
-| `DELETE /api/images/:key` | yes | Delete one image |
-| `GET /api/library-sync` | no | When the console's Kittl sync last ran |
+| `GET /api/config` | anyone | Platinum price label and whether it's open (Shopify ids set) |
+| `POST /api/auth/signup`, `/signin`, `/signout`, `/password`; `GET /api/me` | anyone / signed in | accounts |
+| `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/:id`, `POST /:id/duplicate`, `GET /:id/thumb` | signed in | My projects (2 MB per project, 50 per account) |
+| `POST /api/orders` (multipart), `GET /api/orders` | signed in | stores the print file, answers with the cart post |
+| `GET /files/<order id>/<name>` | anyone with the link | the stored print file (24 random bytes in the id) |
+| `POST /api/exports/check` | signed in | 200 for Platinum, 403 otherwise |
+| `POST /api/shopify/webhook` | Shopify (HMAC) | `orders/paid` with the Platinum variant: Platinum until paid date + 35 days |
+| `GET/POST /api/admin/platinum` | CONSOLE_KEY | set or clear Platinum by email |
 
-The key is sent as `x-console-key` and is the same `CONSOLE_KEY` secret the Business Console uses.
+Accounts: email + password (PBKDF2-SHA256, 100,000 rounds, salt per user), HttpOnly Secure SameSite=Lax
+session cookie (30 days, token stored only as a hash), sign-in limited to 5 failures per email and 20
+per IP in 15 minutes, passwords of 10+ characters, generic error messages, writes refused from other
+sites. Password reset by email isn't built (no email sending is set up).
+
+Ordering: the order goes to the store's free "Custom request" product (read from the live feed, falling
+back to `lib/shop-config.mjs`), so it comes in at $0 for Aaron to quote. Line-item properties: Item,
+Project, Details, Order ref, and hidden ones (`_Print file` link, `_Preview`, `_EPIX3D account`, `_Source`).
+
+### Platinum: what is and isn't enforced
+
+The makers build their files in the browser, so the main gate is in the page: download buttons ask
+`/api/exports/check` and only Platinum members get through. A determined person could still pull a
+file out of the page with developer tools. Stored order files are never shown in the cart (the link is
+a hidden property) but anyone holding the link can open it, so Aaron can from the Shopify order.
+
+## Shopify ids
+
+All in `lib/shop-config.mjs`: the store, the Custom request product/variant (real, read from the live
+feed), and the Platinum product/variant/selling plan (placeholders until the subscription product exists).
 
 ## Run and test
 
 ```
 npm install
-npm run check        # syntax check every file
+npm run check        # syntax check
 npm test             # API tests
-npm run build && npm run test:ui   # browser test at 1280 and 390 wide, light and dark
-npm run dev          # local Worker at http://localhost:8787
+npm run build
+PLAYWRIGHT_PATH=<folder with node_modules/playwright> npm run test:ui   # browser test at 1280 and 390
+npm run dev          # local Worker
 ```
 
-## Deploy (from Aaron's PC)
+## Deploy (from Aaron's PC, needs his typed OK)
 
-1. In the repo folder: `npm install`, then `npm run check` and `npm test`.
-2. The first time only, Aaron sets the key himself: `npx.cmd wrangler secret put CONSOLE_KEY`
-   (the same value as the console's).
-3. `npx.cmd wrangler deploy`.
-
-`wrangler.toml` declares epix3d.com and www.epix3d.com as custom domains, so a deploy keeps them.
+1. `npx.cmd wrangler kv namespace create ACCOUNTS` and put the id in `wrangler.toml` (replaces `REPLACE_AT_DEPLOY`).
+2. Aaron sets `npx.cmd wrangler secret put SHOPIFY_WEBHOOK_SECRET` (CONSOLE_KEY is already set).
+3. `npm run check`, `npm test`, `npm run test:ui`, then `npx.cmd wrangler deploy`.
+4. When the Platinum subscription product exists on the Charleston3D store: put its ids in
+   `lib/shop-config.mjs`, add an `orders/paid` webhook to `https://epix3d.com/api/shopify/webhook`, and deploy again.

@@ -295,11 +295,310 @@ await test("/api/plate-order reads the store feed and follows its primary domain
   assert.match(String(sent["user-agent"] ?? ""), /\S/);
 });
 
-await test("the license plate maker may post to the Charleston3D cart; other pages may not", async () => {
+
+await test("pages may post to the Charleston3D cart (orders, Platinum); nowhere else", async () => {
   const e = env();
-  const plate = await call(e, "/makers/license-plate/");
-  assert.match(plate.headers.get("content-security-policy"), /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com/);
-  for (const p of ["/makers/nameplate/", "/"]) assert.match((await call(e, p)).headers.get("content-security-policy"), /form-action 'self'$/);
+  for (const p of ["/makers/license-plate/", "/makers/lightbox/", "/makers/nameplate/", "/", "/pricing/"]) {
+    const csp = (await call(e, p)).headers.get("content-security-policy");
+    assert.match(csp, /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com$/, p);
+  }
+  assert.match((await call(e, "/")).headers.get("content-security-policy"), /script-src 'self';/, "site pages run no inline script");
+  assert.equal((await call(e, "/makers/")).headers.get("x-frame-options"), "DENY", "the makers list is a normal page");
+});
+
+// ----- EPIX3D accounts, projects, orders and Platinum -----
+const { PBKDF2_ITERATIONS, hashPassword, SIGNIN_LIMIT } = await import("../lib/accounts.mjs");
+const { shopifyHmac } = await import("../lib/webhook.mjs");
+const shop = await import("../lib/shop-config.mjs");
+const ORIGIN = "https://studio.test";
+const siteEnv = (extra = {}) => env({ ACCOUNTS: memoryKV(), SHOPIFY_WEBHOOK_SECRET: "whsec-test-0123456789", ...extra });
+const jcall = (e, path, { method = "GET", body, cookie, headers = {} } = {}) => call(e, path, {
+  method, body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
+  headers: { ...(body !== undefined ? { "content-type": "application/json" } : {}), ...(cookie ? { cookie } : {}), origin: ORIGIN, ...headers },
+});
+const cookieOf = (res) => (res.headers.get("set-cookie") ?? "").split(";")[0];
+async function signUp(e, email = "Maker@Example.com", password = "a-good-long-password") {
+  const r = await jcall(e, "/api/auth/signup", { method: "POST", body: { email, password } });
+  assert.equal(r.status, 201, `sign up ${email}`);
+  return cookieOf(r);
+}
+const me = async (e, c) => (await (await jcall(e, "/api/me", { cookie: c })).json()).user;
+
+await test("accounts: sign up sets a secure session cookie and normalizes the email", async () => {
+  const e = siteEnv();
+  const r = await jcall(e, "/api/auth/signup", { method: "POST", body: { email: "  Maker@Example.COM ", password: "a-good-long-password" } });
+  assert.equal(r.status, 201);
+  const sc = r.headers.get("set-cookie");
+  assert.match(sc, /^epx_session=[A-Za-z0-9_-]{40,}; Path=\/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000$/);
+  const { user } = await r.json();
+  assert.deepEqual([user.email, user.platinum, user.platinumUntil], ["maker@example.com", false, null]);
+  const stored = JSON.parse(e.ACCOUNTS.m.get("user:maker@example.com").value);
+  assert.equal(stored.iter, PBKDF2_ITERATIONS); assert.ok(stored.iter >= 100000);
+  assert.ok(!JSON.stringify(stored).includes("a-good-long-password"), "the password itself is never stored");
+  assert.equal(stored.hash, await hashPassword("a-good-long-password", stored.salt));
+  const sessions = [...e.ACCOUNTS.m.keys()].filter((k) => k.startsWith("session:"));
+  assert.equal(sessions.length, 1);
+  assert.ok(!sessions[0].includes(sc.split(";")[0].split("=")[1]), "the session token is stored only as a hash");
+  assert.equal((await me(e, cookieOf(r))).email, "maker@example.com");
+  assert.equal(await me(e), null);
+});
+
+await test("accounts: duplicate email, bad email and short password are refused with plain messages", async () => {
+  const e = siteEnv();
+  await signUp(e);
+  const dup = await jcall(e, "/api/auth/signup", { method: "POST", body: { email: "maker@EXAMPLE.com", password: "another-long-password" } });
+  assert.equal(dup.status, 409);
+  assert.doesNotMatch((await dup.json()).error, /exists|taken/i);
+  assert.equal((await jcall(e, "/api/auth/signup", { method: "POST", body: { email: "not-an-email", password: "a-good-long-password" } })).status, 400);
+  const short = await jcall(e, "/api/auth/signup", { method: "POST", body: { email: "b@example.com", password: "123456789" } });
+  assert.equal(short.status, 400); assert.equal((await short.json()).code, "weak_password");
+});
+
+await test("accounts: sign in, wrong password, unknown email (same answer), sign out", async () => {
+  const e = siteEnv();
+  await signUp(e);
+  const bad = await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "maker@example.com", password: "wrong-password-123" } });
+  const none = await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "nobody@example.com", password: "wrong-password-123" } });
+  assert.equal(bad.status, 401); assert.equal(none.status, 401);
+  assert.equal((await bad.json()).error, (await none.json()).error, "no hint about which emails have accounts");
+  const ok = await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "MAKER@example.com", password: "a-good-long-password" } });
+  assert.equal(ok.status, 200);
+  const c = cookieOf(ok);
+  assert.equal((await me(e, c)).email, "maker@example.com");
+  const out = await jcall(e, "/api/auth/signout", { method: "POST", cookie: c });
+  assert.match(out.headers.get("set-cookie"), /epx_session=; .*Max-Age=0/);
+  assert.equal(await me(e, c), null, "the old cookie no longer works");
+});
+
+await test("accounts: sign-in attempts are rate limited per email", async () => {
+  const e = siteEnv();
+  await signUp(e);
+  for (let i = 0; i < SIGNIN_LIMIT.perEmail; i++)
+    assert.equal((await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "maker@example.com", password: `wrong-password-${i}` } })).status, 401);
+  const blocked = await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "maker@example.com", password: "a-good-long-password" } });
+  assert.equal(blocked.status, 429, "even the right password waits once the limit is hit");
+  assert.equal((await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "other@example.com", password: "x-long-password" } })).status, 401, "other emails aren't blocked");
+});
+
+await test("accounts: sign-in attempts are rate limited per IP across emails", async () => {
+  const e = siteEnv();
+  let last;
+  for (let i = 0; i <= SIGNIN_LIMIT.perIp; i++)
+    last = await jcall(e, "/api/auth/signin", { method: "POST", body: { email: `guess${i}@example.com`, password: "wrong-password" }, headers: { "cf-connecting-ip": "203.0.113.9" } });
+  assert.equal(last.status, 429);
+  assert.equal((await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "x@example.com", password: "wrong-password" }, headers: { "cf-connecting-ip": "203.0.113.10" } })).status, 401);
+});
+
+await test("accounts: change password signs out other devices; writes from other sites are refused", async () => {
+  const e = siteEnv();
+  const a = await signUp(e);
+  const b = cookieOf(await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "maker@example.com", password: "a-good-long-password" } }));
+  assert.equal((await jcall(e, "/api/auth/password", { method: "POST", cookie: a, body: { current: "nope-nope-nope", next: "a-new-long-password" } })).status, 401);
+  assert.equal((await jcall(e, "/api/auth/password", { method: "POST", cookie: a, body: { current: "a-good-long-password", next: "short" } })).status, 400);
+  const r = await jcall(e, "/api/auth/password", { method: "POST", cookie: a, body: { current: "a-good-long-password", next: "a-new-long-password" } });
+  assert.equal(r.status, 200);
+  const a2 = cookieOf(r);
+  assert.equal(await me(e, b), null, "the other device is signed out");
+  assert.equal((await me(e, a2)).email, "maker@example.com");
+  assert.equal((await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "maker@example.com", password: "a-new-long-password" } })).status, 200);
+  const cross = await jcall(e, "/api/projects", { method: "POST", cookie: a2, body: { maker: "lightbox", name: "x", data: {} }, headers: { origin: "https://evil.example" } });
+  assert.equal(cross.status, 403);
+  assert.equal((await jcall(siteEnv({ ACCOUNTS: undefined }), "/api/me")).status, 503);
+});
+
+const THUMB = "data:image/png;base64," + Buffer.from(PNG).toString("base64");
+await test("projects: save, list, open, rename, duplicate, thumbnail, delete", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  assert.equal((await jcall(e, "/api/projects")).status, 401, "signed out: no projects");
+  const made = await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "lightbox", mode: "keychain", name: "Boat tag", data: { state: "{}", pics: { p1: "data:image/png;base64,AAAA" } }, thumb: THUMB } });
+  assert.equal(made.status, 201);
+  const { project } = await made.json();
+  assert.deepEqual([project.maker, project.mode, project.name], ["lightbox", "keychain", "Boat tag"]);
+  const list = await (await jcall(e, "/api/projects", { cookie: c })).json();
+  assert.equal(list.items.length, 1); assert.equal(list.max, 50);
+  const one = await (await jcall(e, `/api/projects/${project.id}`, { cookie: c })).json();
+  assert.equal(one.project.data.pics.p1, "data:image/png;base64,AAAA");
+  const th = await jcall(e, project.thumbUrl, { cookie: c });
+  assert.equal(th.status, 200); assert.equal(th.headers.get("content-type"), "image/png");
+  const ren = await (await jcall(e, `/api/projects/${project.id}`, { method: "PUT", cookie: c, body: { name: "Boat tag, blue" } })).json();
+  assert.equal(ren.project.name, "Boat tag, blue");
+  const upd = await (await jcall(e, `/api/projects/${project.id}`, { method: "PUT", cookie: c, body: { data: { state: "{\"w\":2}" }, mode: "lightbox" } })).json();
+  assert.equal(upd.project.mode, "lightbox");
+  const dup = await jcall(e, `/api/projects/${project.id}/duplicate`, { method: "POST", cookie: c });
+  assert.equal(dup.status, 201); assert.equal((await dup.json()).project.name, "Boat tag, blue copy");
+  assert.equal((await (await jcall(e, "/api/projects", { cookie: c })).json()).items.length, 2);
+  assert.equal((await jcall(e, `/api/projects/${project.id}`, { method: "DELETE", cookie: c })).status, 200);
+  assert.equal((await jcall(e, `/api/projects/${project.id}`, { cookie: c })).status, 404);
+  assert.equal((await (await jcall(e, "/api/projects", { cookie: c })).json()).items.length, 1);
+});
+
+await test("projects: bad maker or mode, oversized designs and bad thumbnails are refused", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  assert.equal((await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "shirts", name: "x", data: {} } })).status, 400);
+  assert.equal((await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "nameplate", mode: "keychain", name: "x", data: {} } })).status, 400);
+  const big = await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "nameplate", name: "x", data: { pic: "A".repeat(2 * 1024 * 1024 + 10) } } });
+  assert.equal(big.status, 413);
+  assert.equal((await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "nameplate", name: "x", data: {}, thumb: "javascript:alert(1)" } })).status, 400);
+  // A design under the cap with a picture inside still saves.
+  const ok = await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "hype-chain", name: "Chain", data: { img: "data:image/png;base64," + "A".repeat(1_500_000) } } });
+  assert.equal(ok.status, 201);
+});
+
+await test("projects: 50 per account, and one account can't see or touch another's", async () => {
+  const e = siteEnv();
+  const a = await signUp(e, "a@example.com"), b = await signUp(e, "b@example.com");
+  let first;
+  for (let i = 0; i < 50; i++) {
+    const r = await jcall(e, "/api/projects", { method: "POST", cookie: a, body: { maker: "nameplate", name: `Plate ${i}`, data: { i } } });
+    assert.equal(r.status, 201); if (!i) first = (await r.json()).project.id;
+  }
+  assert.equal((await jcall(e, "/api/projects", { method: "POST", cookie: a, body: { maker: "nameplate", name: "one more", data: {} } })).status, 409);
+  assert.equal((await jcall(e, `/api/projects/${first}/duplicate`, { method: "POST", cookie: a })).status, 409);
+  assert.equal((await (await jcall(e, "/api/projects", { cookie: b })).json()).items.length, 0);
+  for (const [m, p] of [["GET", `/api/projects/${first}`], ["PUT", `/api/projects/${first}`], ["DELETE", `/api/projects/${first}`], ["GET", `/api/projects/${first}/thumb`], ["POST", `/api/projects/${first}/duplicate`]])
+    assert.equal((await jcall(e, p, { method: m, cookie: b, body: m === "PUT" ? { name: "mine now" } : undefined })).status, 404, `${m} ${p}`);
+  assert.equal((await (await jcall(e, `/api/projects/${first}`, { cookie: a })).json()).project.name, "Plate 0");
+});
+
+// A zip's first bytes are what the server checks a 3MF for.
+const ZIP = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 20, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+function orderForm(fields = {}, file = new File([ZIP], "boat-tag.3mf")) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries({ maker: "lightbox", mode: "keychain", project: "Boat tag", details: "Keychain, 60 x 40 mm, Teal and White", ...fields })) fd.append(k, v);
+  if (file) fd.append("file", file);
+  fd.append("preview", new File([PNG], "preview.png", { type: "image/png" }));
+  return fd;
+}
+const orderReq = (body, c) => new Request(`${ORIGIN}/api/orders`, { method: "POST", body, headers: { ...(c ? { cookie: c } : {}), origin: ORIGIN } });
+
+await test("orders: the print file is stored under an unguessable id and the cart post adds the $0 quote line", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  assert.equal((await handleRequest(orderReq(orderForm()), e, feed([requestProduct]))).status, 401, "orders need an account");
+  const r = await handleRequest(orderReq(orderForm(), c), e, feed([requestProduct]));
+  assert.equal(r.status, 201);
+  const o = await r.json();
+  assert.match(o.orderId, /^[A-Za-z0-9_-]{32}$/);
+  assert.equal(o.cart.action, "https://charleston3d.com/cart/add");
+  assert.equal(o.cart.fields.id, "11", "the store feed's free request product");
+  assert.equal(o.cart.fields["properties[Item]"], "EPIX3D Keychain");
+  assert.equal(o.cart.fields["properties[Project]"], "Boat tag");
+  assert.equal(o.cart.fields["properties[_EPIX3D account]"], "maker@example.com");
+  assert.equal(o.cart.fields["properties[_Print file]"], `${ORIGIN}/files/${o.orderId}/boat-tag.3mf`);
+  assert.equal(o.priced, false);
+  const f = await call(e, `/files/${o.orderId}/boat-tag.3mf`);
+  assert.equal(f.status, 200, "anyone with the link (Aaron, from the Shopify order) can open it");
+  assert.match(f.headers.get("content-disposition"), /attachment; filename="boat-tag\.3mf"/);
+  assert.deepEqual(new Uint8Array(await f.arrayBuffer()), ZIP);
+  assert.equal((await call(e, `/files/${o.orderId}/preview`)).headers.get("content-type"), "image/png");
+  assert.equal((await call(e, `/files/${o.orderId}/other.3mf`)).status, 404);
+  assert.equal((await call(e, `/files/${"x".repeat(32)}/boat-tag.3mf`)).status, 404);
+  const mine = await (await jcall(e, "/api/orders", { cookie: c })).json();
+  assert.deepEqual([mine.items.length, mine.items[0].project], [1, "Boat tag"]);
+});
+
+await test("orders: falls back to the configured request variant, and refuses non-print files", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  const down = async () => new Response("no", { status: 503 });
+  const o = await (await handleRequest(orderReq(orderForm({ maker: "nameplate" }), c), e, down)).json();
+  assert.equal(o.cart.fields.id, String(shop.QUOTE_VARIANT_ID));
+  assert.equal(o.cart.action, `${shop.STORE}/cart/add`);
+  assert.equal(o.cart.fields["properties[Item]"], "EPIX3D Nameplate");
+  assert.equal((await handleRequest(orderReq(orderForm({}, new File([PNG], "x.3mf")), c), e, down)).status, 400);
+  assert.equal((await handleRequest(orderReq(orderForm({}, null), c), e, down)).status, 400);
+  assert.equal((await handleRequest(orderReq(orderForm({ maker: "shirt" }), c), e, down)).status, 400);
+});
+
+await test("orders: a priced plate-maker product sells license plates at the store's price", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  const sale = { id: 2, handle: "plates", title: "License plate print", tags: ["plate-maker"], variants: [{ id: 21, title: "Frame", price: "34.00" }, { id: 22, title: "Novelty plate", price: "29.50" }] };
+  const o = await (await handleRequest(orderReq(orderForm({ maker: "license-plate", product: "plate" }), c), e, feed([requestProduct, sale]))).json();
+  assert.deepEqual([o.cart.fields.id, o.priced], ["22", true]);
+});
+
+const { handleWebhook } = await import("../lib/webhook.mjs");
+async function hook(e, payload, { secret = "whsec-test-0123456789", topic = "orders/paid", shopDomain = shop.SHOP_DOMAIN } = {}, ids = { variant: 777, product: null }) {
+  const body = new TextEncoder().encode(JSON.stringify(payload));
+  const req = new Request(`${ORIGIN}/api/shopify/webhook`, { method: "POST", body, headers: { "x-shopify-hmac-sha256": await shopifyHmac(secret, body), "x-shopify-topic": topic, "x-shopify-shop-domain": shopDomain } });
+  try { return await handleWebhook(req, e.ACCOUNTS, (k) => e[k], { ids }); } catch (err) { return new Response(JSON.stringify({ code: err.code }), { status: err.status }); }
+}
+const paidOrder = (email, extra = {}) => ({ id: 9001, email: "checkout@example.com", processed_at: "2026-11-07T15:00:00Z", line_items: [{ variant_id: 777, product_id: 55, quantity: 1, properties: email ? [{ name: "_EPIX3D account", value: email }] : [] }], ...extra });
+const days35 = (iso) => new Date(Date.parse(iso) + 35 * 86400000).toISOString();
+
+await test("webhook: a good signature on a paid Platinum order gives 35 days from the payment date", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  assert.equal((await hook(e, paidOrder("Maker@example.com"))).status, 200);
+  assert.equal((await me(e, c)).platinumUntil, days35("2026-11-07T15:00:00Z"));
+  await hook(e, paidOrder("maker@example.com")); // Shopify retries deliveries: the same order doesn't stack
+  assert.equal((await me(e, c)).platinumUntil, days35("2026-11-07T15:00:00Z"));
+  await hook(e, paidOrder("maker@example.com", { id: 9002, processed_at: "2026-12-07T15:00:00Z" })); // next month's renewal
+  assert.equal((await me(e, c)).platinumUntil, days35("2026-12-07T15:00:00Z"));
+  await hook(e, paidOrder("maker@example.com", { id: 9000, processed_at: "2026-10-01T15:00:00Z" })); // a late, older one never shortens it
+  assert.equal((await me(e, c)).platinumUntil, days35("2026-12-07T15:00:00Z"));
+  // The real route reaches the same handler (here with no Platinum product configured yet, so nothing changes).
+  const body = JSON.stringify(paidOrder("maker@example.com"));
+  const routed = await handleRequest(new Request(`${ORIGIN}/api/shopify/webhook`, { method: "POST", body, headers: { "x-shopify-hmac-sha256": await shopifyHmac("whsec-test-0123456789", new TextEncoder().encode(body)), "x-shopify-topic": "orders/paid" } }), e);
+  assert.equal(routed.status, 200);
+});
+
+await test("webhook: bad or missing signatures, other stores and other products change nothing", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  assert.equal((await hook(e, paidOrder("maker@example.com"), { secret: "wrong-secret-0123456" })).status, 401);
+  assert.equal((await hook(e, paidOrder("maker@example.com"), { shopDomain: "someone-else.myshopify.com" })).status, 401);
+  const unsigned = await handleRequest(new Request(`${ORIGIN}/api/shopify/webhook`, { method: "POST", body: JSON.stringify(paidOrder("maker@example.com")), headers: { "x-shopify-topic": "orders/paid" } }), e);
+  assert.equal(unsigned.status, 401);
+  assert.equal((await hook(e, paidOrder("maker@example.com"), { topic: "orders/create" })).status, 200);
+  assert.equal((await (await hook(e, { ...paidOrder("maker@example.com"), line_items: [{ variant_id: 123, quantity: 1 }] })).json()).ignored, "no platinum line");
+  assert.equal((await me(e, c)).platinum, false);
+  assert.equal((await handleRequest(new Request(`${ORIGIN}/api/shopify/webhook`, { method: "POST", body: "{}" }), siteEnv({ SHOPIFY_WEBHOOK_SECRET: undefined }))).status, 503);
+  assert.equal((await (await hook(e, paidOrder("maker@example.com"), {}, { variant: null, product: null })).json()).ignored, "no platinum line", "no Platinum product configured: ignored");
+});
+
+await test("webhook: a membership bought before the account exists is applied at sign-up; falls back to the order email", async () => {
+  const e = siteEnv();
+  const r = await (await hook(e, paidOrder(null, { email: "Later@Example.com" }))).json();
+  assert.equal(r.account, "pending");
+  const c = await signUp(e, "later@example.com");
+  assert.equal((await me(e, c)).platinum, true);
+});
+
+await test("admin: setting Platinum by hand needs the console key", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  const admin = (body, key = KEY) => call(e, "/api/admin/platinum", { method: "POST", body: JSON.stringify(body), headers: { "content-type": "application/json", ...(key ? { "x-console-key": key } : {}) } });
+  assert.equal((await admin({ email: "maker@example.com", days: 30 }, null)).status, 401);
+  assert.equal((await admin({ email: "maker@example.com", days: 30 }, "wrong-key-wrong-key")).status, 401);
+  assert.equal((await jcall(e, "/api/admin/platinum", { method: "POST", cookie: c, body: { email: "maker@example.com", days: 30 } })).status, 401, "a session is not the key");
+  const r = await admin({ email: "MAKER@example.com", days: 30 });
+  assert.equal(r.status, 200); assert.equal((await r.json()).user.platinum, true);
+  assert.equal((await me(e, c)).platinum, true);
+  assert.equal((await (await call(e, "/api/admin/platinum?email=maker@example.com", { headers: { "x-console-key": KEY } })).json()).user.platinum, true);
+  assert.equal((await admin({ email: "nobody@example.com", days: 30 })).status, 404);
+  await admin({ email: "maker@example.com", clear: true });
+  assert.equal((await me(e, c)).platinum, false);
+});
+
+await test("downloads: the export check says yes only to signed-in Platinum members", async () => {
+  const e = siteEnv();
+  assert.equal((await jcall(e, "/api/exports/check", { method: "POST" })).status, 401);
+  const c = await signUp(e);
+  const free = await jcall(e, "/api/exports/check", { method: "POST", cookie: c });
+  assert.equal(free.status, 403); assert.equal((await free.json()).code, "platinum_required");
+  await call(e, "/api/admin/platinum", { method: "POST", body: JSON.stringify({ email: "maker@example.com", days: 1 }), headers: { "content-type": "application/json", "x-console-key": KEY } });
+  assert.equal((await jcall(e, "/api/exports/check", { method: "POST", cookie: c })).status, 200);
+});
+
+await test("config: Platinum shows as not open until its Shopify ids are set", async () => {
+  const cfg = await (await call(siteEnv(), "/api/config")).json();
+  assert.equal(cfg.platinum.price, "$15 a month");
+  assert.equal(cfg.platinum.available, shop.platinumReady());
+  assert.equal(cfg.accounts, true);
 });
 
 console.log(`\n${passed} API tests passed`);
