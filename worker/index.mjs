@@ -24,6 +24,12 @@ export const MAKER_HEADERS = {
   "x-frame-options": "SAMEORIGIN",
   "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self'",
 };
+// The Photo to 3D Maker runs its 3D engine (ONNX Runtime, WebAssembly and WebGPU) in the visitor's browser,
+// which needs WebAssembly compiling: 'wasm-unsafe-eval' allows that and nothing else (no eval of scripts).
+export const PHOTO3D_HEADERS = {
+  ...MAKER_HEADERS,
+  "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'"),
+};
 // The License Plate Maker also posts orders to the Charleston3D store's cart (lib/plate-order.mjs).
 export const PLATE_HEADERS = {
   ...MAKER_HEADERS,
@@ -57,7 +63,7 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(req);
   const out = new Response(res.body, res);
-  const headers = pathname.startsWith("/makers/license-plate") ? PLATE_HEADERS : pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
+  const headers = pathname.startsWith("/makers/license-plate") ? PLATE_HEADERS : pathname.startsWith("/makers/ai3d") ? PHOTO3D_HEADERS : pathname.startsWith("/makers/") ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }

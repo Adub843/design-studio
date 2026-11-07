@@ -208,9 +208,9 @@ const ART = [
         await page.goto(`${BASE}#makers`);
         const studio = page.frameLocator("iframe.maker-frame");
         await studio.locator("#tabs a").first().waitFor();
-        assert.equal(await studio.locator("#tabs a").count(), 4);
+        assert.equal(await studio.locator("#tabs a").count(), 5);
         assert.equal(await studio.locator(".back").isVisible(), false, "inside the studio, its sidebar is the way back");
-        for (const [name, slug] of [["Nameplate", "nameplate"], ["Hype chain", "hype-chain"], ["Light box & keychain", "lightbox"], ["License plate", "license-plate"]]) {
+        for (const [name, slug] of [["Nameplate", "nameplate"], ["Hype chain", "hype-chain"], ["Light box & keychain", "lightbox"], ["License plate", "license-plate"], ["Photo to 3D", "ai3d"]]) {
           await studio.locator("#tabs a", { hasText: name }).click();
           // The tab sets the frame's src from its click handler, so wait for it rather than read it at once.
           let src = null;

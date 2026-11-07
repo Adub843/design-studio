@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Photo to 3D Maker · Charleston 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>try{var t=parent.document.documentElement.dataset.theme||localStorage.getItem("bc-theme");if(t)document.documentElement.dataset.theme=String(t).replace(/"/g,"")}catch(e){}</script>
+<style>
+:root{--bg:#f6f1e7;--card:#fffdf8;--raise:#ece5d6;--line:#ddd3bf;--fg:#16203a;--muted:#5e6474;--accent:#0e7c74;--accent-fg:#fff;--stage:#e7e1d4;--warn:#9a5b00;--ok:#0e7c74;--bad:#b3261e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1428;--card:#111d36;--raise:#182644;--line:#24345a;--fg:#f3ede1;--muted:#aab3c7;--accent:#4fc8bd;--accent-fg:#06201d;--stage:#0d1830;--warn:#f0b44c;--ok:#4fc8bd;--bad:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a1428;--card:#111d36;--raise:#182644;--line:#24345a;--fg:#f3ede1;--muted:#aab3c7;--accent:#4fc8bd;--accent-fg:#06201d;--stage:#0d1830;--warn:#f0b44c;--ok:#4fc8bd;--bad:#ff8a80;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+[hidden]{display:none!important}.muted{color:var(--muted)}.small{font-size:12.5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn{font:inherit;font-weight:600;font-size:14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn:hover{border-color:var(--muted)}.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.btn:disabled{opacity:.45;cursor:default}
+.btn.block{width:100%}.btn.sm{padding:6px 10px;font-size:13px}
+.ed{flex:1;min-width:0;min-height:0;display:grid;grid-template-columns:76px 292px minmax(0,1fr) 304px;grid-template-rows:56px minmax(0,1fr)}
+.ed-top{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 16px;background:var(--card);border-bottom:1px solid var(--line);min-width:0}
+.ed-brand{font-weight:600;font-size:15px;white-space:nowrap}.ed-brand span{color:var(--muted);font-weight:500}
+.grow{flex:1}
+.ed-rail{grid-row:2;grid-column:1;background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
+.ed-rail button{font:inherit;font-size:11.5px;font-weight:500;border:0;background:none;color:var(--muted);display:grid;justify-items:center;gap:4px;padding:9px 2px;border-radius:9px;cursor:pointer}
+.ed-rail button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ed-rail button:hover{color:var(--fg)}.ed-rail button[aria-pressed="true"]{background:var(--raise);color:var(--accent)}
+.ed-rail .r-print{display:none}
+.ed-drawer{grid-row:2;grid-column:2;background:var(--card);border-right:1px solid var(--line);overflow:auto;padding:18px 16px 24px}
+.ed-props{grid-row:2;grid-column:4;background:var(--card);border-left:1px solid var(--line);overflow:auto;padding:18px 16px 24px}
+.ed-drawer h2,.ed-props h2{font-size:15px;margin:0 0 14px;font-weight:600}
+.ed-props h3,.ed-drawer h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px;font-weight:600}
+.sheet-x{display:none}
+.fld{display:block;font-size:12.5px;color:var(--muted)}
+.fld input[type=number],.fld select{display:block;margin-top:4px;width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:14px}
+.fld input[type=range]{display:block;width:100%;margin-top:6px;accent-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:22px 12px;text-align:center;cursor:pointer;display:grid;place-items:center;gap:8px;background:var(--bg);width:100%;font:inherit;color:var(--fg)}
+.drop.over{border-color:var(--accent)}.drop svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.6;opacity:.6}
+.thumbs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.thumbs figure{margin:0;display:grid;gap:4px}.thumbs figcaption{font-size:11.5px;color:var(--muted);text-align:center}
+.thumbs img,.thumbs canvas{width:100%;aspect-ratio:1;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:#fff repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/14px 14px}
+.ed-stage{grid-row:2;grid-column:3;position:relative;background:var(--stage);display:flex;flex-direction:column;min-width:0;min-height:0}
+.stage-c{flex:1;min-height:0;position:relative}
+#view3d{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+.chip{position:absolute;left:12px;top:12px;z-index:1;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--muted);pointer-events:none}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px}
+.empty>div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;display:grid;gap:12px;max-width:380px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.empty p{margin:0}.empty p.t{font-weight:600}
+.busy{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:min(360px,calc(100% - 32px));display:grid;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.1);z-index:2}
+.bar{height:6px;border-radius:99px;background:var(--raise);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px}
+.steps li{display:flex;gap:8px;align-items:center;color:var(--muted)}.steps li.on{color:var(--fg);font-weight:600}.steps li.done{color:var(--ok)}
+.steps li::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.5;flex:none}.steps li.on::before{opacity:1}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13.5px;margin:0}.kv dt{color:var(--muted)}.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.pcheck{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pcheck li{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:13px;line-height:1.4}
+.pcheck svg{width:16px;height:16px;margin-top:1px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pcheck .ok svg{stroke:var(--ok)}.pcheck .warn svg{stroke:var(--warn)}.pcheck .bad svg{stroke:var(--bad)}
+.dl{display:grid;gap:8px;margin-top:12px}
+.note{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);margin-top:18px;padding-top:12px}
+.err{color:var(--bad);font-size:13px;margin:8px 0 0}
+.toasts{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:grid;gap:6px;z-index:30}
+.toast{background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:14px}
+@media (max-width:1180px){.ed{grid-template-columns:72px 260px minmax(0,1fr) 272px}}
+@media (max-width:860px){
+  .ed{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+  .ed-top{padding:8px 12px;gap:8px;min-height:52px}.ed-top .btn span{display:none}
+  .ed-stage{grid-row:2;grid-column:1}
+  .ed-rail{grid-row:3;grid-column:1;flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:4px 2px calc(4px + env(safe-area-inset-bottom));overflow:visible}
+  .ed-rail button{flex:1;padding:7px 0;font-size:10.5px;min-width:0}.ed-rail .r-print{display:grid}.ed-rail button svg{width:20px;height:20px}
+  .ed-drawer,.ed-props{position:fixed;left:0;right:0;bottom:var(--barh,62px);max-height:62dvh;border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.18);z-index:5;padding-top:14px}
+  .ed:not([data-sheet="tool"]) .ed-drawer{display:none}.ed:not([data-sheet="print"]) .ed-props{display:none}
+  .sheet-x{display:inline-flex;float:right;margin:-4px -4px 0 0}
+}
+</style>
+</head>
+<body>
+<div id="ds-back-bar" style="position:sticky;top:0;z-index:2147483000;display:flex;align-items:center;gap:12px;height:40px;flex:none;padding:0 16px;background:#15223f;color:#f7f2e8;font:500 14px/1 Inter,system-ui,sans-serif"><a href="/#makers" style="color:#f7f2e8;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><span aria-hidden="true">&#8592;</span> Back to Design Studio</a><span style="opacity:.6;margin-left:auto">Photo to 3D Maker</span></div>
+<div class="ed" id="ed" data-sheet="">
+  <header class="ed-top">
+    <div class="ed-brand">Photo to 3D <span>· Charleston 3D</span></div>
+    <div class="grow"></div>
+    <button class="btn sm" id="topNew" type="button" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New photo</span></button>
+    <button class="btn sm primary" id="top3mf" type="button" disabled><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Download 3MF</span></button>
+  </header>
+  <nav class="ed-rail" aria-label="Tools">
+    <button type="button" data-tool="photo" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Photo</button>
+    <button type="button" data-tool="size" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7"/></svg>Size</button>
+    <button type="button" data-tool="turn" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Turn</button>
+    <button type="button" class="r-print" data-tool="print" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Print</button>
+  </nav>
+  <aside class="ed-drawer" id="drawer" aria-label="Tool settings">
+    <button class="btn sm sheet-x" type="button" data-close aria-label="Close">Close</button>
+    <section data-panel="photo">
+      <h2>Photo</h2>
+      <button class="drop" id="drop" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/></svg>
+        <span><b>Add a photo</b><br><span class="small muted">One object, plain background, JPG or PNG</span></span>
+      </button>
+      <input type="file" id="file" accept="image/png,image/jpeg,image/webp" hidden>
+      <div class="thumbs" id="thumbs" hidden>
+        <figure><img id="thumbIn" alt="Your photo"><figcaption>Your photo</figcaption></figure>
+        <figure><canvas id="thumbCut" width="256" height="256" aria-label="Cut out"></canvas><figcaption>What the maker sees</figcaption></figure>
+      </div>
+      <button class="btn primary block" id="make" type="button" style="margin-top:14px" disabled>Make 3D model</button>
+      <p class="err" id="err" role="alert" hidden></p>
+      <p class="hint">Best results: one object, filling most of the photo, shot straight on in good light. Everything runs on this device; your photo isn't uploaded.</p>
+    </section>
+    <section data-panel="size" hidden>
+      <h2>Size</h2>
+      <label class="fld">Longest side <span id="sizeOut">60 mm</span><input type="range" id="size" min="20" max="200" step="5" value="60"></label>
+      <label class="fld" style="margin-top:14px">Thinnest wall
+        <select id="wall"><option value="0.8">0.8 mm · small details</option><option value="1.2" selected>1.2 mm · standard</option><option value="1.6">1.6 mm · extra strong</option></select>
+      </label>
+      <label class="fld" style="margin-top:14px">Base
+        <select id="base"><option value="1" selected>Flat base, ready to stand</option><option value="0">Keep the bottom as made</option></select>
+      </label>
+      <p class="hint">Sized for Bambu Lab printers (256 mm plate). Thin parts are thickened to the wall you pick.</p>
+    </section>
+    <section data-panel="turn" hidden>
+      <h2>Turn</h2>
+      <p class="hint" style="margin:0 0 12px">Stand the model the right way up. Each press turns it a quarter.</p>
+      <div class="g3">
+        <button class="btn sm" type="button" data-turn="x">Tip forward</button>
+        <button class="btn sm" type="button" data-turn="y">Tip sideways</button>
+        <button class="btn sm" type="button" data-turn="z">Spin</button>
+      </div>
+      <button class="btn sm block" type="button" id="turnReset" style="margin-top:10px">Reset</button>
+    </section>
+  </aside>
+  <main class="ed-stage">
+    <div class="stage-c">
+      <canvas id="view3d" tabindex="0" aria-label="3D design preview, drag to turn"></canvas>
+      <span class="chip">Design preview</span>
+      <div class="empty" id="empty"><div>
+        <p class="t">Turn a photo into a 3D print</p>
+        <p class="muted small">Add a photo of one object. You'll get a solid, print-ready 3MF and STL for Bambu Studio.</p>
+        <button class="btn primary" type="button" id="emptyAdd">Add a photo</button>
+      </div></div>
+      <div class="busy" id="busy" role="status" aria-live="polite" hidden>
+        <ol class="steps" id="steps">
+          <li data-step="engine">Getting the 3D engine ready</li>
+          <li data-step="cut">Cutting out the photo</li>
+          <li data-step="shape">Building the shape</li>
+          <li data-step="detail">Adding detail</li>
+          <li data-step="print">Making it printable</li>
+        </ol>
+        <div class="bar"><i id="barFill"></i></div>
+        <span class="small muted" id="busyNote"></span>
+      </div>
+    </div>
+  </main>
+  <aside class="ed-props" id="props" aria-label="Print">
+    <button class="btn sm sheet-x" type="button" data-close aria-label="Close">Close</button>
+    <h2>Print</h2>
+    <div id="noResult" class="muted small">Your print checks and files show here once the model is made.</div>
+    <div id="result" hidden>
+      <dl class="kv" id="facts"></dl>
+      <h3>Checks</h3>
+      <ul class="pcheck" id="checks"></ul>
+      <div class="dl">
+        <button class="btn primary block" type="button" id="dl3mf">Download 3MF for Bambu Studio</button>
+        <button class="btn block" type="button" id="dlStl">Download STL</button>
+      </div>
+      <p class="note">Open the 3MF in Bambu Studio, pick your filament and slice. Prints in one colour. Weight is for a solid part; with normal infill it uses much less.</p>
+    </div>
+  </aside>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
