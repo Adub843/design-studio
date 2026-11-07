@@ -309,6 +309,9 @@ await test("/api/nameplate-order sells a nameplate-maker product, never the plat
   assert.equal(only.mode, "quote"); // no nameplate product yet: it comes in as a free request
   const both = await (await handleRequest(new Request("https://studio.test/api/nameplate-order"), env(), feed([requestProduct, plateSale, nameSale]))).json();
   assert.deepEqual([both.mode, both.variants[0].id], ["buy", 41]);
+  const twoWay = { ...nameSale, variants: [{ id: 42, title: "Nameplate", price: "24.99" }, { id: 43, title: "Nameplate with desk stand", price: "29.99" }] };
+  const two = await (await handleRequest(new Request("https://studio.test/api/nameplate-order"), env(), feed([requestProduct, twoWay]))).json();
+  assert.deepEqual(two.variants.map((v) => [v.id, v.title, v.price]), [[42, "Nameplate", 2499], [43, "Nameplate with desk stand", 2999]]);
 });
 
 console.log(`\n${passed} API tests passed`);

@@ -6595,8 +6595,15 @@ ${parts.map((p, i) => { const pl = plan.find((q) => q.slot === p.slot); const m 
   const MAX_FILE = 20 * 1024 * 1024; // Shopify's limit for a file on a cart line
   let order = null;
   const money = (c) => `$${(c / 100).toFixed(2)}`;
+  // the store product can carry two options: the plate alone and the plate with a desk stand (title says "stand")
+  function orderVariant() {
+    const vs = (order && order.mode !== "none" && order.variants) || [];
+    if (vs.length <= 1) return vs[0] || null;
+    const want = $("stand").checked;
+    return vs.find((v) => /stand/i.test(v.title) === want) || vs[0];
+  }
   function renderOrder() {
-    const v = order && order.mode !== "none" ? (order.variants || [])[0] : null;
+    const v = orderVariant();
     document.documentElement.classList.toggle("can-order", !!v);
     $("order").hidden = !v;
     if (SHOP && !v) { $("status").textContent = "Ordering is not open right now. Please check back soon."; return; }
@@ -6646,7 +6653,7 @@ ${parts.map((p, i) => { const pl = plan.find((q) => q.slot === p.slot); const m 
     return f;
   }
   async function placeOrder() {
-    const v = order && (order.variants || [])[0];
+    const v = orderVariant();
     if (!v || !state.full) return;
     const btn = $("order-btn"); btn.disabled = true;
     try {
@@ -6671,7 +6678,8 @@ ${parts.map((p, i) => { const pl = plan.find((q) => q.slot === p.slot); const m 
     }
   }
   $("order-btn").addEventListener("click", placeOrder);
-  window.NPM = Object.assign(window.NPM || {}, { order: () => order, orderFields: () => orderFields(((order && order.variants) || [{ id: 0 }])[0]) });
+  $("stand").addEventListener("change", renderOrder);
+  window.NPM = Object.assign(window.NPM || {}, { order: () => order, orderFields: () => orderFields(orderVariant() || { id: 0 }) });
 
   /* ---------- size */
   const PRESETS = { "120x40": [120, 40], "150x50": [150, 50], "170x0": [170, 0], "200x70": [200, 70], "220x0": [220, 0], "250x0": [250, 0], "175x0": [175, 0] };
