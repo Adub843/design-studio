@@ -15,7 +15,7 @@
   }
   const fmtDate = (iso) => new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const MAKERS = { lightbox: "Light box", "license-plate": "License plate", nameplate: "Nameplate", "hype-chain": "Hype chain" };
-  const MODES = { lightbox: "Light box", keychain: "Keychain", sign: "Sign", litho: "Lithophane" };
+  const MODES = { lightbox: "Light box", keychain: "Keychain", nametag: "Name tag", sign: "Sign", litho: "Lithophane" };
   const makerName = (p) => (p.maker === "lightbox" && MODES[p.mode]) || MAKERS[p.maker] || p.maker;
   // Only same-site paths are followed after sign-in.
   const safeNext = (n) => (typeof n === "string" && /^\/(?!\/)[^\s\\]*$/.test(n) ? n : null);

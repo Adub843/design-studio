@@ -444,6 +444,8 @@ await test("projects: save, list, open, rename, duplicate, thumbnail, delete", a
   assert.equal((await jcall(e, `/api/projects/${project.id}`, { method: "DELETE", cookie: c })).status, 200);
   assert.equal((await jcall(e, `/api/projects/${project.id}`, { cookie: c })).status, 404);
   assert.equal((await (await jcall(e, "/api/projects", { cookie: c })).json()).items.length, 1);
+  const tag = await jcall(e, "/api/projects", { method: "POST", cookie: c, body: { maker: "lightbox", mode: "nametag", name: "Maya badge", data: { state: "{}" } } });
+  assert.equal(tag.status, 201, "the Name tag maker saves like the other light box modes");
 });
 
 await test("projects: bad maker or mode, oversized designs and bad thumbnails are refused", async () => {

@@ -42,7 +42,7 @@
     slot.className = "epx-bar";
     slot.setAttribute("role", "banner");
     slot.innerHTML = `<a class="epx-logo" href="/" aria-label="EPIX3D home">${LOGO}<span>EPIX3D</span></a>
-      <a class="epx-all" href="/makers/">All makers</a>
+      <span data-epix-switch></span>
       <span class="epx-title" data-epix-title>${esc(title())}</span>
       <span class="epx-status" role="status" aria-live="polite"></span>
       <button type="button" class="epx-btn" data-epix-save>Save</button>
@@ -228,9 +228,46 @@
     document.documentElement.dataset.epixUser = me ? (me.platinum ? "platinum" : "free") : "none";
   }
 
+
+  /* ---------- maker switcher: every maker is one click away, on every maker ---------- */
+  const GRID = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M3.5 3.5h5v5h-5zm8 0h5v5h-5zm-8 8h5v5h-5zm8 0h5v5h-5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+  const CHEV = '<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="m5 8 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  let makers = null;
+  const loadMakers = () => makers || (makers = fetch("/assets/makers.json", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : [])).catch(() => []));
+  // The light box page holds four makers (?mode=), so its address alone doesn't say which one is open.
+  const makerKey = (pathname, mode) => pathname + (pathname === "/makers/lightbox/" ? `?mode=${mode || "lightbox"}` : "");
+  const isCurrent = (m) => { const u = new URL(m.href, location.origin); return makerKey(u.pathname, u.searchParams.get("mode")) === makerKey(location.pathname, (M.mode && M.mode()) || params.get("mode")); };
+  function closeSwitch() {
+    for (const w of document.querySelectorAll(".epx-switch-menu")) w.hidden = true;
+    for (const b of document.querySelectorAll(".epx-switch")) b.setAttribute("aria-expanded", "false");
+  }
+  async function openSwitch(btn, menu) {
+    const list = await loadMakers();
+    menu.innerHTML = `<p class="epx-sw-h">Pick a maker</p><ul>${list.map((m) => `<li><a href="${esc(m.href)}" class="tone-${esc(m.tone)}"${isCurrent(m) ? ' aria-current="page"' : ""}><i aria-hidden="true"></i><b>${esc(m.name)}</b><small>${esc(m.blurb)}</small></a></li>`).join("")}</ul><a class="epx-sw-all" href="/makers/">See every maker with pictures</a>`;
+    menu.hidden = false; btn.setAttribute("aria-expanded", "true");
+    const cur = menu.querySelector('[aria-current="page"]') || menu.querySelector("a"); if (cur) cur.focus();
+  }
+  function renderSwitch() {
+    for (const slot of document.querySelectorAll("[data-epix-switch]")) {
+      if (slot.dataset.done) continue; slot.dataset.done = "1";
+      slot.className = "epx-switch-wrap";
+      slot.innerHTML = `<button type="button" class="epx-switch" aria-haspopup="true" aria-expanded="false" aria-label="All makers">${GRID}<span>All makers</span>${CHEV}</button><div class="epx-switch-menu" hidden></div>`;
+      const btn = slot.querySelector("button"), menu = slot.querySelector(".epx-switch-menu");
+      btn.addEventListener("click", (e) => { e.stopPropagation(); if (menu.hidden) { closeSwitch(); openSwitch(btn, menu); } else closeSwitch(); });
+      menu.addEventListener("keydown", (e) => {
+        const items = [...menu.querySelectorAll("a")]; const i = items.indexOf(document.activeElement);
+        if (e.key === "ArrowDown") { e.preventDefault(); (items[i + 1] || items[0]).focus(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+        else if (e.key === "Escape") { e.preventDefault(); closeSwitch(); btn.focus(); }
+      });
+    }
+    document.addEventListener("click", (e) => { if (!e.target.closest(".epx-switch-wrap")) closeSwitch(); });
+  }
+
   /* ---------- start ---------- */
   async function start() {
     renderBar();
+    renderSwitch();
     for (const b of document.querySelectorAll("[data-epix-save]")) b.addEventListener("click", save);
     for (const b of document.querySelectorAll("[data-epix-order]")) b.addEventListener("click", order);
     renderAccount();

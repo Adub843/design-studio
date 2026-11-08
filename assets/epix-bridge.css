@@ -33,3 +33,27 @@
 .epx-dlg-f{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:14px}
 .epx-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483601;max-width:calc(100% - 32px);background:#23203a;color:#fff8ef;padding:11px 18px;border-radius:999px;font:500 14px/1.35 "Inter","Segoe UI",system-ui,sans-serif;box-shadow:0 10px 30px rgba(35,32,58,.3)}
 .epx-toast[hidden]{display:none}
+/* "All makers" switcher (same on every maker) */
+.epx-switch-wrap{position:relative;flex:none;display:inline-flex}
+.epx-switch{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:999px;border:0;background:transparent;color:#5e5a73;font:500 14px/1 "Inter","Segoe UI",system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.epx-switch:hover,.epx-switch[aria-expanded="true"]{background:#f3e8d6;color:#23203a}
+.epx-switch:focus-visible{outline:2px solid #ff6b3d;outline-offset:2px}
+.epx-switch-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:2147483500;width:min(380px,calc(100vw - 20px));max-height:min(560px,calc(100vh - 80px));overflow:auto;background:#fff8ef;border:1px solid #eadfcd;border-radius:18px;box-shadow:0 18px 50px rgba(35,32,58,.2);padding:8px;font:14px/1.35 "Inter","Segoe UI",system-ui,sans-serif;color:#23203a}
+.epx-switch-menu[hidden]{display:none}
+.epx-switch-menu .epx-sw-h{margin:6px 10px 6px;font:700 15px/1.2 "Fredoka","Inter",system-ui,sans-serif}
+.epx-switch-menu ul{list-style:none;margin:0;padding:0}
+.epx-switch-menu li a{display:grid;grid-template-columns:12px 1fr;column-gap:10px;align-items:baseline;padding:9px 10px;border-radius:12px;color:#23203a;text-decoration:none}
+.epx-switch-menu li a:hover,.epx-switch-menu li a:focus-visible{background:#f3e8d6;outline:none}
+.epx-switch-menu li a[aria-current="page"]{background:#23203a;color:#fff8ef}
+.epx-switch-menu li a[aria-current="page"] small{color:#d9d4e6}
+.epx-switch-menu li i{width:10px;height:10px;border-radius:50%;background:#ff6b3d;align-self:center}
+.epx-switch-menu .tone-sun i{background:#ffc23d}.epx-switch-menu .tone-mint i{background:#23b5a0}.epx-switch-menu .tone-berry i{background:#e84a7f}.epx-switch-menu .tone-sky i{background:#4c7cf3}
+.epx-switch-menu b{font-weight:600}
+.epx-switch-menu small{grid-column:2;color:#5e5a73;font-size:12.5px;margin-top:2px}
+.epx-switch-menu .epx-sw-all{display:block;margin:6px 4px 2px;padding:10px;border-top:1px solid #eadfcd;color:#23203a;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:820px){.epx-switch span{display:none}.epx-switch{padding:0 8px}}
+@media (max-width:600px){.epx-switch-menu{position:fixed;top:58px;left:10px;right:10px;width:auto}}
+/* Some makers style every link in their own bar (an id selector); the menu keeps its own look there too. */
+.epx-switch-menu li a{display:grid!important;white-space:normal!important;color:#23203a!important;text-decoration:none!important;font-weight:400!important}
+.epx-switch-menu li a[aria-current="page"]{color:#fff8ef!important}
+.epx-switch-menu .epx-sw-all{display:block!important;white-space:normal!important;color:#23203a!important}

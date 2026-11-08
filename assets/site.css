@@ -242,3 +242,10 @@ p { margin: 0 0 1em; }
 .foot-small { grid-column: 1 / -1; margin: 0; padding-top: 22px; border-top: 1px solid #3a3655; color: #bdb6cf; font-size: 14px; }
 .foot-small a { color: #fff8ef; }
 @media (max-width: 700px) { .foot-in { grid-template-columns: minmax(0, 1fr); padding: 40px 16px 32px; } }
+
+/* Every maker as a row of chips (pricing page) */
+.mk-chips { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; padding: 0; }
+.mk-chips a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; background: #fff; border: 1.5px solid var(--line); color: var(--ink); font-weight: 600; text-decoration: none; }
+.mk-chips a:hover { border-color: var(--ink); }
+.mk-chips i { width: 10px; height: 10px; border-radius: 50%; background: var(--tangerine); }
+.mk-chips .tone-sun i { background: var(--sun); } .mk-chips .tone-mint i { background: var(--mint); } .mk-chips .tone-berry i { background: var(--berry); } .mk-chips .tone-sky i { background: var(--sky); }

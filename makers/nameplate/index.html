@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-maker="nameplate">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -279,7 +279,7 @@ summary { cursor: pointer; font: 600 17px var(--f-display); }
 .chart td, .chart th { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
-</head>
+<link rel="stylesheet" href="/assets/epix-theme.css"></head>
 <body><header id="epix-bar"></header>
 <div class="wrap">
   <header>
@@ -582,7 +582,7 @@ summary { cursor: pointer; font: 600 17px var(--f-display); }
   </section>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/makers/vendor/three.min.js"></script>
 <script id="engine-src">/* Nameplate engine \u2014 dependency-free geometry + 3MF writer.
    Works in the browser (window.NP) and in Node (module.exports). Units: mm, y up. */
 (function (root) {

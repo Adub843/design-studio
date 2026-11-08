@@ -112,8 +112,8 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
 
     await step(`${label}: home lists every maker with its own picture; SEO tags are there`, async () => {
       await page.goto(BASE + "/", { waitUntil: "networkidle" });
-      assert.equal(await page.locator(".makers .mk").count(), 8);
-      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
+      assert.equal(await page.locator(".makers .mk").count(), 9);
+      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=nametag", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
         assert.equal(await page.locator(`.makers a[href="${href}"]`).count(), 1, href);
       await page.locator(".makers img").last().scrollIntoViewIfNeeded();
       await until(page, () => [...document.querySelectorAll(".makers img")].every((i) => i.complete && i.naturalWidth > 0));
@@ -265,6 +265,31 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       assert.equal(await page.evaluate(() => MK.name), "Key tag", "the design came back and was saved");
       const list = await (await page.request.get(BASE + "/api/projects")).json();
       assert.ok(list.items.some((p) => p.name === "Key tag" && p.mode === "keychain"));
+    });
+
+    await step(`${label}: the Name tag maker starts with a name badge and builds a 3MF`, async () => {
+      await page.goto(BASE + "/makers/lightbox/?mode=nametag", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      const st = await page.evaluate(() => ({ mode: MK.mode, w: MK.width, h: MK.height, ring: MK.ring, text: MK.els[0] && MK.els[0].text, title: EPIX_MAKER.title() }));
+      assert.deepEqual(st, { mode: "nametag", w: 76, h: 26, ring: false, text: "YOUR NAME", title: "Name tag maker" });
+      const parts = await page.evaluate(async () => (await lbBuild({ collect: true })).map((p) => [p.name, p.blob.size]));
+      const f = parts.find(([n]) => /\.3mf$/.test(n));
+      assert.ok(f && f[1] > 2000, "a real 3MF: " + JSON.stringify(parts));
+      await shot("maker-nametag", false);
+    });
+
+    await step(`${label}: "All makers" on every maker lists the whole studio and moves between makers`, async () => {
+      for (const m of ["/makers/lightbox/?mode=nametag", "/makers/license-plate/"]) {
+        await page.goto(BASE + m, { waitUntil: "load" });
+        await until(page, () => document.documentElement.dataset.epixReady === "1");
+        await page.click(".epx-switch");
+        await page.waitForSelector(".epx-switch-menu:not([hidden]) li a");
+        assert.equal(await page.locator(".epx-switch-menu li a").count(), 9, m);
+        assert.equal(await page.locator('.epx-switch-menu [aria-current="page"] b').innerText(), m.includes("nametag") ? "Name tag" : "License plate");
+      }
+      await shot("maker-switcher", false);
+      await page.locator(".epx-switch-menu li a", { hasText: "Hype chain" }).click();
+      await page.waitForURL(/\/makers\/hype-chain\/$/);
     });
 
     await step(`${label}: the other makers load with the EPIX3D bar and their gate`, async () => {

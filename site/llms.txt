@@ -5,6 +5,7 @@
 ## Makers
 - [Light box](https://epix3d.com/makers/lightbox/): pictures, text and shapes in a framed box that glows; LED strips glue in through the back cover.
 - [Keychain](https://epix3d.com/makers/lightbox/?mode=keychain): a picture or name traced into a flat multi-colour tag with a ring hole.
+- [Name tag](https://epix3d.com/makers/lightbox/?mode=nametag): your name on a small two-colour badge; glue a pin or magnet on the back.
 - [Sign](https://epix3d.com/makers/lightbox/?mode=sign): raised lettering on a plate for doors, desks and shelves.
 - [Lithophane](https://epix3d.com/makers/lightbox/?mode=litho): a photo as a thin plate that shows the picture when lit from behind.
 - [License plate](https://epix3d.com/makers/license-plate/): custom plate frames and novelty plates with your own text.

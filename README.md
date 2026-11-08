@@ -32,7 +32,13 @@ menu and Maker Studio tabs (`index.html`, `assets/app.js`, `api.js`, `brands.js`
 |---|---|
 | Home `/`, Makers `/makers/`, Pricing, FAQ, Privacy, Terms, 404 | `site/pages/*.html` wrapped in `site/layout.html` |
 | Account `/account/`, My projects `/projects/` | same, filled in by `assets/site.js` |
-| The makers `/makers/lightbox/` (also `?mode=keychain`, `sign`, `litho`), `/makers/license-plate/`, `/makers/nameplate/`, `/makers/hype-chain/` | `makers/` |
+| The makers `/makers/lightbox/` (also `?mode=keychain`, `nametag`, `sign`, `litho`), `/makers/ai3d/`, `/makers/license-plate/`, `/makers/nameplate/`, `/makers/hype-chain/` | `makers/` |
+
+**One site, one link.** Every maker lives here and nowhere else: no maker gets its own address, app or QR
+code (Aaron, 8 Nov 2026). Each maker page carries the same EPIX3D bar with an **All makers** switcher
+(the list comes from `site/makers.json`, published as `/assets/makers.json`), and the same look through
+`assets/epix-theme.css`. The brand (logo files, colours, type, the one QR code) is in `BRAND.md` and
+`assets/brand/`. three.js, its controls and JSZip are served from `makers/vendor/`, not from outside CDNs.
 
 `scripts/build.mjs` builds `dist/` (pages, `assets/`, `makers/`, `sitemap.xml`, `robots.txt`, `llms.txt`).
 The maker cards come from `site/makers.json`; their pictures (`assets/img/makers/`) are real renders
@@ -83,6 +89,7 @@ npm install
 npm run check        # syntax check
 npm test             # API tests
 npm run build
+npm run check:links  # every same-site link, script and picture in dist/ points at a real file
 PLAYWRIGHT_PATH=<folder with node_modules/playwright> npm run test:ui   # browser test at 1280 and 390
 npm run dev          # local Worker
 ```

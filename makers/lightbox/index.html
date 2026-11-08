@@ -1,19 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-maker="lightbox">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Light Box, Keychain, Sign and Lithophane Maker | EPIX3D</title>
-<meta name="description" content="Design a glowing light box, a multi-colour keychain, a raised sign or a photo lithophane in your browser. Order a print made in Charleston, SC, or download the 3MF with Platinum.">
+<title>Light Box, Keychain, Name Tag, Sign and Lithophane Maker | EPIX3D</title>
+<meta name="description" content="Design a glowing light box, a multi-colour keychain, a name tag, a raised sign or a photo lithophane in your browser. Order a print made in Charleston, SC, or download the 3MF with Platinum.">
 <link rel="canonical" href="https://epix3d.com/makers/lightbox/">
-<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Light Box, Keychain, Sign and Lithophane Maker | EPIX3D"><meta property="og:description" content="Design a glowing light box, a multi-colour keychain, a raised sign or a photo lithophane in your browser. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/lightbox/"><meta property="og:image" content="https://epix3d.com/assets/img/og.png">
+<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Light Box, Keychain, Name Tag, Sign and Lithophane Maker | EPIX3D"><meta property="og:description" content="Design a glowing light box, a multi-colour keychain, a name tag, a raised sign or a photo lithophane in your browser. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/lightbox/"><meta property="og:image" content="https://epix3d.com/assets/img/og.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@500;600&display=swap">
 <link rel="stylesheet" href="/assets/epix-bridge.css">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;600;800&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@400;700&family=Montserrat:wght@400;700;800&family=Roboto+Slab:wght@400;700&family=Playfair+Display:wght@400;700;800&family=Great+Vibes&display=swap">
-<script>try{var t=parent.document.documentElement.dataset.theme||localStorage.getItem("bc-theme");if(t)document.documentElement.dataset.theme=String(t).replace(/"/g,"")}catch(e){}</script>
 <style>
 /* light, neutral editor: white bars and panels, grey canvas, near-black buttons. Dark only when the console's theme asks for it. */
 :root{--bg:#f5f5f5;--card:#fff;--raise:#f2f2f3;--line:#e4e4e6;--line2:#cfcfd3;--fg:#1a1a1a;--muted:#6e6e73;--accent:#1a1a1a;--accent-fg:#fff;--sel:#3d6be0;--stage:#ececec;--bed:#b3b3b6;--field:#f4f4f5;--warn:#a35a00;--ok:#2d7a46;color-scheme:light}
@@ -219,7 +218,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stro
   .modal.wide .dlg-b{padding:14px}.dlg-f{padding:12px 16px}.dlg-f .chk{flex:1 1 100%}.dlg-f .grow{display:none}.dlg-f .btn{flex:1}.drafts{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.draft.new{min-height:170px}
 }
 </style>
-</head>
+<link rel="stylesheet" href="/assets/epix-theme.css"></head>
 <body>
 <!-- Copy of tools/maker/index.html from Adub843/Business-console, plus the back bar. Change it there first, then copy it here. -->
 <header id="epix-bar"></header>
@@ -235,9 +234,14 @@ function dlBlob(name,blob){name=String(name||"file").replace(/[\\/:*?"<>|]+/g,"-
 /* ================= MAKER: Light box · Keychain · Sign · Lithophane — pictures, text and shapes in, Bambu-ready 3MF/STL out =================
    Layout: Image, Text, Shape and Layer on a narrow rail (small pop-overs), the design on the printer bed in the middle,
    the Overall settings (or the selected element's settings) on the right. Design and Preview at the top. A bottom bar on phones. */
-const MK_MODES=[["lightbox","Light box","Pictures, text and shapes glowing in a box. The lights glue inside through the back cover."],["keychain","Keychain","Picture or text traced into a flat multi-colour tag with a ring hole."],["sign","Sign","Raised lettering on a plate. Name plates, badges, shelf signs."],["litho","Lithophane","Photo as a thin plate that shows the picture when lit from behind."]];
+const MK_MODES=[["lightbox","Light box","Pictures, text and shapes glowing in a box. The lights glue inside through the back cover."],["keychain","Keychain","Picture or text traced into a flat multi-colour tag with a ring hole."],["nametag","Name tag","Your name on a small two-colour badge. Glue a pin or magnet on the back, or add a lanyard hole."],["sign","Sign","Raised lettering on a plate. Name plates, badges, shelf signs."],["litho","Lithophane","Photo as a thin plate that shows the picture when lit from behind."]];
 /* MK_SOLO: the light box only (when the page carries the old studio back bar). On epix3d.com every mode is open and ?mode= picks one. */
 const MK_SOLO=!!document.getElementById("ds-back-bar");
+/* Name tag is the keychain engine with badge defaults: a rounded plate about 76 x 26 mm with the name on it, no ring tab. */
+function mkKC(m){ m=m||MK.mode; return m==="keychain"||m==="nametag"; }
+function mkNameTagStart(){ if(MK.mode!=="nametag"||MK.els.length) return; Object.assign(MK,{shape:"round",width:76,height:26,ring:false,keyT:3,border:2,res:0.2,colors:2});
+  const e={id:mkId("t"),type:"text",text:"YOUR NAME",font:"Archivo Black",weight:400,size:0.34,align:"center",x:0.5,y:0.5,rot:0,color:"#1d1d1f",spacing:0,stroke:0,strokeColor:"#1d1d1f"};
+  MK.els.push(e); MK.sel=null; MK.comp=null; mkFontReady(e.font,e.weight); }
 /* background (the outline the box or tag follows) */
 const MK_SHAPES=[["trace","None"],["rect","Square"],["round","Rounded square"],["circle","Circle"]];
 const MK_ELSHAPES=[["circle","Circle"],["rect","Rectangle"],["triangle","Triangle"],["star","Star"],["sparkle","Sparkle"],["heart","Heart"],["round","Rounded"],["hex","Hexagon"]];
@@ -265,7 +269,7 @@ const MK_SAVE=["mode","shape","bgType","width","height","res","colors","border",
 let mkUid=0; const mkId=p=>p+(++mkUid).toString(36)+Date.now().toString(36).slice(-4);
 
 function mkRound(n,d){ return Math.round(n*(d||10))/(d||10); }
-function mkTitle(){ return ({lightbox:"Light box",keychain:"Keychain",sign:"Sign",litho:"Lithophane"})[MK.mode]||"Maker"; }
+function mkTitle(){ return ({lightbox:"Light box",keychain:"Keychain",nametag:"Name tag",sign:"Sign",litho:"Lithophane"})[MK.mode]||"Maker"; }
 function mkDefName(){ return mkTitle()+" design"; }
 /* the weight to draw a font in: the asked weight if that font has it, else its heaviest (holds up best at 0.4 mm) */
 function mkFontW(f,w){ const x=MK_FONTS.find(a=>a[0]===f); if(!x) return +w||700; return x[2].includes(+w)?+w:x[2][x[2].length-1]; }
@@ -313,7 +317,7 @@ const mkSl=(id,label,min,max,step,val,unit)=>`<div class="sl"><label for="${id}"
 const mkSegw=(id,opts,cur)=>`<div class="segw" id="${id}" role="group">${opts.map(o=>`<button type="button" data-v="${o[0]}" aria-pressed="${cur===o[0]}">${o[1]}</button>`).join("")}</div>`;
 const mkAcc=(sec,title,body,modes,pv)=>`<section class="acc" data-sec="${sec}" data-modes="${modes}"${pv?" data-pv":""}><button type="button" class="ah" aria-expanded="false"><span>${title}</span>${mkIc("chev",16)}</button><div class="ab">${body}</div></section>`;
 function lbMount(){ const m=document.getElementById("lbMount"); if(!m) return; MK.node=m; MK.three=null;
-  if(!MK.mounted){ MK.mounted=true; if(!MK_SOLO) try{ const q=new URLSearchParams(location.search).get("mode"); if(MK_MODES.some(x=>x[0]===q)) MK.mode=q; }catch{} }
+  if(!MK.mounted){ MK.mounted=true; if(!MK_SOLO) try{ const q=new URLSearchParams(location.search).get("mode"); if(MK_MODES.some(x=>x[0]===q)) MK.mode=q; }catch{} mkNameTagStart(); }
   const tools=[["image","Image",ICON.image],["text","Text",ICON.text],["shape","Shape",ICON.shape],["layer","Layer",ICON.layers],["settings","Settings",ICON.sliders]];
   const opt=(list,cur)=>list.map(o=>`<option value="${o[0]}" ${String(cur)===String(o[0])?"selected":""}>${o[1]}</option>`).join("");
   m.innerHTML=`<div class="ed" id="mkEd" data-dp="${MK.dp}">
@@ -374,12 +378,12 @@ function lbMount(){ const m=document.getElementById("lbMount"); if(!m) return; M
         <div id="mkOverallBody">
           ${MK_SOLO?"":`<label class="fld ph-mode">What to make<select id="mkModeSel">${opt(MK_MODES.map(x=>[x[0],x[1]]),MK.mode)}</select></label>`}
           ${mkAcc("signtext","Text",`<div class="stack" style="margin-top:12px"><label class="fld">Sign text<input type="text" id="mkText" maxlength="40" placeholder="e.g. THE LEWIS FAMILY" value="${esc(MK.text)}"></label><label class="fld">Font<select id="mkFont">${opt(MK_FONTS.map(f=>[f[0],f[0]]),MK.font)}</select></label></div>`,"sign")}
-          ${mkAcc("color","Color",`<div id="lbPal"></div><label class="fld mk-color" style="margin-top:12px">Colours taken from the image<select id="mkColors">${opt([2,3,4,5,6,8].map(n=>[n,n]),MK.colors)}</select></label>`,"lightbox keychain sign litho",1)}
+          ${mkAcc("color","Color",`<div id="lbPal"></div><label class="fld mk-color" style="margin-top:12px">Colours taken from the image<select id="mkColors">${opt([2,3,4,5,6,8].map(n=>[n,n]),MK.colors)}</select></label>`,"lightbox keychain nametag sign litho",1)}
           ${mkAcc("background","Background",`<div class="k">Type</div>${mkSegw("mkBgType",[["standard","Standard shape"],["outline","Outline"]],MK.bgType)}
             <div class="tiles" id="mkBgShape"${MK.bgType==="outline"?" hidden":""}>${MK_SHAPES.map(s=>`<button type="button" data-v="${s[0]}" title="${s[1]}" aria-label="${s[1]}" aria-pressed="${MK.shape===s[0]}">${MK_BG_SVG[s[0]]}</button>`).join("")}</div>
             <div id="mkBgOutline"${MK.bgType==="outline"?"":" hidden"}>${mkSl("mkGap","Margin round the design",1,15,0.5,MK.gap)}</div>
             <p class="hint" id="mkShapeHint" hidden>Tracing needs an image or a shape, so text on its own gets a rounded outline.</p>
-            <p class="hint">None follows the edge of your design. Outline follows it with a margin. A shape puts the design on a square, rounded or round panel.</p>`,"lightbox keychain")}
+            <p class="hint">None follows the edge of your design. Outline follows it with a margin. A shape puts the design on a square, rounded or round panel.</p>`,"lightbox keychain nametag")}
           ${mkAcc("hole","Hole",`<div class="k">Type</div><div class="tiles lbl" id="mkHoleType">${[["rect","Rectangle"],["circle","Circle"],["key","Key"]].map(t=>`<button type="button" data-v="${t[0]}" aria-pressed="${MK.holeType===t[0]}">${MK_HOLE_SVG[t[0]]}<span>${t[1]}</span></button>`).join("")}</div>
             <div class="k">Size</div><div class="g2"><label class="fld in"><b>W</b><input type="number" id="mkHoleW" min="4" max="80" step="0.5" value="${MK.holeW}" aria-label="Hole width in mm"><i>mm</i></label><label class="fld in"><b>H</b><input type="number" id="mkHoleH" min="4" max="80" step="0.5" value="${MK.holeH}" aria-label="Hole height in mm"><i>mm</i></label></div>
             <button type="button" class="btn primary block" id="mkHoleAdd" style="margin-top:12px">Add hole</button>
@@ -390,13 +394,13 @@ function lbMount(){ const m=document.getElementById("lbMount"); if(!m) return; M
             <div class="mk-keychain">${mkSl("mkKeyT","Thickness",2,6,0.5,MK.keyT)}${mkSl("mkBorder","Border",1,15,0.5,MK.border)}<label class="chk" style="margin-top:8px"><input type="checkbox" id="mkRing" ${MK.ring?"checked":""}> Ring hole tab</label></div>
             <div class="mk-sign">${mkSl("mkTextT","Letter height",0.4,4,0.2,MK.textT)}${mkSl("mkPlateT","Plate thickness",2,8,0.5,MK.plateT)}</div>
             <div class="mk-litho">${mkSl("lbMin","Thinnest",0.4,2,0.1,MK.minT)}${mkSl("lbMax","Thickest",1.5,6,0.1,MK.maxT)}${mkSl("lbArc","Curve",0,180,10,MK.arc,"°")}</div>
-            <label class="fld mk-notlitho" style="margin-top:12px">Detail<select id="mkRes">${opt([["0.6","Fast · 0.6 mm"],["0.4","Normal · 0.4 mm"],["0.3","Fine · 0.3 mm"]],MK.res)}</select></label>
-            <label class="fld mk-litho" style="margin-top:12px">Detail<select id="lbRes">${opt([["0.4","Fast · 0.4 mm"],["0.3","Normal · 0.3 mm"],["0.2","Fine · 0.2 mm"]],MK.lres)}</select></label>`,"lightbox keychain sign litho",1)}
+            <label class="fld mk-notlitho" style="margin-top:12px">Detail<select id="mkRes">${opt([["0.6","Fast · 0.6 mm"],["0.4","Normal · 0.4 mm"],["0.3","Fine · 0.3 mm"],["0.2","Extra fine · 0.2 mm (small pieces)"]],MK.res)}</select></label>
+            <label class="fld mk-litho" style="margin-top:12px">Detail<select id="lbRes">${opt([["0.4","Fast · 0.4 mm"],["0.3","Normal · 0.3 mm"],["0.2","Fine · 0.2 mm"]],MK.lres)}</select></label>`,"lightbox keychain nametag sign litho",1)}
           ${mkAcc("structure","Structure",`<div class="k">Structure type</div>${mkSegw("mkStruct",[["default","Default"],["reversed","Reversed"]],MK.reverse?"reversed":"default")}
             <label class="chk" style="margin-top:8px"><input type="checkbox" id="mkDiffuse" ${MK.diffuse?"checked":""}> Diffusion layer</label><label class="chk"><input type="checkbox" id="mkReflect" ${MK.reflect?"checked":""}> Reflection layer</label>
             <p class="hint">Reversed prints the background solid in the side colour, so only the design lights up. The diffusion layer spreads the light evenly; the reflection layer lines the walls in white so the box glows brighter.</p>`,"lightbox",1)}
           ${mkAcc("base","Base",`<div style="margin-top:12px">${mkSegw("mkBase",[["with","With base"],["without","Without base"]],MK.stand?"with":"without")}</div><p class="hint">The base is a stand that prints next to the back cover and holds the box upright.</p>`,"lightbox")}
-          ${mkAcc("check","Print check",`<dl class="kv" id="mkSize"></dl><ul class="pcheck" id="mkCheck"></ul><div class="lbstat small muted" id="lbStat"></div><div id="lbDl"></div>`,"lightbox keychain sign litho",1)}
+          ${mkAcc("check","Print check",`<dl class="kv" id="mkSize"></dl><ul class="pcheck" id="mkCheck"></ul><div class="lbstat small muted" id="lbStat"></div><div id="lbDl"></div>`,"lightbox keychain nametag sign litho",1)}
         </div>
       </div>
     </aside>
@@ -470,7 +474,7 @@ function mkMenu(btn,items,fn){ mkMenuClose(); const r=btn.getBoundingClientRect(
   mn.onclick=e=>{ const b=e.target.closest("[data-v]"); if(!b) return; mkMenuClose(); fn(b.dataset.v); };
   mn.onkeydown=e=>{ if(e.key==="Escape"){ e.stopPropagation(); mkMenuClose(); btn.focus(); } }; const f=mn.querySelector("button"); if(f) f.focus(); }
 function mkMenuClose(){ const x=document.getElementById("mkFloatMenu"); if(x) x.remove(); }
-function mkSetMode(md){ if(!MK_MODES.some(x=>x[0]===md)) return; const m=MK.node; mkFlush(); MK.mode=md;
+function mkSetMode(md){ if(!MK_MODES.some(x=>x[0]===md)) return; const m=MK.node; mkFlush(); MK.mode=md; mkNameTagStart();
   m.querySelectorAll("#mkModes [data-mode]").forEach(x=>x.setAttribute("aria-checked",x.dataset.mode===md)); m.querySelector("#mkModeBtn span").textContent=mkTitle(); m.querySelector("#mkModes").hidden=true; m.querySelector("#mkModeBtn").setAttribute("aria-expanded","false");
   const s=m.querySelector("#mkModeSel"); if(s) s.value=md; m.querySelector("#lbName").placeholder=mkDefName();
   if(md==="sign") MK.sec="signtext"; else if(MK.sec==="signtext") MK.sec="color";
@@ -494,7 +498,7 @@ function mkRailState(){ const m=MK.node; if(!m) return; m.querySelectorAll("#mkR
 function mkAccUI(){ const m=MK.node; if(!m) return; m.querySelectorAll("#mkOverallBody .acc").forEach(s=>{ const o=s.dataset.sec===MK.sec; s.classList.toggle("open",o); s.querySelector(".ah").setAttribute("aria-expanded",o); }); if(MK.L!==undefined) mkInksUI(MK.L); }
 function mkBgUI(){ const m=MK.node; m.querySelectorAll("#mkBgType [data-v]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===MK.bgType)); m.querySelectorAll("#mkBgShape [data-v]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===MK.shape)); m.querySelector("#mkBgShape").hidden=MK.bgType==="outline"; m.querySelector("#mkBgOutline").hidden=MK.bgType!=="outline"; }
 function mkShowOpts(){ const m=MK.node; if(!m) return; const md=MK.mode;
-  const rule={"mk-lightbox":md==="lightbox","mk-keychain":md==="keychain","mk-sign":md==="sign","mk-litho":md==="litho","mk-color":md==="lightbox"||md==="keychain","mk-notsign":md!=="sign","mk-notlitho":md!=="litho"};
+  const rule={"mk-lightbox":md==="lightbox","mk-keychain":mkKC(md),"mk-sign":md==="sign","mk-litho":md==="litho","mk-color":md==="lightbox"||mkKC(md),"mk-notsign":md!=="sign","mk-notlitho":md!=="litho"};
   m.querySelectorAll(".ed-props [class*='mk-'], .pop [class*='mk-']").forEach(x=>{ const cls=[...x.classList].filter(c=>c in rule); if(cls.length) x.hidden=!cls.some(c=>rule[c]); });
   const vis=[]; m.querySelectorAll("#mkOverallBody .acc").forEach(s=>{ const on=s.dataset.modes.split(" ").includes(md); s.hidden=!on; if(on) vis.push(s.dataset.sec); });
   if(MK.sec&&!vis.includes(MK.sec)) MK.sec=vis[0];
@@ -754,7 +758,7 @@ function mkLayout(){ const src=mkSource(); if(!src) return null; const {w,h}=lbD
       for(const h of MK.holes){ const cx=c1-h.x*(c1-c0), cy=r0+h.y*(r1-r0); const hm=mkHoleMask(h,C,R,cx,cy,res); let off=false; for(let i=0;i<C*R;i++) if(hm[i]&&!inner[i]){ off=true; break; } plate=mkSub(plate,hm); ring=mkSub(ring,hm); L.holes.push({h,cx,cy,off}); }
       L.lidPlate=plate; L.lidRing=ring;
       L.parts.push({name:"Back cover",color:bc,mask:plate,z0:0,z1:mkZ(MK.lidT),lid:true}); L.parts.push({name:"Back cover rim",color:bc,mask:ring,z0:mkZ(MK.lidT),z1:mkZ(MK.lidT+6),lid:true}); } }
-  else if(MK.mode==="keychain"){ const pad=Math.ceil(cellsOf(gapE+MK.border+12))+2; const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; let S0=P.m; const q=mkQuant(d,shape,cols,rows,MK.colors); L.cleaned=mkClean(q.idx,shape,cols,rows,minRun); const ik=mkInks(q); const idx=new Uint8Array(C*R); for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) idx[(r+pad)*C+c+pad]=ik.idx[r*cols+c];
+  else if(mkKC()){ const pad=Math.ceil(cellsOf(gapE+MK.border+12))+2; const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; let S0=P.m; const q=mkQuant(d,shape,cols,rows,MK.colors); L.cleaned=mkClean(q.idx,shape,cols,rows,minRun); const ik=mkInks(q); const idx=new Uint8Array(C*R); for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) idx[(r+pad)*C+c+pad]=ik.idx[r*cols+c];
     const area=gapE>0?mkDilate(S0,C,R,cellsOf(gapE)):S0; let base=mkDilate(area,C,R,cellsOf(MK.border)); if(MK.ring){ let cx=0,n=0,top=R; for(let r=0;r<R;r++) for(let c=0;c<C;c++) if(base[r*C+c]){ if(r<top) top=r; cx+=c; n++; } cx=n?cx/n:C/2; const cy=top-cellsOf(2.5); const tab=mkDisk(C,R,cx,cy,cellsOf(5.5)); for(let i=0;i<C*R;i++) base[i]=base[i]||tab[i]?1:0; const hole=mkDisk(C,R,cx,cy,cellsOf(2.2)); base=mkSub(base,hole); }
     Object.assign(L,{cols:C,rows:R,pad,palette:ik.palette,inks:ik.inks,idx,shape:S0,outer:base,area,mat:mkSub(area,S0)});
     colourParts(ik,S0,idx,C,R,mkZ(MK.imgT));
@@ -778,7 +782,7 @@ function mkChecks(L){ const out=[]; const ok=t=>out.push(["ok",t]), warn=t=>out.
     for(const x of L.holes||[]){ const n=x.h.type==="circle"?`${x.h.w} mm round hole`:x.h.type==="rect"?`${x.h.w} × ${x.h.h} mm hole`:"Keyhole"; (x.off?warn:ok)(x.off?`${n} runs past the inside of the box. Drag it inside the frame on the design.`:`${n} in the back cover${x.h.type==="key"?" for hanging on a screw":" for gluing in the lights and running the cable"}.`); }
     if(MK.stand) ok("Base prints on plate 2 with the back cover and holds the box upright.");
     L.palette.forEach((c,i)=>{ if(mkLum(c)<0.12) info(`Colour ${i+1} is very dark and will look almost black when lit.`); }); }
-  if(MK.mode==="keychain") ok(`${MK.keyT} mm thick${MK.ring?", 4.4 mm ring hole":""}.`);
+  if(mkKC()) ok(`${MK.keyT} mm thick${MK.ring?", 4.4 mm ring hole":""}.`);
   if(MK.mode==="sign") (L.letterMm>=minLetter?ok:warn)(L.letterMm>=minLetter?`Letters about ${L.letterMm} mm tall.`:`Letters are about ${L.letterMm} mm tall. Make the sign wider so they're at least ${minLetter} mm.`);
   if(MK.mode!=="sign"){ for(const e of MK.els){ if(e.type!=="text"||!(e.text||"").trim()) continue; const mm=mkRound(e.size*L.h*0.7); const nm=String(e.text).split("\n")[0]; (mm>=minLetter?ok:warn)(mm>=minLetter?`"${nm}" letters about ${mm} mm tall.`:`"${nm}" letters are about ${mm} mm tall. Make them at least ${minLetter} mm so they print clean with a ${nz} mm nozzle.`); }
     if(L.cleaned){ const pic=L.shape.reduce((s,v)=>s+v,0)||1; const pct=L.cleaned/pic; (pct>0.03?warn:info)(pct>0.03?`A lot of fine detail is thinner than ${mf} mm (the finest a ${nz} mm nozzle prints) and was merged into nearby colours. Make it bigger or use bolder art.`:`${L.cleaned} tiny spots thinner than ${mf} mm were merged into the colour next to them so a ${nz} mm nozzle can print them.`); }
@@ -795,7 +799,7 @@ function lbPreviewNow(){ const m=MK.node; if(!m) return; const st=m.querySelecto
   const row=(a,b)=>`<dt>${a}</dt><dd>${b}</dd>`;
   if(MK.mode==="litho") size.innerHTML=row("Size",`${L.w} × ${L.h} mm`)+row("Thickness",`${MK.minT}–${mkRound(Math.max(MK.minT+0.3,MK.maxT))} mm`)+row("Prints","standing up");
   else { const W=mkRound(L.cols*L.res), H=mkRound(L.rows*L.res); const nh=(L.holes||[]).length;
-    size.innerHTML=row("Outside",`${W} × ${H} mm`)+(MK.mode==="lightbox"?row("Depth",`${MK.depth} mm`)+row("Back cover",MK.lid?(nh?`${nh} hole${nh>1?"s":""}`:"no holes"):"none")+(MK.stand?row("Base","yes"):""):MK.mode==="keychain"?row("Thickness",`${MK.keyT} mm`):row("Thickness",`${mkZ(MK.plateT+MK.textT)} mm`))+row("Prints",MK.mode==="sign"?"face up":"face down"); }
+    size.innerHTML=row("Outside",`${W} × ${H} mm`)+(MK.mode==="lightbox"?row("Depth",`${MK.depth} mm`)+row("Back cover",MK.lid?(nh?`${nh} hole${nh>1?"s":""}`:"no holes"):"none")+(MK.stand?row("Base","yes"):""):mkKC()?row("Thickness",`${MK.keyT} mm`):row("Thickness",`${mkZ(MK.plateT+MK.textT)} mm`))+row("Prints",MK.mode==="sign"?"face up":"face down"); }
   mkInksUI(L);
   ck.innerHTML=mkChecks(L).map(([k,t])=>`<li class="${k}">${ICON[k]}<span>${esc(t)}</span></li>`).join("");
   st.textContent=MK.mode==="litho"?"Prints standing up in white PLA.":MK.mode==="sign"?"Prints face up.":"Prints face down, colours first.";
@@ -850,7 +854,7 @@ function mkDrawDesign(ctx,W,H,L,dpr){ const b=mkBed(); ctx.fillStyle=mkCss("--st
   const s=k*L.res; const F={s,w:L.cols*s,h:L.rows*s,ox:cx-L.cols*s/2,oy:cy-L.rows*s/2}; MK.vp=F;
   if(MK.mode==="sign"||(MK.frame&&MK.mode==="lightbox")) mkDrawFront(ctx,W,H,L,"off",dpr,F);
   else { /* the outline the box or tag follows, faint, then the design exactly as placed */
-    ctx.drawImage(mkUp(mkCells(L.cols,L.rows,i=>L.outer[i]?[0,0,0,MK.mode==="keychain"?38:20]:null),F.w,F.h),F.ox,F.oy);
+    ctx.drawImage(mkUp(mkCells(L.cols,L.rows,i=>L.outer[i]?[0,0,0,mkKC()?38:20]:null),F.w,F.h),F.ox,F.oy);
     const comp=mkComposite(); if(comp){ ctx.save(); ctx.imageSmoothingQuality="high"; ctx.drawImage(comp.img,F.ox+L.pad*s,F.oy+L.pad*s,L.cols0*s,L.rows0*s); ctx.restore(); } }
   if(MK.mode==="lightbox"&&MK.lid) mkDrawHolesF(ctx,F,L,dpr);
   mkDrawSel(ctx,dpr); }
