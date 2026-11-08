@@ -89,3 +89,15 @@
 :root:root:root[data-maker="hype-chain"] { --accent: var(--epx-ink); --accent2: #2b2e36; --accent-ink: #fff; --accent-soft: rgba(21, 23, 28, .07); --olive: #3d4350; }
 :root[data-maker="hype-chain"] .top .brand { display: none; }
 :root[data-maker] input[type="range"] { accent-color: var(--epx-ink); }
+
+/* One font in the Nameplate and Hype chain makers too: no condensed uppercase labels, no monospace UI text,
+   and plain solid drop zones instead of dashed boxes. */
+:root:root:root[data-maker="nameplate"] { --f-label: var(--epx-font); --f-display: var(--epx-font); }
+:root:root:root[data-maker="hype-chain"] { --f-mono: var(--epx-font); }
+:root[data-maker="nameplate"] :is(h1.brandmark small, .label, h3, .cat-tab, .chip, .tag, .tab, .tabs .tool, .seg button, .small, .swatch b, .imp-imgs figcaption, .stage .hint, .stage .busy, table.mesh th) {
+  text-transform: none; letter-spacing: 0; }
+:root[data-maker="nameplate"] h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 650; letter-spacing: -.02em; }
+:root[data-maker="nameplate"] .drop, :root[data-maker="hype-chain"] .upzone {
+  border: 1px solid var(--epx-line); background: var(--epx-cream-2); border-radius: 10px; }
+:root[data-maker="nameplate"] .drop:hover, :root[data-maker="hype-chain"] .upzone:hover { border-color: var(--epx-line-2); background: var(--epx-sand); }
+:root[data-maker] input[type="number"], :root[data-maker="hype-chain"] .status { font-variant-numeric: tabular-nums; }
