@@ -297,7 +297,7 @@ await test("pages may post to the Charleston3D cart (orders, Platinum); nowhere 
     const csp = (await call(e, p)).headers.get("content-security-policy");
     assert.match(csp, /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com$/, p);
   }
-  assert.match((await call(e, "/")).headers.get("content-security-policy"), /script-src 'self';/, "site pages run no inline script");
+  assert.match((await call(e, "/")).headers.get("content-security-policy"), /script-src 'self' https:\/\/static\.cloudflareinsights\.com;/, "site pages run no inline script, only the Cloudflare analytics beacon");
   assert.equal((await call(e, "/makers/")).headers.get("x-frame-options"), "DENY", "the makers list is a normal page");
 });
 

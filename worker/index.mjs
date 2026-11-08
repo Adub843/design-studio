@@ -18,8 +18,9 @@ export const HQ_URL = "https://claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK";
 
 // The Charleston3D store: ordered prints and Platinum check out there, so pages may post to its cart.
 const CART = "https://charleston3d.com https://www.charleston3d.com";
+// Cloudflare Web Analytics (auto-injected beacon) is allowed on every page so visits are counted.
 export const SITE_HEADERS = {
-  "content-security-policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self' ${CART}`,
+  "content-security-policy": `default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self' ${CART}`,
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
   "x-frame-options": "DENY",
@@ -32,7 +33,7 @@ export const SITE_HEADERS = {
 export const MAKER_HEADERS = {
   ...SITE_HEADERS,
   "x-frame-options": "SAMEORIGIN",
-  "content-security-policy": `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self' ${CART}`,
+  "content-security-policy": `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self' ${CART}`,
 };
 export const PLATE_HEADERS = MAKER_HEADERS;
 // The Photo to 3D Maker runs its 3D engine (ONNX Runtime, WebAssembly and WebGPU) in the visitor's browser,
