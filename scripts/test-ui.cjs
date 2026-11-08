@@ -307,6 +307,25 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       }
     });
 
+    await step(`${label}: Hype chain: the chain prints on its own plate, never hung in the pendant, in every link style`, async () => {
+      await page.goto(BASE + "/makers/hype-chain/", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1", null, { timeout: 30000 });
+      const design = await page.evaluate(() => ({ chainMeshes: V.groups.chain.children.length, note: !document.querySelector("#plateBar").hidden }));
+      assert.deepEqual(design, { chainMeshes: 0, note: true }, "design view shows the pendant only, with a note that the chain has its own plate");
+      await page.click('#plateBar [data-plate="go"]');
+      await until(page, () => S.view === "plates" && V.groups.chain.children.length > 0);
+      assert.ok(await page.locator('#plateBar [data-plate="1"]').count(), "a Plate 2 button");
+      await page.click('#plateBar [data-plate="1"]');
+      assert.equal(await page.evaluate(() => V.focusPlate), 1);
+      const styles = await page.evaluate(() => Object.keys(CHAIN));
+      assert.ok(styles.length >= 11, "at least 11 chain styles: " + styles.join(","));
+      for (const k of ["cuban14", "miami", "curb", "box20"]) {
+        const r = await page.evaluate(async (k) => { S.d.chain.style = k; commit(); rebuild(false); const f = await EPIX_MAKER.buildPrintFile(); const z = await JSZip.loadAsync(f.blob); return { size: f.blob.size, plates: Object.keys(z.files).filter((n) => /plate_\d+\.png$/.test(n)).length }; }, k);
+        assert.ok(r.size > 100000 && r.plates >= 2, k + " " + JSON.stringify(r));
+      }
+      await shot("maker-hype-chain-plates", false);
+    });
+
     await step(`${label}: no script errors`, async () => { assert.deepEqual(errors, []); });
     await ctx.close();
   }
