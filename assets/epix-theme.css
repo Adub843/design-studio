@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap");
 /* EPIX3D studio theme: one look for every maker.
    Each maker was built on its own palette with its own variable names. This file maps all of them
    onto the EPIX3D brand (the same tokens as assets/site.css), so the studio reads as one product.
@@ -6,27 +7,27 @@
 
 :root:root:root {
   /* brand tokens */
-  --epx-cream: #fff8ef;
-  --epx-cream-2: #f8efe1;
-  --epx-sand: #f3e8d6;
-  --epx-stage: #f1e9dc;
-  --epx-stage-2: #e7dccb;
-  --epx-line: #eadfcd;
-  --epx-line-2: #dccfb9;
-  --epx-ink: #23203a;
-  --epx-muted: #5e5a73;
-  --epx-dim: #8a8499;
-  --epx-tangerine: #ff6b3d;
-  --epx-tangerine-2: #ff8259;
-  --epx-sun: #ffc23d;
-  --epx-mint: #23b5a0;
-  --epx-berry: #e84a7f;
-  --epx-sky: #4c7cf3;
+  --epx-cream: #ffffff;
+  --epx-cream-2: #f5f4f1;
+  --epx-sand: #eeece8;
+  --epx-stage: #f3f2ef;
+  --epx-stage-2: #e6e4df;
+  --epx-line: #e6e4df;
+  --epx-line-2: #d4d1ca;
+  --epx-ink: #15171c;
+  --epx-muted: #5d636f;
+  --epx-dim: #8b909a;
+  --epx-tangerine: #e0512a;
+  --epx-tangerine-2: #c7441f;
+  --epx-sun: #15171c;
+  --epx-mint: #3d4350;
+  --epx-berry: #3d4350;
+  --epx-sky: #2f5bd3;
   --epx-ok: #1d7a3a;
   --epx-warn: #9a5800;
   --epx-bad: #b4232a;
   --epx-font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --epx-display: "Fredoka", "Inter", system-ui, sans-serif;
+  --epx-display: var(--epx-font);
   color-scheme: light;
 }
 
@@ -34,7 +35,7 @@
 :root:root:root[data-maker="lightbox"], :root:root:root[data-maker="ai3d"] {
   --bg: var(--epx-cream); --card: #fff; --raise: var(--epx-cream-2); --line: var(--epx-line); --line2: var(--epx-line-2);
   --fg: var(--epx-ink); --muted: var(--epx-muted); --accent: var(--epx-ink); --accent-fg: var(--epx-cream);
-  --sel: var(--epx-tangerine); --stage: var(--epx-stage); --bed: #c9bba4; --field: #fffdf9;
+  --sel: var(--epx-tangerine); --stage: var(--epx-stage); --bed: #d4d1ca; --field: #ffffff;
   --warn: var(--epx-warn); --ok: var(--epx-ok); --bad: var(--epx-bad);
 }
 
@@ -42,8 +43,8 @@
 :root:root:root[data-maker="license-plate"] {
   --bg: var(--epx-cream); --surface: #fff; --sunk: var(--epx-cream-2); --line: var(--epx-line); --line-strong: var(--epx-line-2);
   --fg: var(--epx-ink); --muted: var(--epx-muted); --accent: var(--epx-ink); --accent-fg: var(--epx-cream);
-  --accent-soft: #ffe6dc; --focus: var(--epx-tangerine); --ok: var(--epx-ok); --warn: var(--epx-warn); --bad: var(--epx-bad);
-  --note: var(--epx-muted); --stage: var(--epx-stage); --stage-2: var(--epx-stage-2); --chip: rgba(35, 32, 58, .82);
+  --accent-soft: var(--epx-cream-2); --focus: var(--epx-ink); --ok: var(--epx-ok); --warn: var(--epx-warn); --bad: var(--epx-bad);
+  --note: var(--epx-muted); --stage: var(--epx-stage); --stage-2: var(--epx-stage-2); --chip: rgba(21, 23, 28, .82);
   --f-ui: var(--epx-font);
 }
 
@@ -59,8 +60,8 @@
 :root:root:root[data-maker="hype-chain"] {
   --bg: var(--epx-stage); --panel: var(--epx-cream); --panel2: var(--epx-cream-2); --panel3: var(--epx-sand);
   --line: var(--epx-line); --line2: var(--epx-line-2); --ink: var(--epx-ink); --muted: var(--epx-muted); --dim: var(--epx-dim);
-  --accent: var(--epx-tangerine); --accent2: var(--epx-tangerine-2); --accent-ink: var(--epx-ink); --accent-soft: rgba(255, 107, 61, .14);
-  --olive: var(--epx-mint); --olive2: #3cc9b4; --warn: #c27a00; --danger: var(--epx-bad);
+  --accent: var(--epx-tangerine); --accent2: var(--epx-tangerine-2); --accent-ink: var(--epx-ink); --accent-soft: rgba(224, 81, 42, .14);
+  --olive: var(--epx-mint); --olive2: #565d6b; --warn: #c27a00; --danger: var(--epx-bad);
   --f-ui: var(--epx-font);
 }
 
@@ -70,10 +71,21 @@
 /* Hype chain: the 3D stage stays a dark photo bench, so the floating panels on it become light cards */
 :root[data-maker="hype-chain"] .strip, :root[data-maker="hype-chain"] .views, :root[data-maker="hype-chain"] .hint,
 :root[data-maker="hype-chain"] .ledpanel, :root[data-maker="hype-chain"] .busy {
-  background: rgba(255, 248, 239, .95); border-color: var(--epx-line); color: var(--epx-ink);
+  background: rgba(255, 255, 255, .95); border-color: var(--epx-line); color: var(--epx-ink);
   box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
 }
-:root[data-maker="hype-chain"] .dim, :root[data-maker="hype-chain"] .mlabel { background: rgba(255, 248, 239, .96); color: var(--epx-ink); }
-:root[data-maker="hype-chain"] .drop { background: rgba(35, 32, 58, .55); color: #fff; }
+:root[data-maker="hype-chain"] .dim, :root[data-maker="hype-chain"] .mlabel { background: rgba(255, 255, 255, .96); color: var(--epx-ink); }
+:root[data-maker="hype-chain"] .drop { background: rgba(21, 23, 28, .55); color: #fff; }
 :root[data-maker="hype-chain"] .toast { background: var(--epx-ink); color: var(--epx-cream); }
-:root[data-maker="hype-chain"] .menu { box-shadow: 0 12px 30px rgba(35, 32, 58, .18); }
+:root[data-maker="hype-chain"] .menu { box-shadow: 0 12px 30px rgba(21, 23, 28, .18); }
+
+/* One UI font across every maker (the design fonts people pick for their prints are untouched). */
+:root[data-maker] body { font-family: var(--epx-font); }
+:root:root:root[data-maker="hype-chain"] { --f-head: var(--epx-font); }
+:root:root:root[data-maker="nameplate"] { --f-body: var(--epx-font); }
+
+/* Professional look (2026-11-08): one ink action colour across the makers, and no second logo inside a maker. */
+:root:root:root[data-maker="nameplate"] { --accent: var(--epx-ink); --accent-ink: #fff; --pop: var(--epx-ink); }
+:root:root:root[data-maker="hype-chain"] { --accent: var(--epx-ink); --accent2: #2b2e36; --accent-ink: #fff; --accent-soft: rgba(21, 23, 28, .07); --olive: #3d4350; }
+:root[data-maker="hype-chain"] .top .brand { display: none; }
+:root[data-maker] input[type="range"] { accent-color: var(--epx-ink); }

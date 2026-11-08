@@ -115,12 +115,12 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       assert.equal(await page.locator(".makers .mk").count(), 9);
       for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=nametag", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
         assert.equal(await page.locator(`.makers a[href="${href}"]`).count(), 1, href);
-      await page.locator(".makers img").last().scrollIntoViewIfNeeded();
+      for (const img of await page.locator(".makers img").all()) await img.scrollIntoViewIfNeeded(); // lazy images load as they come into view
       await until(page, () => [...document.querySelectorAll(".makers img")].every((i) => i.complete && i.naturalWidth > 0));
-      assert.equal(await page.locator('meta[property="og:image"]').getAttribute("content"), "https://epix3d.com/assets/img/og.png");
+      assert.equal(await page.locator('meta[property="og:image"]').getAttribute("content"), "https://epix3d.com/assets/img/og.jpg");
       const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
       assert.match(ld, /"Organization"/); assert.match(ld, /"WebSite"/);
-      for (const f of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/assets/img/og.png"]) assert.equal((await page.request.get(BASE + f)).status(), 200, f);
+      for (const f of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/assets/img/og.jpg"]) assert.equal((await page.request.get(BASE + f)).status(), 200, f);
       const body = await page.locator("body").innerText();
       assert.doesNotMatch(body, /Design Studio|Elevated Designs|Creative Lab|Netlify/i);
       const links = await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.getAttribute("href")));

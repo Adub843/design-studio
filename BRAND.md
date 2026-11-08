@@ -19,30 +19,32 @@ account, with one Platinum membership. No maker gets its own link, app or QR cod
 | `epix3d-mark.svg` / `.png` | The mark alone: app icons, favicons, stickers, profile pictures |
 | `epix3d-qr.svg` / `.png` | The one QR code, to https://epix3d.com (checked: it decodes at 200 to 1024 px) |
 
-The wordmark is Fredoka SemiBold turned into outlines, so the files look the same without the font.
+The mark is an ink tile with a cube (white top, grey and accent sides). The wordmark is Segoe UI Bold turned into outlines, so the files look the same without the font. Redrawn 2026-11-08 when the site moved to a professional look (CLAUDE.md rule 19).
 
-## Colours
+## Look (2026-11-08)
+
+Professional and calm, like a real product site: a neutral palette, one accent, one UI font, real or
+photoreal product photos. No blobs, cartoon shapes, emoji, pills or playful display fonts (CLAUDE.md rule 19).
 
 | Token | Hex | Use |
 |---|---|---|
-| Ink | `#23203a` | Text, dark buttons, the Platinum card |
-| Cream | `#fff8ef` | Page and studio background |
-| Paper | `#fffdf9` | Cards and fields |
-| Sand | `#f8efe1` / `#f3e8d6` | Raised panels, hover |
-| Line | `#eadfcd` | Borders |
-| Muted | `#5e5a73` | Secondary text |
-| Tangerine | `#ff6b3d` | The main action (Order a print, Export, Go Platinum) and the mark |
-| Sun | `#ffc23d` | Highlights, Platinum badge text |
-| Mint | `#23b5a0` | Success, second accent |
-| Berry | `#e84a7f` | Maker tone |
-| Sky | `#4c7cf3` | Maker tone, links in focus |
-
-Each maker has a tone (its dot in "All makers" and on its card): see `site/makers.json`.
+| Ink | `#15171c` | Text, the main buttons (Start designing, Order a print, Export), the logo tile |
+| White | `#ffffff` | Page, cards, fields, the maker bar |
+| Sunk | `#f5f4f1` / `#eeece8` | Bands, the footer, raised panels, hover |
+| Line | `#e6e4df` / `#d4d1ca` | Borders and dividers |
+| Muted | `#5d636f` | Secondary text |
+| Accent | `#e0512a` | Small labels (kickers, step numbers) and the cube's side in the mark. Never a large fill. |
+| Focus | `#2f5bd3` | Focus rings |
 
 ## Type
 
-- Headings: **Fredoka** 600.
-- Everything else: **Inter** 400 to 700.
+- **Inter** (400 to 700) for everything, headings included (weight 650, tight letter spacing).
+
+## Photos
+
+- `assets/img/hero.jpg`, `assets/img/print-at-home.jpg` and `assets/img/makers/*.jpg` are photoreal product
+  photos made in Kittl (GPT Image 2.5, 2026-11-08): real-looking prints with visible layer lines in natural light.
+  Replace any of them with a real photo of the same piece when one exists. 1200 x 800 JPEG for maker cards.
 
 ## How the makers share the look
 

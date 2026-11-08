@@ -42,7 +42,7 @@ code (Aaron, 8 Nov 2026). Each maker page carries the same EPIX3D bar with an **
 
 `scripts/build.mjs` builds `dist/` (pages, `assets/`, `makers/`, `sitemap.xml`, `robots.txt`, `llms.txt`).
 The maker cards come from `site/makers.json`; their pictures (`assets/img/makers/`) are real renders
-from the makers themselves. Look: warm off-white, Fredoka + Inter, tangerine / sun / mint / berry / sky.
+from the makers themselves. Look: professional and calm: white and warm-grey neutrals, ink buttons, one accent (#e0512a), Inter only, photoreal product photos (see BRAND.md).
 
 Each maker loads `assets/epix-bridge.js`, which adds the EPIX3D bar (Save, Order a print, account),
 saves and opens projects, sends orders, and puts the Platinum gate on every download button. Each maker

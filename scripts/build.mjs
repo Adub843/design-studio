@@ -36,7 +36,7 @@ const ORG = {
 // The maker cards (site/makers.json), shared by the home page and the makers page.
 const MAKERS = JSON.parse(fs.readFileSync(path.join(root, "site", "makers.json"), "utf8"));
 export function makerCards(list = MAKERS, { heading = "h3" } = {}) {
-  return list.map((m) => `<li class="mk tone-${esc(m.tone)}"><a href="${esc(m.href)}"><span class="mk-pic"><img src="${esc(m.img)}" alt="The ${esc(m.name.toLowerCase())} maker" width="640" height="420" loading="lazy" decoding="async"></span><span class="mk-body"><${heading} class="mk-name">${esc(m.name)}</${heading}><span class="mk-blurb">${esc(m.blurb)}</span><span class="mk-go">Start designing <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span></a></li>`).join(String.fromCharCode(10));
+  return list.map((m) => `<li class="mk tone-${esc(m.tone)}"><a href="${esc(m.href)}"><span class="mk-pic"><img src="${esc(m.img)}" alt="The ${esc(m.name.toLowerCase())} maker" width="600" height="400" loading="lazy" decoding="async"></span><span class="mk-body"><${heading} class="mk-name">${esc(m.name)}</${heading}><span class="mk-blurb">${esc(m.blurb)}</span><span class="mk-go">Start designing <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span></a></li>`).join(String.fromCharCode(10));
 }
 
 // A compact list of every maker (the pricing page: "every plan includes every maker").
