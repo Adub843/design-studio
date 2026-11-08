@@ -20,6 +20,20 @@
 ## Ordering
 - Prints are made in Charleston, SC. Checkout runs on the Charleston3D Shopify store, where EPIX3D is sold.
 
+## Where
+- Based in Charleston, SC (city only; no walk-in shop). Serving Charleston, Mount Pleasant, Summerville, North Charleston, West Ashley, James Island, Goose Creek, Hanahan, Daniel Island and the rest of the Lowcountry, plus online orders.
+
+## Common questions
+- Is it free? Designing, saving up to 50 projects and ordering prints are free. Each printed piece is quoted when you order. Platinum is $15 a month and adds 3MF and STL downloads.
+- Do I need to install anything? No. Every maker runs in a web browser on a computer, tablet or phone.
+- Which files can Platinum members download? 3MF files with one part per colour (ready for Bambu Studio) and STL files for any slicer such as Orca, Prusa or Cura.
+- Is my photo uploaded by Photo to 3D? No. The model is made on your own device.
+
+## What EPIX3D doesn't do
+- No app or software to install, and no printer needed to order a print.
+- No fixed price list for printed pieces: each order is quoted.
+- No street address or phone line; contact is by email.
+
 ## More
 - [Pricing](https://epix3d.com/pricing/)
 - [FAQ](https://epix3d.com/faq/)

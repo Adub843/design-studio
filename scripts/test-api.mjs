@@ -616,4 +616,37 @@ await test("config: Platinum shows as not open until its Shopify ids are set", a
   assert.equal(cfg.accounts, true);
 });
 
+await test("SEO: each Light box mode is served from its own page copy, and other addresses are untouched", async () => {
+  const seen = [];
+  const e = env({ ASSETS: { fetch: async (r) => { seen.push(new URL(r.url).pathname); return new Response("<!doctype html>", { headers: { "content-type": "text/html" } }); } } });
+  for (const mode of ["keychain", "nametag", "sign", "litho"]) await call(e, `/makers/lightbox/?mode=${mode}`);
+  await call(e, "/makers/lightbox/?mode=lightbox"); await call(e, "/makers/lightbox/?mode=../../x"); await call(e, "/makers/nameplate/?mode=sign");
+  assert.deepEqual(seen, ["/makers/lightbox/m/keychain/", "/makers/lightbox/m/nametag/", "/makers/lightbox/m/sign/", "/makers/lightbox/m/litho/", "/makers/lightbox/", "/makers/lightbox/", "/makers/nameplate/"]);
+});
+
+await test("SEO: the IndexNow key file is served only for the INDEXNOW_KEY secret", async () => {
+  const k = "0123456789abcdef0123456789abcdef";
+  const r = await call(env({ INDEXNOW_KEY: k }), `/${k}.txt`);
+  assert.equal(r.status, 200); assert.equal(await r.text(), k);
+  assert.equal(await (await call(env(), `/${k}.txt`)).text(), "<!doctype html>");
+});
+
+await test("SEO: build output has robots groups for AI crawlers, every maker in the sitemap, and maker tags", async () => {
+  const { robotsTxt, makerSeo, MAKER_SEO, makerUrl } = await import("./build.mjs");
+  const robots = robotsTxt();
+  for (const ua of ["*", "Googlebot", "Bingbot", "GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-SearchBot", "PerplexityBot", "Google-Extended", "CCBot"]) assert.match(robots, new RegExp(`User-agent: ${ua.replace("*", "\\*")}\nAllow: /\nDisallow: /api/`));
+  assert.match(robots, /Sitemap: https:\/\/epix3d\.com\/sitemap\.xml/);
+  const fs = await import("node:fs");
+  for (const id of Object.keys(MAKER_SEO)) {
+    const src = fs.readFileSync(new URL(`../makers/${MAKER_SEO[id].dir || id}/index.html`, import.meta.url), "utf8");
+    const html = makerSeo(src, id);
+    const head = html.slice(0, html.indexOf("</head>"));
+    assert.ok(head.includes(`<link rel="canonical" href="https://epix3d.com${makerUrl(id)}">`), id);
+    for (const t of ["<title>", 'name="description"', 'name="geo.region"', 'name="twitter:card"', '"WebApplication"', '"BreadcrumbList"', 'name="robots"']) assert.ok(head.includes(t), `${id} ${t}`);
+    assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, `${id} h1`);
+    const d = head.match(/name="description" content="([^"]*)"/)[1]; assert.ok(d.length >= 70 && d.length <= 160, `${id} description length ${d.length}`);
+    const t = head.match(/<title>([^<]*)/)[1]; assert.ok(t.length <= 60, `${id} title length ${t.length}`);
+  }
+});
+
 console.log(`\n${passed} API tests passed`);

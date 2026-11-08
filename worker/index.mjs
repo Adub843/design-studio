@@ -42,6 +42,17 @@ export const PHOTO3D_HEADERS = {
   "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'"),
 };
 const MAKER_PAGE = /^\/makers\/[a-z0-9-]+\//;
+// The Light box engine also runs the Keychain, Name tag, Sign and Lithophane makers (?mode=...). Each
+// mode has its own copy of the page with its own title, description and canonical (scripts/build.mjs puts
+// them in makers/lightbox/m/<mode>/), so search engines see five separate makers. The address stays the same.
+export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho"];
+export function lightboxModeRequest(req) {
+  const u = new URL(req.url);
+  if (u.pathname !== "/makers/lightbox/" || (req.method !== "GET" && req.method !== "HEAD")) return null;
+  const mode = u.searchParams.get("mode");
+  if (!LIGHTBOX_MODES.includes(mode)) return null;
+  return new Request(new URL(`/makers/lightbox/m/${mode}/`, u.origin), { method: req.method, headers: req.headers });
+}
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
@@ -104,8 +115,12 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
     console.error("site api error", pathname, e?.name);
     return json({ error: "Something went wrong on the server." }, 500);
   }
+  // IndexNow ownership file (https://www.indexnow.org): the key is the INDEXNOW_KEY secret, set by Aaron.
+  const indexNowKey = typeof env?.INDEXNOW_KEY === "string" && /^[A-Za-z0-9-]{8,128}$/.test(env.INDEXNOW_KEY) ? env.INDEXNOW_KEY : "";
+  if (indexNowKey && pathname === `/${indexNowKey}.txt`)
+    return new Response(indexNowKey, { headers: { ...SITE_HEADERS, "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" } });
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
-  const res = await env.ASSETS.fetch(req);
+  const res = await env.ASSETS.fetch(lightboxModeRequest(req) || req);
   const out = new Response(res.body, res);
   const headers = pathname.startsWith("/makers/ai3d/") ? PHOTO3D_HEADERS : MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);

@@ -33,7 +33,7 @@ photoreal product photos. No blobs, cartoon shapes, emoji, pills or playful disp
 | Sunk | `#f5f4f1` / `#eeece8` | Bands, the footer, raised panels, hover |
 | Line | `#e6e4df` / `#d4d1ca` | Borders and dividers |
 | Muted | `#5d636f` | Secondary text |
-| Accent | `#e0512a` | Small labels (kickers, step numbers) and the cube's side in the mark. Never a large fill. |
+| Accent | `#6d28d9` | Small labels (kickers, step numbers) and the cube's side in the mark. Never a large fill. |
 | Focus | `#2f5bd3` | Focus rings |
 
 ## Type

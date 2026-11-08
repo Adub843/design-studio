@@ -119,7 +119,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       await until(page, () => [...document.querySelectorAll(".makers img")].every((i) => i.complete && i.naturalWidth > 0));
       assert.equal(await page.locator('meta[property="og:image"]').getAttribute("content"), "https://epix3d.com/assets/img/og.jpg");
       const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
-      assert.match(ld, /"Organization"/); assert.match(ld, /"WebSite"/);
+      assert.match(ld, /"OnlineStore"/); assert.match(ld, /"WebSite"/); assert.match(ld, /"priceRange":"\$\$"/); assert.doesNotMatch(ld, /streetAddress|telephone|postalCode/);
       for (const f of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/assets/img/og.jpg"]) assert.equal((await page.request.get(BASE + f)).status(), 200, f);
       const body = await page.locator("body").innerText();
       assert.doesNotMatch(body, /Design Studio|Elevated Designs|Creative Lab|Netlify/i);

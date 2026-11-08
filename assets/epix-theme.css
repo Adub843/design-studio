@@ -17,8 +17,8 @@
   --epx-ink: #15171c;
   --epx-muted: #5d636f;
   --epx-dim: #8b909a;
-  --epx-tangerine: #e0512a;
-  --epx-tangerine-2: #c7441f;
+  --epx-tangerine: #6d28d9;
+  --epx-tangerine-2: #5b21b6;
   --epx-sun: #15171c;
   --epx-mint: #3d4350;
   --epx-berry: #3d4350;
@@ -60,7 +60,7 @@
 :root:root:root[data-maker="hype-chain"] {
   --bg: var(--epx-stage); --panel: var(--epx-cream); --panel2: var(--epx-cream-2); --panel3: var(--epx-sand);
   --line: var(--epx-line); --line2: var(--epx-line-2); --ink: var(--epx-ink); --muted: var(--epx-muted); --dim: var(--epx-dim);
-  --accent: var(--epx-tangerine); --accent2: var(--epx-tangerine-2); --accent-ink: var(--epx-ink); --accent-soft: rgba(224, 81, 42, .14);
+  --accent: var(--epx-tangerine); --accent2: var(--epx-tangerine-2); --accent-ink: var(--epx-ink); --accent-soft: rgba(109, 40, 217, .14);
   --olive: var(--epx-mint); --olive2: #565d6b; --warn: #c27a00; --danger: var(--epx-bad);
   --f-ui: var(--epx-font);
 }
@@ -101,3 +101,7 @@
   border: 1px solid var(--epx-line); background: var(--epx-cream-2); border-radius: 10px; }
 :root[data-maker="nameplate"] .drop:hover, :root[data-maker="hype-chain"] .upzone:hover { border-color: var(--epx-line-2); background: var(--epx-sand); }
 :root[data-maker] input[type="number"], :root[data-maker="hype-chain"] .status { font-variant-numeric: tabular-nums; }
+
+/* Photo to 3D: the same plain upload panel as the other makers, no dashed box. */
+:root[data-maker="ai3d"] .drop { border: 1px solid var(--epx-line); background: var(--epx-cream-2); }
+:root[data-maker="ai3d"] .drop:hover { border-color: var(--epx-line-2); background: var(--epx-sand); }

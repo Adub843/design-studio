@@ -522,7 +522,8 @@
   function renderOrder() {
     const v = buyVariant();
     document.body.classList.add("can-order");
-    for (const b of $$(".bar-order")) b.textContent = v ? "Order print" : "Request print";
+    // The same words as every other maker's bar; "a print" hides on phones (.lg).
+    for (const b of $$(".bar-order")) b.innerHTML = 'Order<span class="lg"> a print</span>';
     for (const box of $$(".order")) {
       box.hidden = false;
       $(".order-note", box).textContent = orderNote();

@@ -42,7 +42,7 @@ code (Aaron, 8 Nov 2026). Each maker page carries the same EPIX3D bar with an **
 
 `scripts/build.mjs` builds `dist/` (pages, `assets/`, `makers/`, `sitemap.xml`, `robots.txt`, `llms.txt`).
 The maker cards come from `site/makers.json`; their pictures (`assets/img/makers/`) are real renders
-from the makers themselves. Look: professional and calm: white and warm-grey neutrals, ink buttons, one accent (#e0512a), Inter only, photoreal product photos (see BRAND.md).
+from the makers themselves. Look: professional and calm: white and warm-grey neutrals, ink buttons, one accent (#6d28d9), Inter only, photoreal product photos (see BRAND.md).
 
 Each maker loads `assets/epix-bridge.js`, which adds the EPIX3D bar (Save, Order a print, account),
 saves and opens projects, sends orders, and puts the Platinum gate on every download button. Each maker
@@ -93,6 +93,14 @@ npm run check:links  # every same-site link, script and picture in dist/ points 
 PLAYWRIGHT_PATH=<folder with node_modules/playwright> npm run test:ui   # browser test at 1280 and 390
 npm run dev          # local Worker
 ```
+
+## Search (SEO, local, AI assistants)
+
+Built into `scripts/build.mjs` and `worker/index.mjs`, checked by `npm test`:
+- Every page: title, description, canonical, meta robots, Open Graph and Twitter tags, `geo.region US-SC` / `geo.placename Charleston`, and JSON-LD (OnlineStore + LocalBusiness at city level only, WebSite, BreadcrumbList; ItemList of makers on home and /makers/; FAQPage on /faq/; Product on /pricing/).
+- Maker pages get the same tags at build time, plus WebApplication JSON-LD and a hidden h1 where the app has none. Keychain, Name tag, Sign and Lithophane each have their own title and canonical (`/makers/lightbox/?mode=...`): the Worker serves the copy in `makers/lightbox/m/<mode>/`.
+- `robots.txt` names Google, Bing, Apple, DuckDuckGo and the AI crawlers (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended and more); `sitemap.xml` lists all 15 public URLs; `llms.txt` is the summary for AI assistants.
+- IndexNow: Aaron sets `npx.cmd wrangler secret put INDEXNOW_KEY` (32 letters/digits); the Worker then serves `/<key>.txt`.
 
 ## Deploy (from Aaron's PC, needs his typed OK)
 

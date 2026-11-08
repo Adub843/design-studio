@@ -9,8 +9,8 @@
 .epx-status{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5d636f;font-size:13px;text-align:right}
 .epx-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1.5px solid #15171c;background:#fff;color:#15171c;font:600 14px/1 "Inter","Segoe UI",system-ui,sans-serif;cursor:pointer;white-space:nowrap;text-decoration:none}
 .epx-btn:hover{background:#f5f4f1}
-.epx-btn.epx-primary{background:#e0512a;border-color:#e0512a;color:#15171c}
-.epx-btn.epx-primary:hover{background:#c7441f;border-color:#c7441f}
+.epx-btn.epx-primary{background:#6d28d9;border-color:#6d28d9;color:#fff}
+.epx-btn.epx-primary:hover{background:#5b21b6;border-color:#5b21b6}
 .epx-btn:disabled{opacity:.55;cursor:progress}
 .epx-btn:focus-visible,.epx-acct:focus-visible,.epx-logo:focus-visible,.epx-all:focus-visible{outline:2px solid #c4c8cf;outline-offset:2px}
 .epx-acct{display:inline-flex;align-items:center;gap:6px;color:#15171c;text-decoration:none;font-weight:600;white-space:nowrap;padding:8px 6px}
@@ -37,7 +37,7 @@
 .epx-switch-wrap{position:relative;flex:none;display:inline-flex}
 .epx-switch{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:8px;border:0;background:transparent;color:#5d636f;font:500 14px/1 "Inter","Segoe UI",system-ui,sans-serif;cursor:pointer;white-space:nowrap}
 .epx-switch:hover,.epx-switch[aria-expanded="true"]{background:#eeece8;color:#15171c}
-.epx-switch:focus-visible{outline:2px solid #e0512a;outline-offset:2px}
+.epx-switch:focus-visible{outline:2px solid #6d28d9;outline-offset:2px}
 .epx-switch-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:2147483500;width:min(380px,calc(100vw - 20px));max-height:min(560px,calc(100vh - 80px));overflow:auto;background:#ffffff;border:1px solid #e6e4df;border-radius:12px;box-shadow:0 18px 50px rgba(21,23,28,.2);padding:8px;font:14px/1.35 "Inter","Segoe UI",system-ui,sans-serif;color:#15171c}
 .epx-switch-menu[hidden]{display:none}
 .epx-switch-menu .epx-sw-h{margin:6px 10px 6px;font:700 15px/1.2 "Inter",system-ui,sans-serif}
@@ -46,7 +46,7 @@
 .epx-switch-menu li a:hover,.epx-switch-menu li a:focus-visible{background:#eeece8;outline:none}
 .epx-switch-menu li a[aria-current="page"]{background:#15171c;color:#ffffff}
 .epx-switch-menu li a[aria-current="page"] small{color:#c9ccd3}
-.epx-switch-menu li i{width:10px;height:10px;border-radius:50%;background:#e0512a;align-self:center}
+.epx-switch-menu li i{width:10px;height:10px;border-radius:50%;background:#6d28d9;align-self:center}
 .epx-switch-menu .tone-sun i{background:#ffffff}.epx-switch-menu .tone-mint i{background:#c4c8cf}.epx-switch-menu .tone-berry i{background:#c4c8cf}.epx-switch-menu .tone-sky i{background:#c4c8cf}
 .epx-switch-menu b{font-weight:600}
 .epx-switch-menu small{grid-column:2;color:#5d636f;font-size:12.5px;margin-top:2px}
