@@ -172,10 +172,10 @@ function loadScript(srcs) {
 }
 async function view() {
   if (three) return three;
-  if (!window.THREE) await loadScript(["https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js", "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"]);
-  if (!THREE.OrbitControls) await loadScript(["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"]);
+  if (!window.THREE) await loadScript(["../vendor/three.min.js", "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js", "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"]);
+  if (!window.THREE.OrbitControls) await loadScript(["../vendor/OrbitControls.js", "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"]);
   const canvas = $("view3d");
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(2, devicePixelRatio));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
@@ -184,15 +184,16 @@ async function view() {
   const key = new THREE.DirectionalLight(0xffffff, 0.75); key.position.set(-120, -200, 260); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(200, 160, 120); scene.add(rim);
   // the build plate: a soft square with a fine grid, like a slicer
-  const plate = new THREE.Mesh(new THREE.PlaneGeometry(256, 256), new THREE.MeshStandardMaterial({ color: 0x3a3f47, roughness: 0.9, metalness: 0.1 }));
+  const dark = document.documentElement.dataset.theme === "dark";
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(256, 256), new THREE.MeshStandardMaterial({ color: dark ? 0x3a3f47 : 0x8c8c92, roughness: 0.9, metalness: 0.1 }));
   plate.position.z = -0.05; scene.add(plate);
-  const grid = new THREE.GridHelper(256, 16, 0x5c636e, 0x4a5059); grid.rotation.x = Math.PI / 2; scene.add(grid);
+  const grid = dark ? new THREE.GridHelper(256, 16, 0x5c636e, 0x4a5059) : new THREE.GridHelper(256, 16, 0x76767b, 0x7f7f85); grid.rotation.x = Math.PI / 2; scene.add(grid);
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49;
   const fit = () => { const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
   new ResizeObserver(fit).observe(canvas); fit();
   (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
-  three = { scene, camera, controls, mesh: null };
+  three = { scene, camera, controls, renderer, mesh: null };
   return three;
 }
 async function showModel(positions, indices) {
@@ -201,7 +202,7 @@ async function showModel(positions, indices) {
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geo.setIndex(new THREE.BufferAttribute(indices, 1));
   geo.computeVertexNormals(); geo.computeBoundingSphere();
-  const mat = new THREE.MeshStandardMaterial({ color: 0xd9d4c7, roughness: 0.62, metalness: 0.02 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0xe8e4da, roughness: 0.62, metalness: 0.02 });
   if (v.mesh) { v.scene.remove(v.mesh); v.mesh.geometry.dispose(); v.mesh.material.dispose(); }
   v.mesh = new THREE.Mesh(geo, mat); v.scene.add(v.mesh);
   const r = geo.boundingSphere.radius, c = geo.boundingSphere.center;
@@ -214,3 +215,39 @@ async function showModel(positions, indices) {
 
 if (matchMedia("(max-width:860px)").matches) ed.dataset.sheet = "";
 view().catch(() => {});
+
+// ---------- EPIX3D: save, open, order (see the EPIX_MAKER block in index.html) ----------
+function photoUrl(max = 1024) {
+  const b = state.photo, k = Math.min(1, max / Math.max(b.width, b.height));
+  const c = document.createElement("canvas"); c.width = Math.round(b.width * k); c.height = Math.round(b.height * k);
+  c.getContext("2d").drawImage(b, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.88);
+}
+window.AI3D = {
+  name: () => (state.name && state.name !== "model" ? state.name.replace(/-/g, " ") : "Photo to 3D model").slice(0, 80),
+  hasContent: () => !!state.photo,
+  getState: () => ({ v: 1, name: state.name, photo: state.photo ? photoUrl() : null, size: $("size").value, wall: $("wall").value, base: $("base").value, turn: state.turn }),
+  async setState(d) {
+    if (!d || !d.photo) throw new Error("no design");
+    const blob = await (await fetch(d.photo)).blob();
+    await usePhoto(new File([blob], `${d.name || "model"}.jpg`, { type: "image/jpeg" }));
+    if (d.size) { $("size").value = d.size; $("sizeOut").textContent = `${d.size} mm`; }
+    if (d.wall) $("wall").value = d.wall;
+    if (d.base) $("base").value = d.base;
+    toast("Photo loaded. Press Make 3D model to build it again.");
+  },
+  async thumb() {
+    if (!three || !three.mesh) return state.photo ? photoUrl(480) : "";
+    three.renderer.render(three.scene, three.camera);
+    const src = three.renderer.domElement, W = 480, H = Math.max(1, Math.round(W * src.height / src.width));
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+    g.fillStyle = "#ececec"; g.fillRect(0, 0, W, H); g.drawImage(src, 0, 0, W, H);
+    return c.toDataURL("image/jpeg", 0.82);
+  },
+  async buildPrintFile() {
+    if (!state.result) throw new Error("Make the 3D model first.");
+    const r = state.result.report, name = fileName("3mf");
+    return { blob: new Blob([state.result.tmf], { type: "model/3mf" }), name, details: `Photo to 3D model, ${r.sizeMm.map((v) => v.toFixed(0)).join(" x ")} mm, walls ${r.minWallMm} mm` };
+  },
+};
+window.AI3D_READY?.();

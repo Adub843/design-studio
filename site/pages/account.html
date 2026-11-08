@@ -1,0 +1,58 @@
+<!--{"path": "/account/", "title": "Account | EPIX3D", "description": "Sign in to EPIX3D or create a free account.", "nav": "account", "index": false, "bodyClass": "page-account"}-->
+<section class="page-head has-blobs">
+  <svg class="blob" viewBox="0 0 600 600" style="width:380px;right:-150px;top:-150px" aria-hidden="true"><path fill="#e1e8fd" d="M455 115c51 59 61 154 23 230s-125 132-209 133-165-53-188-131 12-177 79-232 244-59 295 0z"/></svg>
+  <div class="wrap">
+    <h1 data-acct-title>Your account</h1>
+    <p class="lead" data-acct-lead>Sign in to save projects and order prints.</p>
+  </div>
+</section>
+<section>
+  <div class="wrap">
+    <p class="muted" data-acct-loading>Loading…</p>
+
+    <div class="auth card" data-auth hidden>
+      <div class="tabs" role="tablist" aria-label="Sign in or create an account">
+        <button type="button" role="tab" id="tab-signin" aria-controls="form-signin" aria-selected="true" data-tab="signin">Sign in</button>
+        <button type="button" role="tab" id="tab-signup" aria-controls="form-signup" aria-selected="false" data-tab="signup">Create account</button>
+      </div>
+      <form id="form-signin" role="tabpanel" aria-labelledby="tab-signin" data-form="signin" novalidate>
+        <div class="field"><label for="si-email">Email</label><input id="si-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="si-pass">Password</label><input id="si-pass" name="password" type="password" autocomplete="current-password" required></div>
+        <p class="form-msg" role="alert"></p>
+        <button class="btn btn-primary" type="submit">Sign in</button>
+        <p class="auth-foot">Forgot your password? Reset by email is coming soon. Until then, write to <a href="mailto:hello@charleston3d.com">hello@charleston3d.com</a> from the address on your account.</p>
+      </form>
+      <form id="form-signup" role="tabpanel" aria-labelledby="tab-signup" data-form="signup" novalidate hidden>
+        <div class="field"><label for="su-email">Email</label><input id="su-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="su-pass">Password</label><input id="su-pass" name="password" type="password" autocomplete="new-password" minlength="10" required aria-describedby="su-hint"><span class="hint" id="su-hint">At least 10 characters.</span></div>
+        <p class="form-msg" role="alert"></p>
+        <button class="btn btn-primary" type="submit">Create my free account</button>
+        <p class="auth-foot">By creating an account you agree to the <a href="/terms/">terms</a> and <a href="/privacy/">privacy notes</a>.</p>
+      </form>
+    </div>
+
+    <div class="acct-grid" data-account hidden>
+      <div class="card">
+        <h2>Membership</h2>
+        <div class="status" data-member><span class="dot" aria-hidden="true"></span><div><b data-member-title>Free account</b><br><span data-member-text class="muted">Design, save and order prints.</span></div></div>
+        <div class="cta" style="margin-top:0" data-member-cta><a class="btn btn-primary" href="/pricing/">Go Platinum</a><a class="btn" href="/projects/">My projects</a></div>
+        <h2 style="margin-top:30px">Your print requests</h2>
+        <p class="muted" data-orders-empty>None yet. Use Order a print in any maker.</p>
+        <ul class="orders" data-orders></ul>
+      </div>
+      <div class="card">
+        <h2>Details</h2>
+        <dl class="kv"><dt>Email</dt><dd data-me-email></dd><dt>Member since</dt><dd data-me-since></dd></dl>
+        <h2 style="margin-top:26px">Change password</h2>
+        <form data-form="password" novalidate>
+          <div class="field"><label for="pw-cur">Current password</label><input id="pw-cur" name="current" type="password" autocomplete="current-password" required></div>
+          <div class="field"><label for="pw-new">New password</label><input id="pw-new" name="next" type="password" autocomplete="new-password" minlength="10" required><span class="hint">At least 10 characters. Other devices will be signed out.</span></div>
+          <p class="form-msg" role="alert"></p>
+          <button class="btn" type="submit">Change password</button>
+        </form>
+        <hr style="border:0;border-top:1px solid var(--line);margin:26px 0 20px">
+        <button class="btn" type="button" data-signout>Sign out</button>
+      </div>
+    </div>
+  </div>
+</section>

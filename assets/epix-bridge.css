@@ -1,0 +1,35 @@
+/* The EPIX3D bar and dialogs on the maker pages (assets/epix-bridge.js). Self-contained: the makers keep their own styles. */
+.epx-bar{position:sticky;top:0;z-index:2147483000;flex:none;display:flex;align-items:center;gap:10px;height:52px;padding:0 14px;background:#fff8ef;color:#23203a;border-bottom:1px solid #eadfcd;font:500 14px/1 "Inter","Segoe UI",system-ui,sans-serif;box-sizing:border-box;min-width:0}
+.epx-bar *{box-sizing:border-box}
+.epx-logo{display:inline-flex;align-items:center;gap:7px;color:#23203a;text-decoration:none;font:700 18px/1 "Fredoka","Inter",system-ui,sans-serif;letter-spacing:.01em;flex:none}
+.epx-logo svg{display:block}
+.epx-all{color:#5e5a73;text-decoration:none;white-space:nowrap;padding:6px 8px;border-radius:999px}
+.epx-all:hover{background:#f3e8d6;color:#23203a}
+.epx-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#23203a;padding-left:10px;border-left:1px solid #eadfcd}
+.epx-status{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5e5a73;font-size:13px;text-align:right}
+.epx-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;border:1.5px solid #23203a;background:#fff;color:#23203a;font:600 14px/1 "Inter","Segoe UI",system-ui,sans-serif;cursor:pointer;white-space:nowrap;text-decoration:none}
+.epx-btn:hover{background:#f6eee1}
+.epx-btn.epx-primary{background:#ff6b3d;border-color:#ff6b3d;color:#23203a}
+.epx-btn.epx-primary:hover{background:#ff8259;border-color:#ff8259}
+.epx-btn:disabled{opacity:.55;cursor:progress}
+.epx-btn:focus-visible,.epx-acct:focus-visible,.epx-logo:focus-visible,.epx-all:focus-visible{outline:2px solid #4c7cf3;outline-offset:2px}
+.epx-acct{display:inline-flex;align-items:center;gap:6px;color:#23203a;text-decoration:none;font-weight:600;white-space:nowrap;padding:8px 6px}
+.epx-acct:hover{text-decoration:underline}
+.epx-pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#23203a;color:#ffc23d;font-size:11.5px;font-weight:700;letter-spacing:.03em}
+.epx-short{display:none}
+@media (max-width:820px){.epx-all{display:none}}
+@media (max-width:600px){
+  .epx-bar{gap:8px;padding:0 10px;height:50px}
+  .epx-logo span,.epx-title,.epx-acct .epx-pill{display:none}
+  .epx-status{font-size:12px}
+  .epx-long{display:none}.epx-short{display:inline}
+  .epx-btn{height:34px;padding:0 12px}
+}
+.epx-modal{position:fixed;inset:0;z-index:2147483600;background:rgba(35,32,58,.45);display:grid;place-items:center;padding:16px;font:15px/1.5 "Inter","Segoe UI",system-ui,sans-serif}
+.epx-dlg{width:min(460px,100%);background:#fff8ef;color:#23203a;border-radius:22px;padding:22px 22px 18px;box-shadow:0 24px 60px rgba(35,32,58,.28)}
+.epx-dlg h2{margin:0 0 8px;font:700 22px/1.2 "Fredoka","Inter",system-ui,sans-serif}
+.epx-dlg p{margin:0 0 10px}
+.epx-dlg .epx-muted{color:#5e5a73;font-size:13.5px}
+.epx-dlg-f{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:14px}
+.epx-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483601;max-width:calc(100% - 32px);background:#23203a;color:#fff8ef;padding:11px 18px;border-radius:999px;font:500 14px/1.35 "Inter","Segoe UI",system-ui,sans-serif;box-shadow:0 10px 30px rgba(35,32,58,.3)}
+.epx-toast[hidden]{display:none}

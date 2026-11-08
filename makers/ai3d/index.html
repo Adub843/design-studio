@@ -3,16 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow">
-<title>Photo to 3D Maker · Charleston 3D</title>
+<title>Photo to 3D Maker | EPIX3D</title>
+<meta name="description" content="Turn a photo of one object into a solid 3D model in your browser. Your photo isn't uploaded. Order a print made in Charleston, SC, or download the 3MF with Platinum.">
+<link rel="canonical" href="https://epix3d.com/makers/ai3d/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Photo to 3D Maker | EPIX3D"><meta property="og:description" content="Turn a photo of one object into a solid 3D model in your browser. Your photo isn't uploaded. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/ai3d/"><meta property="og:image" content="https://epix3d.com/assets/img/og.png">
+<link rel="stylesheet" href="/assets/epix-bridge.css">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <script>try{var t=parent.document.documentElement.dataset.theme||localStorage.getItem("bc-theme");if(t)document.documentElement.dataset.theme=String(t).replace(/"/g,"")}catch(e){}</script>
 <style>
-:root{--bg:#f6f1e7;--card:#fffdf8;--raise:#ece5d6;--line:#ddd3bf;--fg:#16203a;--muted:#5e6474;--accent:#0e7c74;--accent-fg:#fff;--stage:#e7e1d4;--warn:#9a5b00;--ok:#0e7c74;--bad:#b3261e;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1428;--card:#111d36;--raise:#182644;--line:#24345a;--fg:#f3ede1;--muted:#aab3c7;--accent:#4fc8bd;--accent-fg:#06201d;--stage:#0d1830;--warn:#f0b44c;--ok:#4fc8bd;--bad:#ff8a80;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0a1428;--card:#111d36;--raise:#182644;--line:#24345a;--fg:#f3ede1;--muted:#aab3c7;--accent:#4fc8bd;--accent-fg:#06201d;--stage:#0d1830;--warn:#f0b44c;--ok:#4fc8bd;--bad:#ff8a80;color-scheme:dark}
+:root{--bg:#f5f5f5;--card:#fff;--raise:#f2f2f3;--line:#e4e4e6;--fg:#1a1a1a;--muted:#6e6e73;--accent:#1a1a1a;--accent-fg:#fff;--stage:#ececec;--warn:#a35a00;--ok:#2d7a46;--bad:#b3261e;color-scheme:light}
+:root[data-theme="dark"]{--bg:#161617;--card:#1e1e20;--raise:#29292c;--line:#323235;--fg:#ececec;--muted:#a1a1a6;--accent:#f0f0f0;--accent-fg:#141414;--stage:#2a2a2d;--warn:#f0b44c;--ok:#6cc58b;--bad:#ff8a80;color-scheme:dark}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--fg);font:14px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 [hidden]{display:none!important}.muted{color:var(--muted)}.small{font-size:12.5px}
@@ -81,10 +84,10 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stro
 </style>
 </head>
 <body>
-<div id="ds-back-bar" style="position:sticky;top:0;z-index:2147483000;display:flex;align-items:center;gap:12px;height:40px;flex:none;padding:0 16px;background:#15223f;color:#f7f2e8;font:500 14px/1 Inter,system-ui,sans-serif"><a href="/#makers" style="color:#f7f2e8;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><span aria-hidden="true">&#8592;</span> Back to Design Studio</a><span style="opacity:.6;margin-left:auto">Photo to 3D Maker</span></div>
+<header id="epix-bar"></header>
 <div class="ed" id="ed" data-sheet="">
   <header class="ed-top">
-    <div class="ed-brand">Photo to 3D <span>· Charleston 3D</span></div>
+    <div class="ed-brand">Photo to 3D</div>
     <div class="grow"></div>
     <button class="btn sm" id="topNew" type="button" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New photo</span></button>
     <button class="btn sm primary" id="top3mf" type="button" disabled><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Download 3MF</span></button>
@@ -172,6 +175,30 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stro
     </div>
   </aside>
 </div>
+<script>
+/* EPIX3D: what the site bridge (/assets/epix-bridge.js) needs from this maker. app.js (a module, so it runs
+   later) fills in window.AI3D; every call waits for it. */
+(() => {
+  let ready; const whenReady = new Promise((ok) => { ready = ok; });
+  window.AI3D_READY = ready;
+  const A = async () => { await whenReady; return window.AI3D; };
+  window.EPIX_MAKER = {
+    id: "ai3d",
+    title: () => "Photo to 3D maker",
+    mode: () => null,
+    name: () => (window.AI3D ? window.AI3D.name() : "Photo to 3D model"),
+    hasContent: () => !!(window.AI3D && window.AI3D.hasContent()),
+    ready: whenReady,
+    getState: async () => (await A()).getState(),
+    setState: async (d) => (await A()).setState(d),
+    thumb: async () => (await A()).thumb(),
+    buildPrintFile: async () => (await A()).buildPrintFile(),
+    downloadSelector: "#dl3mf, #dlStl, #top3mf",
+    orderNote: () => "We print it in Charleston, SC. Your model goes to checkout as a free print request: we check it, then reply with a price within 1-2 business days. You pay nothing now.",
+  };
+})();
+</script>
 <script type="module" src="app.js"></script>
+<script src="/assets/epix-bridge.js"></script>
 </body>
 </html>

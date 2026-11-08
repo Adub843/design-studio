@@ -9,7 +9,7 @@ const http = require("node:http"), path = require("node:path"), fs = require("no
 const ROOT = path.resolve(__dirname, ".."), DIST = path.join(ROOT, "dist"), FIX = path.join(__dirname, "fixtures/photo3d");
 const ORT = process.env.ORT_DIST, THREE = process.env.THREE_PKG, SCREENS = process.env.SCREENS || "";
 if (!ORT || !THREE) { console.log("skip - set ORT_DIST and THREE_PKG to run the Photo to 3D browser test"); process.exit(0); }
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".wasm": "application/wasm" };
+const TYPES = { ".html": "text/html", ".css": "text/css", ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".js": "text/javascript", ".mjs": "text/javascript", ".wasm": "application/wasm" };
 const ASSETS = { async fetch(req) {
   let p = decodeURIComponent(new URL(req.url).pathname); if (p.endsWith("/")) p += "index.html";
   const file = path.join(DIST, path.normalize(p));
@@ -44,10 +44,11 @@ const outside = (url) => {
       return route.abort();
     });
     try {
-      // through Maker Studio's tab, the way customers get there
-      await page.goto(BASE + "makers/#photo3d");
-      const frame = await (await page.waitForSelector('iframe[src="ai3d/"]')).contentFrame();
+      await page.goto(BASE + "makers/ai3d/");
+      const frame = page;
       await frame.waitForSelector("#emptyAdd");
+      await page.waitForFunction(() => document.documentElement.dataset.epixReady === "1");
+      assert.equal(await page.locator("#epix-bar [data-epix-order]").count(), 1, "the EPIX3D bar is there");
       if (SCREENS) await page.screenshot({ path: path.join(SCREENS, `photo3d-start-${w}.png`) });
       await frame.setInputFiles("#file", path.join(FIX, "photo.jpg"));
       await frame.click("#make");
@@ -56,9 +57,16 @@ const outside = (url) => {
       assert.match(facts, /60\.0/, "longest side is the default 60 mm");
       const checks = await frame.evaluate(() => document.getElementById("checks").innerText);
       assert.match(checks, /Solid and watertight/);
-      const dl = page.waitForEvent("download");
-      await frame.evaluate(() => document.getElementById("dl3mf").click());
-      const d = await dl; assert.match(d.suggestedFilename(), /^photo-60mm\.3mf$/);
+      // signed out, downloads ask for Platinum; the print file the site orders with is a real 3MF
+      await frame.click("#top3mf");
+      await page.waitForSelector("text=Platinum");
+      await page.keyboard.press("Escape");
+      const pf = await page.evaluate(async () => { const f = await window.EPIX_MAKER.buildPrintFile(); const b = new Uint8Array(await f.blob.arrayBuffer()); return { name: f.name, size: b.length, pk: b[0] === 0x50 && b[1] === 0x4b, details: f.details }; });
+      assert.equal(pf.name, "photo-60mm.3mf"); assert.ok(pf.pk && pf.size > 1000, "a zipped 3MF"); assert.match(pf.details, /60 mm|60 x/);
+      const th = await page.evaluate(() => window.EPIX_MAKER.thumb());
+      assert.ok(th.startsWith("data:image/jpeg;base64,") && th.length > 4000, "the project picture is the 3D view");
+      const st = await page.evaluate(async () => { const d = await window.EPIX_MAKER.getState(); return { photo: d.photo.slice(0, 23), size: d.size }; });
+      assert.deepEqual(st, { photo: "data:image/jpeg;base64,", size: "60" });
       await page.waitForTimeout(600);
       if (SCREENS) await page.screenshot({ path: path.join(SCREENS, `photo3d-result-${w}.png`) });
       if (w === 390) { await frame.click('.ed-rail button[data-tool="print"]'); await page.waitForTimeout(300); if (SCREENS) await page.screenshot({ path: path.join(SCREENS, "photo3d-print-390.png") }); }

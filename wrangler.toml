@@ -1,6 +1,8 @@
-# Design Studio on Cloudflare Workers (free plan): one Worker serves the app's files and /api/images.
-# Secrets are never written here: set CONSOLE_KEY with `npx wrangler secret put CONSOLE_KEY`
-# (the same value as the Business Console, so one key works in both).
+# epix3d.com on Cloudflare Workers (free plan): one Worker serves the EPIX3D site, its API (accounts,
+# projects, print orders, Platinum) and the image library / E: drive APIs the shirt app and console use.
+# Secrets are never written here. Aaron sets them himself:
+#   npx.cmd wrangler secret put CONSOLE_KEY              (the same value as the Business Console)
+#   npx.cmd wrangler secret put SHOPIFY_WEBHOOK_SECRET   (the Charleston3D store's webhook signing secret)
 name = "design-studio"
 main = "worker/index.mjs"
 compatibility_date = "2026-10-01"
@@ -18,7 +20,7 @@ routes = [
 [vars]
 DRIVE_ORIGIN = "https://library.epix3d.com"
 
-# Copies index.html and assets/ into dist/ before `wrangler dev` and `wrangler deploy`.
+# Builds dist/ (the pages, makers and assets) before `wrangler dev` and `wrangler deploy`.
 [build]
 command = "node scripts/build.mjs"
 
@@ -27,6 +29,7 @@ directory = "./dist"
 binding = "ASSETS"
 # Every request goes through the Worker first, so /api wins and every page gets the security headers.
 run_worker_first = true
+not_found_handling = "404-page"
 
 # The image library: the SAME namespace the Business Console uses (business-console-images), so both
 # apps and the shirt apps see one library. `wrangler dev` keeps a separate local copy.
@@ -34,3 +37,8 @@ run_worker_first = true
 binding = "IMAGES"
 id = "a4c25d0fee6e45448ada053a44b19bcc"
 
+# EPIX3D accounts, sessions, saved projects and ordered print files (lib/accounts.mjs, projects.mjs,
+# orders.mjs). Namespace epix3d-accounts, created 2026-11-08.
+[[kv_namespaces]]
+binding = "ACCOUNTS"
+id = "22849576a606478292692b682a200b89"

@@ -426,7 +426,7 @@
     $("#seam-row").hidden = S.bed !== "two";
     $("#mounted-label").textContent = S.product === "frame" ? "Show it on a plate with screws" : "Show screws";
     $("#title").textContent = S.product === "frame" ? "License plate frame" : "Novelty license plate";
-    document.title = `${S.product === "frame" ? "License Plate Frame" : "Novelty Plate"} | License Plate Maker`;
+    document.title = `${S.product === "frame" ? "License Plate Frame" : "Novelty Plate"} Maker | EPIX3D`;
   }
 
   let raf = 0;
@@ -511,17 +511,22 @@
     if (vs.length <= 1) return vs[0] ?? null;
     return vs.find((v) => (S.product === "frame" ? /frame/i.test(v.title) : /plate/i.test(v.title) && !/frame/i.test(v.title))) ?? null;
   };
+  // On epix3d.com every design can be ordered: a priced plate product when the store has one, otherwise
+  // the free request (quote) line. The site bridge (/assets/epix-bridge.js) stores the file and opens the cart.
+  const buyVariant = () => (order?.mode === "buy" ? orderVariant() : null);
+  const orderNote = () => {
+    const v = buyVariant();
+    return v ? `${money(v.price)} each, printed in Charleston, SC. Shipping and tax are added at checkout.`
+      : "Free request. We print it in Charleston, SC and reply with a price within 1-2 business days. You pay nothing now.";
+  };
   function renderOrder() {
-    const v = order && order.mode !== "none" ? orderVariant() : null;
-    document.body.classList.toggle("can-order", !!v);
-    if (v) for (const b of $$(".bar-order")) b.textContent = order.mode === "buy" ? "Order print" : "Request print";
+    const v = buyVariant();
+    document.body.classList.add("can-order");
+    for (const b of $$(".bar-order")) b.textContent = v ? "Order print" : "Request print";
     for (const box of $$(".order")) {
-      box.hidden = !v;
-      if (!v) continue;
-      $(".order-note", box).textContent = order.mode === "buy"
-        ? `${money(v.price)} each, printed in Charleston, SC. Shipping and tax are added at checkout.`
-        : "Free request. We print it in Charleston, SC and reply with a price within 1-2 business days. You pay nothing now.";
-      $("[data-order]", box).textContent = order.mode === "buy" ? "Order this print" : "Request this print";
+      box.hidden = false;
+      $(".order-note", box).textContent = orderNote();
+      $("[data-order]", box).textContent = v ? "Order this print" : "Request this print";
     }
   }
   async function loadOrder() {
@@ -540,8 +545,10 @@
     return inp;
   }
   async function placeOrder() {
+    if (blocked()) return;
+    if (window.EPIX) return window.EPIX.order();
     const v = orderVariant();
-    if (!v || blocked()) return;
+    if (!v) return;
     busy(true);
     say("Building the print file…");
     await new Promise((r) => setTimeout(r, 30));
@@ -616,6 +623,27 @@
     let overlap = 0; for (let i = 0; i < L.a.length; i++) if (L.a[i] >= 128 && R.a[i] >= 128) overlap++;
     return { overlap };
   }
+  // EPIX3D: what the site bridge needs from this maker.
+  window.EPIX_MAKER = {
+    id: "license-plate",
+    title: () => "License plate maker",
+    mode: () => null,
+    name: () => (lines().map((k) => S[S.product][k].text.trim()).filter(Boolean).join(" ") || (S.product === "frame" ? "License plate frame" : "Novelty plate")).slice(0, 80),
+    hasContent: () => !blocked(),
+    getState: () => JSON.parse(JSON.stringify(S)),
+    setState: (d) => { if (!d || typeof d !== "object") throw new Error("no design"); S = merge(structuredClone(DEFAULTS), d); textFields(); syncControls(); changed(true); },
+    thumb: () => { const t = document.createElement("canvas"); const k = Math.min(1, 480 / cv.width); t.width = Math.round(cv.width * k); t.height = Math.round(cv.height * k); const x = t.getContext("2d"); x.fillStyle = "#f2efe8"; x.fillRect(0, 0, t.width, t.height); x.drawImage(cv, 0, 0, t.width, t.height); return t.toDataURL("image/jpeg", 0.8); },
+    async buildPrintFile() {
+      const f = await printFile("3mf");
+      const cols = [color(S.base), color(S.accent)], m = model();
+      const details = [m.frame ? "License plate frame" : "Novelty license plate", `text: ${lines().map((k) => S[S.product][k].text.trim()).filter(Boolean).join(" / ") || "none"}`,
+        FONTS.find((x) => x.id === S.font)?.label ?? S.font, m.parts.some((p) => p.color === "accent") ? `${cols[0].name} with ${cols[1].name}` : cols[0].name,
+        `${m.w.toFixed(1)} x ${m.h.toFixed(1)} mm`, S.bed === "one" ? "1 piece" : "2 pieces, dovetailed"].join(", ");
+      return { blob: f.blob, name: f.name, details, product: S.product, preview: await previewBlob() };
+    },
+    orderNote,
+    downloadSelector: "[data-download]",
+  };
   window.LPM = { state: () => S, order: () => order, buildPieces, checks, jointCheck, set: (patch) => { merge(S, patch); textFields(); syncControls(); changed(true); } };
   init();
 })();
