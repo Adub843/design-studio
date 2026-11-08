@@ -1,12 +1,19 @@
 // Browser test for epix3d.com: the real Worker (worker/index.mjs) serving dist/ with in-memory KV
 // (IMAGES and ACCOUNTS), driven by Playwright at desktop (1280) and phone (390) widths.
 // Run: npm run build && npm run test:ui
-// Playwright is not a repo dependency: it comes from NODE_PATH (npm root -g) or PLAYWRIGHT_PATH
-// (a folder holding node_modules/playwright). SHOTS=/path/to/dir saves a screenshot of every page.
+// Playwright is not a repo dependency: it comes from PLAYWRIGHT_PATH (a folder holding node_modules/playwright),
+// NODE_PATH, or the global npm folder (npm root -g), so this runs the same on Windows, macOS and Linux.
+// SHOTS=/path/to/dir saves a screenshot of every page.
 const path = require("node:path");
 const pw = (() => {
   if (process.env.PLAYWRIGHT_PATH) return require(path.join(process.env.PLAYWRIGHT_PATH, "node_modules", "playwright"));
-  return require("playwright");
+  try {
+    return require("playwright");
+  } catch (err) {
+    if (err.code !== "MODULE_NOT_FOUND") throw err;
+    const root = require("node:child_process").execSync("npm root -g", { encoding: "utf8" }).trim();
+    return require(path.join(root, "playwright"));
+  }
 })();
 const { chromium } = pw;
 const http = require("node:http");
