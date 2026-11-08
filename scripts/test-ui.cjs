@@ -105,8 +105,8 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
 
     await step(`${label}: home lists every maker with its own picture; SEO tags are there`, async () => {
       await page.goto(BASE + "/", { waitUntil: "networkidle" });
-      assert.equal(await page.locator(".makers .mk").count(), 7);
-      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/"])
+      assert.equal(await page.locator(".makers .mk").count(), 8);
+      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
         assert.equal(await page.locator(`.makers a[href="${href}"]`).count(), 1, href);
       await page.locator(".makers img").last().scrollIntoViewIfNeeded();
       await until(page, () => [...document.querySelectorAll(".makers img")].every((i) => i.complete && i.naturalWidth > 0));
@@ -261,7 +261,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
     });
 
     await step(`${label}: the other makers load with the EPIX3D bar and their gate`, async () => {
-      for (const m of ["license-plate", "nameplate", "hype-chain"]) {
+      for (const m of ["license-plate", "nameplate", "hype-chain", "ai3d"]) {
         const r = await page.goto(`${BASE}/makers/${m}/`, { waitUntil: "load" });
         assert.equal(r.status(), 200);
         await until(page, () => document.documentElement.dataset.epixReady === "1", null, { timeout: 30000 });

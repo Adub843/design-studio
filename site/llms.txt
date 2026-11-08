@@ -10,6 +10,7 @@
 - [License plate](https://epix3d.com/makers/license-plate/): custom plate frames and novelty plates with your own text.
 - [Nameplate](https://epix3d.com/makers/nameplate/): layered multi-colour nameplates from a subject and style, or your own picture.
 - [Hype chain](https://epix3d.com/makers/hype-chain/): a chunky pendant from a logo or text, with a printed chain.
+- [Photo to 3D](https://epix3d.com/makers/ai3d/): a photo of one object turned into a solid, printable 3D model in the browser.
 
 ## Plans
 - Free: every maker, save up to 50 projects, order prints (each print is quoted per order).

@@ -35,7 +35,13 @@ export const MAKER_HEADERS = {
   "content-security-policy": `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'none'; form-action 'self' ${CART}`,
 };
 export const PLATE_HEADERS = MAKER_HEADERS;
-const MAKER_PAGE = /^\/makers\/[a-z-]+\//;
+// The Photo to 3D Maker runs its 3D engine (ONNX Runtime, WebAssembly and WebGPU) in the visitor's browser,
+// which needs WebAssembly compiling: 'wasm-unsafe-eval' allows that and nothing else (no eval of scripts).
+export const PHOTO3D_HEADERS = {
+  ...MAKER_HEADERS,
+  "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'"),
+};
+const MAKER_PAGE = /^\/makers\/[a-z0-9-]+\//;
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
@@ -101,7 +107,7 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(req);
   const out = new Response(res.body, res);
-  const headers = MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
+  const headers = pathname.startsWith("/makers/ai3d/") ? PHOTO3D_HEADERS : MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }

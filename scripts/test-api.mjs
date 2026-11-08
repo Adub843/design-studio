@@ -301,6 +301,24 @@ await test("pages may post to the Charleston3D cart (orders, Platinum); nowhere 
   assert.equal((await call(e, "/makers/")).headers.get("x-frame-options"), "DENY", "the makers list is a normal page");
 });
 
+await test("only the Photo to 3D Maker may compile WebAssembly (its 3D engine runs in the browser)", async () => {
+  const e = env();
+  const p3d = await call(e, "/makers/ai3d/");
+  assert.match(p3d.headers.get("content-security-policy"), /script-src 'self' 'wasm-unsafe-eval' /);
+  assert.match(p3d.headers.get("content-security-policy"), /form-action 'self' https:\/\/charleston3d\.com/, "it can order a print too");
+  assert.equal(p3d.headers.get("x-frame-options"), "SAMEORIGIN");
+  for (const p of ["/makers/nameplate/", "/makers/license-plate/", "/makers/lightbox/", "/"]) assert.doesNotMatch((await call(e, p)).headers.get("content-security-policy"), /wasm-unsafe-eval/);
+});
+
+await test("print prep turns a density field into one watertight part at the asked size", async () => {
+  const { prepareFromField } = await import("../makers/ai3d/print-prep.js");
+  const r = 40, field = new Float32Array(r * r * r);
+  for (let k = 0; k < r; k++) for (let j = 0; j < r; j++) for (let i = 0; i < r; i++) field[i + r * (j + r * k)] = 25 * Math.exp(8 * (0.6 - Math.hypot(i - 20, j - 20, k - 20) / 20));
+  const { report } = prepareFromField({ field, res: [r, r, r], threshold: 25 }, { sizeMm: 30 });
+  assert.ok(report.ok && report.watertight && report.manifold);
+  assert.ok(Math.abs(Math.max(...report.sizeMm) - 30) < 0.01);
+});
+
 // ----- EPIX3D accounts, projects, orders and Platinum -----
 const { PBKDF2_ITERATIONS, hashPassword, SIGNIN_LIMIT } = await import("../lib/accounts.mjs");
 const { shopifyHmac } = await import("../lib/webhook.mjs");

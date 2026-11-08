@@ -12,5 +12,7 @@
   { "id": "nameplate", "name": "Nameplate", "href": "/makers/nameplate/", "img": "/assets/img/makers/nameplate.jpg", "tone": "mint",
     "blurb": "Layered nameplates from a subject and a style, or a blank plate with your own picture.", "tags": ["Names", "Layered"] },
   { "id": "hype-chain", "name": "Hype chain", "href": "/makers/hype-chain/", "img": "/assets/img/makers/hype-chain.jpg", "tone": "sun",
-    "blurb": "A chunky pendant from a logo or your own text, with a printed chain to match.", "tags": ["Pendant", "Chain"] }
+    "blurb": "A chunky pendant from a logo or your own text, with a printed chain to match.", "tags": ["Pendant", "Chain"] },
+  { "id": "ai3d", "name": "Photo to 3D", "href": "/makers/ai3d/", "img": "/assets/img/makers/photo-3d.jpg", "tone": "sky",
+    "blurb": "A photo of one object turned into a solid 3D model, made in your browser. Your photo isn't uploaded.", "tags": ["Photos", "AI", "3D"] }
 ]
