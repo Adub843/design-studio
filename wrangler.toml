@@ -1,7 +1,7 @@
 # epix3d.com on Cloudflare Workers (free plan): one Worker serves the EPIX3D site, its API (accounts,
 # projects, print orders, Platinum) and the image library / E: drive APIs the shirt app and console use.
 # Secrets are never written here. Aaron sets them himself:
-#   npx.cmd wrangler secret put CONSOLE_KEY              (the same value as the Business Console)
+#   npx.cmd wrangler secret put CONSOLE_KEY              (the same value as the Creative Lab engine)
 #   npx.cmd wrangler secret put SHOPIFY_WEBHOOK_SECRET   (the Charleston3D store's webhook signing secret)
 name = "design-studio"
 main = "worker/index.mjs"
@@ -31,7 +31,7 @@ binding = "ASSETS"
 run_worker_first = true
 not_found_handling = "404-page"
 
-# The image library: the SAME namespace the Business Console uses (business-console-images), so both
+# The image library: the SAME namespace the Creative Lab engine uses (business-console-images), so both
 # apps and the shirt apps see one library. `wrangler dev` keeps a separate local copy.
 [[kv_namespaces]]
 binding = "IMAGES"

@@ -1,7 +1,7 @@
 // The epix3d.com Worker. It serves the EPIX3D site (dist/, built by scripts/build.mjs: the pages, the
 // makers and assets/), the site API (accounts, projects, print orders, Platinum) and, unchanged, the
-// image library and E: drive APIs that the Elevated Designs shirt app and the Business Console use.
-// The image library lives in the same Workers KV namespace as the Business Console's (IMAGES); accounts,
+// image library and E: drive APIs that the Elevated Designs shirt app and the Creative Lab engine use.
+// The image library lives in the same Workers KV namespace as the Creative Lab engine's (IMAGES); accounts,
 // projects and orders live in their own namespace (ACCOUNTS).
 import { handleImages } from "../lib/images.mjs";
 import { kvBlobStore } from "../lib/kv-store.mjs";
