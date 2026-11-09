@@ -60,6 +60,14 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 const envReader = (env) => (k) => typeof env?.[k] === "string" ? env[k] : undefined;
 
+// Account emails (password reset) go out through Cloudflare Email Service: the EMAIL send_email binding in
+// wrangler.toml, sending from noreply@epix3d.com once epix3d.com is onboarded to Email Sending.
+export const MAIL_FROM = { email: "noreply@epix3d.com", name: "EPIX3D" };
+export const MAIL_REPLY_TO = "hello@charleston3d.com";
+export const mailer = (env) => (typeof env?.EMAIL?.send === "function"
+  ? (msg) => env.EMAIL.send({ from: MAIL_FROM, replyTo: MAIL_REPLY_TO, ...msg })
+  : null);
+
 // The site API: accounts, projects, orders, Platinum. Everything but /api/config needs ACCOUNTS.
 const SITE_API = /^\/api\/(config$|me$|auth\/|projects($|\/)|orders$|exports\/|shopify\/webhook$|admin\/platinum$)/;
 async function handleSite(req, env, pathname, fetchImpl) {
@@ -73,7 +81,7 @@ async function handleSite(req, env, pathname, fetchImpl) {
   if (pathname === "/api/admin/platinum") return handleAdminPlatinum(req, kv, envReader(env));
   // Writes must come from this site's own pages.
   if (req.method !== "GET" && req.method !== "HEAD" && !sameOrigin(req)) throw new ApiError(403, "cross_site", "Not allowed from another site.");
-  if (pathname === "/api/me" || pathname.startsWith("/api/auth/")) return handleAuth(req, kv);
+  if (pathname === "/api/me" || pathname.startsWith("/api/auth/")) return handleAuth(req, kv, { mail: mailer(env) });
   if (pathname === "/api/projects" || pathname.startsWith("/api/projects/")) return handleProjects(req, kv);
   if (pathname === "/api/orders") {
     if (req.method === "POST") return createOrder(req, kv, { fetchImpl });

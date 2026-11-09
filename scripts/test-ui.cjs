@@ -68,7 +68,8 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
 
 (async () => {
   const { handleRequest } = await import(pathToFileURL(path.join(ROOT, "worker/index.mjs")).href);
-  const env = { IMAGES: memoryKV(), ACCOUNTS: memoryKV(), CONSOLE_KEY: KEY, SHOPIFY_WEBHOOK_SECRET: "whsec-ui-test", ASSETS };
+  const MAIL = []; // password reset emails the Worker "sent"
+  const env = { IMAGES: memoryKV(), ACCOUNTS: memoryKV(), CONSOLE_KEY: KEY, SHOPIFY_WEBHOOK_SECRET: "whsec-ui-test", ASSETS, EMAIL: { send: async (m) => { MAIL.push(m); return { messageId: String(MAIL.length) }; } } };
   // The Charleston3D store's product feed, with only its free custom request product (quote mode).
   const storeFetch = async () => Object.defineProperty(new Response(JSON.stringify({ products: [
     { id: 15442527223995, handle: "custom-request", title: "Custom request", tags: ["request-product"], variants: [{ id: QUOTE_VARIANT, title: "Default Title", price: "0.00", available: true }] },
@@ -142,6 +143,38 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       const cookie = (await ctx.cookies()).find((c) => c.name === "epx_session");
       assert.ok(cookie && cookie.httpOnly && cookie.sameSite === "Lax", "HttpOnly, SameSite=Lax session cookie");
       await shot("account-signed-in");
+    });
+
+    await step(`${label}: forgot password emails a link that sets a new password`, async () => {
+      const c2 = await browser.newContext({ viewport: { width, height: width > 500 ? 800 : 844 }, deviceScaleFactor: 1 });
+      const p2 = await c2.newPage();
+      p2.on("pageerror", (e) => errors.push(String(e)));
+      await p2.goto(BASE + "/account/", { waitUntil: "networkidle" });
+      await p2.click("[data-form=signin] [data-show-forgot]");
+      await p2.waitForSelector("[data-form=forgot]:not([hidden])");
+      assert.equal(await p2.locator(".auth .tabs").isHidden(), true);
+      await p2.fill("#fp-email", email);
+      const before = MAIL.length;
+      await p2.click("[data-form=forgot] button[type=submit]");
+      await p2.waitForFunction(() => /reset link is on its way/.test(document.querySelector("[data-form=forgot] .form-msg").textContent));
+      if (SHOTS) await p2.screenshot({ path: path.join(SHOTS, `account-forgot-${width}.png`) });
+      assert.equal(MAIL.length, before + 1);
+      const link = MAIL[MAIL.length - 1].text.match(/https:\/\/epix3d\.com(\/account\/\?reset=[A-Za-z0-9_-]+)/)[1];
+      await p2.goto(BASE + link, { waitUntil: "networkidle" });
+      await p2.waitForSelector("[data-form=reset]:not([hidden])");
+      if (SHOTS) await p2.screenshot({ path: path.join(SHOTS, `account-reset-${width}.png`) });
+      await p2.fill("#rp-pass", "a-reset-long-password");
+      await p2.click("[data-form=reset] button[type=submit]");
+      await p2.waitForSelector("[data-account]:not([hidden])");
+      assert.equal(await p2.locator("[data-me-email]").innerText(), email);
+      assert.ok(!p2.url().includes("reset="), "the link leaves the address bar");
+      await c2.close();
+      // The first device was signed out by the reset: sign in again with the new password.
+      await page.goto(BASE + "/account/", { waitUntil: "networkidle" });
+      await page.waitForSelector("[data-form=signin]:not([hidden])");
+      await page.fill("#si-email", email); await page.fill("#si-pass", "a-reset-long-password");
+      await page.click("[data-form=signin] button[type=submit]");
+      await page.waitForSelector("[data-account]:not([hidden])");
     });
 
     let projectId;
@@ -258,7 +291,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       await page.locator("#epx-dialog a", { hasText: "Sign in" }).click();
       await page.waitForURL(/\/account\/\?next=/);
       await page.fill("#si-email", email);
-      await page.fill("#si-pass", "a-good-long-password");
+      await page.fill("#si-pass", "a-reset-long-password");
       await page.click("[data-form=signin] button[type=submit]");
       await page.waitForURL(/\/makers\/lightbox\//);
       await until(page, () => new URL(location.href).searchParams.get("project"), null, { timeout: 30000 });

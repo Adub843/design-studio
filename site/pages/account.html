@@ -19,7 +19,22 @@
         <div class="field"><label for="si-pass">Password</label><input id="si-pass" name="password" type="password" autocomplete="current-password" required></div>
         <p class="form-msg" role="alert"></p>
         <button class="btn btn-primary" type="submit">Sign in</button>
-        <p class="auth-foot">Forgot your password? Reset by email is coming soon. Until then, write to <a href="mailto:hello@charleston3d.com">hello@charleston3d.com</a> from the address on your account.</p>
+        <p class="auth-foot"><button type="button" class="link-btn" data-show-forgot>Forgot your password?</button></p>
+      </form>
+      <form data-form="forgot" novalidate hidden>
+        <h2 class="auth-h">Reset your password</h2>
+        <p class="muted">Enter the email on your account and we'll send you a link to set a new password. The link works once, for an hour.</p>
+        <div class="field"><label for="fp-email">Email</label><input id="fp-email" name="email" type="email" autocomplete="email" required></div>
+        <p class="form-msg" role="alert"></p>
+        <button class="btn btn-primary" type="submit">Email me a reset link</button>
+        <p class="auth-foot"><button type="button" class="link-btn" data-back-signin>Back to sign in</button></p>
+      </form>
+      <form data-form="reset" novalidate hidden>
+        <h2 class="auth-h">Set a new password</h2>
+        <div class="field"><label for="rp-pass">New password</label><input id="rp-pass" name="password" type="password" autocomplete="new-password" minlength="10" required aria-describedby="rp-hint"><span class="hint" id="rp-hint">At least 10 characters. Other devices will be signed out.</span></div>
+        <p class="form-msg" role="alert"></p>
+        <button class="btn btn-primary" type="submit">Save new password</button>
+        <p class="auth-foot"><button type="button" class="link-btn" data-show-forgot>Send a new link</button></p>
       </form>
       <form id="form-signup" role="tabpanel" aria-labelledby="tab-signup" data-form="signup" novalidate hidden>
         <div class="field"><label for="su-email">Email</label><input id="su-email" name="email" type="email" autocomplete="email" required></div>

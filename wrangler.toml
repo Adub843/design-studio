@@ -42,3 +42,9 @@ id = "a4c25d0fee6e45448ada053a44b19bcc"
 [[kv_namespaces]]
 binding = "ACCOUNTS"
 id = "22849576a606478292692b682a200b89"
+
+# Account emails (password reset links) through Cloudflare Email Service. epix3d.com must be onboarded to
+# Email Sending (Cloudflare dashboard > epix3d.com > Email > Email Sending) before mail goes out; until
+# then the Worker still answers reset requests the same way and logs that no email was sent.
+[[send_email]]
+name = "EMAIL"
