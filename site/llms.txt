@@ -8,6 +8,11 @@
 - [Name tag](https://epix3d.com/makers/lightbox/?mode=nametag): your name on a small two-colour badge; glue a pin or magnet on the back.
 - [Sign](https://epix3d.com/makers/lightbox/?mode=sign): raised lettering on a plate for doors, desks and shelves.
 - [Lithophane](https://epix3d.com/makers/lightbox/?mode=litho): a photo as a thin plate that shows the picture when lit from behind.
+- [Relief](https://epix3d.com/makers/lightbox/?mode=relief): a photo or logo as raised wall art lit from the front.
+- [Bookmark](https://epix3d.com/makers/lightbox/?mode=bookmark): a slim multi-colour bookmark with a name or picture and a tassel hole.
+- [Ornament](https://epix3d.com/makers/lightbox/?mode=ornament): a round hanging ornament with a name, date or picture.
+- [Coaster](https://epix3d.com/makers/lightbox/?mode=coaster): a round drink coaster with raised colour lettering or a picture.
+- [Fridge magnet](https://epix3d.com/makers/lightbox/?mode=magnet): a small multi-colour plaque with a magnet glued into the back.
 - [License plate](https://epix3d.com/makers/license-plate/): custom plate frames and novelty plates with your own text.
 - [Nameplate](https://epix3d.com/makers/nameplate/): layered multi-colour nameplates from a subject and style, or your own picture.
 - [Hype chain](https://epix3d.com/makers/hype-chain/): a chunky pendant from a logo or text, with a printed chain.
