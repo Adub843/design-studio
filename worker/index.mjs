@@ -42,11 +42,18 @@ export const PHOTO3D_HEADERS = {
   ...MAKER_HEADERS,
   "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'"),
 };
+// The geometry worker for the CSG makers (organizer, dice, flexi). manifold-3d's WebAssembly bindings build
+// their glue functions at run time, so this one script (a worker: no page, no DOM, no cookies to steal) may
+// evaluate code. Every page keeps its stricter policy.
+export const CSG_WORKER_HEADERS = {
+  ...MAKER_HEADERS,
+  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'",
+};
 const MAKER_PAGE = /^\/makers\/[a-z0-9-]+\//;
 // The Light box engine also runs the Keychain, Name tag, Sign and Lithophane makers (?mode=...). Each
 // mode has its own copy of the page with its own title, description and canonical (scripts/build.mjs puts
 // them in makers/lightbox/m/<mode>/), so search engines see five separate makers. The address stays the same.
-export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet"];
+export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet", "lantern", "stamp", "qr"];
 export function lightboxModeRequest(req) {
   const u = new URL(req.url);
   if (u.pathname !== "/makers/lightbox/" || (req.method !== "GET" && req.method !== "HEAD")) return null;
@@ -131,7 +138,7 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(lightboxModeRequest(req) || req);
   const out = new Response(res.body, res);
-  const headers = pathname.startsWith("/makers/ai3d/") ? PHOTO3D_HEADERS : MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
+  const headers = pathname === "/makers/param/csg-worker.js" ? CSG_WORKER_HEADERS : pathname.startsWith("/makers/ai3d/") ? PHOTO3D_HEADERS : MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }

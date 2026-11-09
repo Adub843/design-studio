@@ -655,9 +655,9 @@ await test("accounts: reset requests are rate limited and work without the email
 await test("SEO: each Light box mode is served from its own page copy, and other addresses are untouched", async () => {
   const seen = [];
   const e = env({ ASSETS: { fetch: async (r) => { seen.push(new URL(r.url).pathname); return new Response("<!doctype html>", { headers: { "content-type": "text/html" } }); } } });
-  for (const mode of ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet"]) await call(e, `/makers/lightbox/?mode=${mode}`);
+  for (const mode of ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet", "lantern", "stamp", "qr"]) await call(e, `/makers/lightbox/?mode=${mode}`);
   await call(e, "/makers/lightbox/?mode=lightbox"); await call(e, "/makers/lightbox/?mode=../../x"); await call(e, "/makers/nameplate/?mode=sign");
-  assert.deepEqual(seen, ["/makers/lightbox/m/keychain/", "/makers/lightbox/m/nametag/", "/makers/lightbox/m/sign/", "/makers/lightbox/m/litho/", "/makers/lightbox/m/relief/", "/makers/lightbox/m/bookmark/", "/makers/lightbox/m/ornament/", "/makers/lightbox/m/coaster/", "/makers/lightbox/m/magnet/", "/makers/lightbox/", "/makers/lightbox/", "/makers/nameplate/"]);
+  assert.deepEqual(seen, ["/makers/lightbox/m/keychain/", "/makers/lightbox/m/nametag/", "/makers/lightbox/m/sign/", "/makers/lightbox/m/litho/", "/makers/lightbox/m/relief/", "/makers/lightbox/m/bookmark/", "/makers/lightbox/m/ornament/", "/makers/lightbox/m/coaster/", "/makers/lightbox/m/magnet/", "/makers/lightbox/m/lantern/", "/makers/lightbox/m/stamp/", "/makers/lightbox/m/qr/", "/makers/lightbox/", "/makers/lightbox/", "/makers/nameplate/"]);
 });
 
 await test("SEO: the IndexNow key file is served only for the INDEXNOW_KEY secret", async () => {
