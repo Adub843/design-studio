@@ -46,7 +46,7 @@ const MAKER_PAGE = /^\/makers\/[a-z0-9-]+\//;
 // The Light box engine also runs the Keychain, Name tag, Sign and Lithophane makers (?mode=...). Each
 // mode has its own copy of the page with its own title, description and canonical (scripts/build.mjs puts
 // them in makers/lightbox/m/<mode>/), so search engines see five separate makers. The address stays the same.
-export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet"];
+export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet", "lantern", "stamp", "qr"];
 export function lightboxModeRequest(req) {
   const u = new URL(req.url);
   if (u.pathname !== "/makers/lightbox/" || (req.method !== "GET" && req.method !== "HEAD")) return null;

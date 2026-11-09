@@ -112,7 +112,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
 
     await step(`${label}: home lists every maker with its own picture; SEO tags are there`, async () => {
       await page.goto(BASE + "/", { waitUntil: "networkidle" });
-      assert.equal(await page.locator(".makers .mk").count(), 14);
+      assert.equal(await page.locator(".makers .mk").count(), 17);
       for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=nametag", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
         assert.equal(await page.locator(`.makers a[href="${href}"]`).count(), 1, href);
       for (const img of await page.locator(".makers img").all()) await img.scrollIntoViewIfNeeded(); // lazy images load as they come into view
@@ -284,7 +284,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
         await until(page, () => document.documentElement.dataset.epixReady === "1");
         await page.click(".epx-switch");
         await page.waitForSelector(".epx-switch-menu:not([hidden]) li a");
-        assert.equal(await page.locator(".epx-switch-menu li a").count(), 14, m);
+        assert.equal(await page.locator(".epx-switch-menu li a").count(), 17, m);
         assert.equal(await page.locator('.epx-switch-menu [aria-current="page"] b').innerText(), m.includes("nametag") ? "Name tag" : "License plate");
       }
       await shot("maker-switcher", false);

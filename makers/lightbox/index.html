@@ -223,6 +223,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stro
 <!-- Copy of tools/maker/index.html from Adub843/creative-lab-engine, plus the back bar. Change it there first, then copy it here. -->
 <header id="epix-bar"></header>
 <div id="lbMount"></div>
+<script src="/makers/vendor/qrcode.js"></script>
 <script>
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const SV=p=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
@@ -234,12 +235,12 @@ function dlBlob(name,blob){name=String(name||"file").replace(/[\\/:*?"<>|]+/g,"-
 /* ================= MAKER: Light box · Keychain · Sign · Lithophane — pictures, text and shapes in, Bambu-ready 3MF/STL out =================
    Layout: Image, Text, Shape and Layer on a narrow rail (small pop-overs), the design on the printer bed in the middle,
    the Overall settings (or the selected element's settings) on the right. Design and Preview at the top. A bottom bar on phones. */
-const MK_MODES=[["lightbox","Light box","Pictures, text and shapes glowing in a box. The lights glue inside through the back cover."],["keychain","Keychain","Picture or text traced into a flat multi-colour tag with a ring hole."],["nametag","Name tag","Your name on a small two-colour badge. Glue a pin or magnet on the back, or add a lanyard hole."],["sign","Sign","Raised lettering on a plate. Name plates, badges, shelf signs."],["litho","Lithophane","Photo as a thin plate that shows the picture when lit from behind."],["relief","Relief","Photo or logo as raised wall art you light from the front. Brighter parts stand out."],["bookmark","Bookmark","A slim multi-colour bookmark with your name or picture and a tassel hole."],["ornament","Ornament","A round hanging ornament with a name, date or picture and a loop for ribbon."],["coaster","Coaster","A round drink coaster with raised colour lettering or a picture."],["magnet","Fridge magnet","A small multi-colour plaque. Glue a round magnet into the back."]];
+const MK_MODES=[["lightbox","Light box","Pictures, text and shapes glowing in a box. The lights glue inside through the back cover."],["keychain","Keychain","Picture or text traced into a flat multi-colour tag with a ring hole."],["nametag","Name tag","Your name on a small two-colour badge. Glue a pin or magnet on the back, or add a lanyard hole."],["sign","Sign","Raised lettering on a plate. Name plates, badges, shelf signs."],["litho","Lithophane","Photo as a thin plate that shows the picture when lit from behind."],["relief","Relief","Photo or logo as raised wall art you light from the front. Brighter parts stand out."],["bookmark","Bookmark","A slim multi-colour bookmark with your name or picture and a tassel hole."],["ornament","Ornament","A round hanging ornament with a name, date or picture and a loop for ribbon."],["coaster","Coaster","A round drink coaster with raised colour lettering or a picture."],["magnet","Fridge magnet","A small multi-colour plaque. Glue a round magnet into the back."],["lantern","Lantern","Your photo wrapped into a round lithophane lantern. Set it over a tea light and the picture glows."],["stamp","Stamp","Raised, mirrored lettering for ink stamps, wax seals and clay. Glue it to a block or handle."],["qr","QR code sign","A scannable QR code plaque for a menu, Wi-Fi, a shop or a website."]];
 /* MK_SOLO: the light box only (when the page carries the old studio back bar). On epix3d.com every mode is open and ?mode= picks one. */
 const MK_SOLO=!!document.getElementById("ds-back-bar");
 /* Name tag is the keychain engine with badge defaults: a rounded plate about 76 x 26 mm with the name on it, no ring tab. */
-const MK_KCV=["bookmark","ornament","coaster","magnet"];
-function mkBase(m){ m=m||MK.mode; return m==="relief"?"litho":MK_KCV.includes(m)?"keychain":m; }
+const MK_KCV=["bookmark","ornament","coaster","magnet","qr"];
+function mkBase(m){ m=m||MK.mode; return m==="relief"||m==="lantern"?"litho":m==="stamp"?"sign":MK_KCV.includes(m)?"keychain":m; }
 function mkKC(m){ m=m||MK.mode; return m==="keychain"||m==="nametag"||MK_KCV.includes(m); }
 /* Starting presets for the makers that share the keychain and lithophane engines (sizes in mm). */
 const MK_PRESETS={
@@ -248,9 +249,12 @@ const MK_PRESETS={
   ornament:{set:{shape:"circle",width:76,height:76,ring:true,keyT:3,border:2.5,res:0.3,colors:2},text:"YOUR NAME",size:0.12,rot:0},
   coaster:{set:{shape:"circle",width:95,height:95,ring:false,keyT:4,border:3,res:0.4,colors:2},text:"CHEERS",size:0.22,rot:0},
   magnet:{set:{shape:"round",width:60,height:60,ring:false,keyT:3,border:2,res:0.2,colors:2},text:"HELLO",size:0.26,rot:0},
-  relief:{set:{minT:1.6,maxT:5,invert:true,arc:0,blur:0.8}}
+  relief:{set:{minT:1.6,maxT:5,invert:true,arc:0,blur:0.8}},
+  lantern:{set:{width:220,height:100,minT:0.8,maxT:3,invert:false,arc:0,lres:0.4}},
+  stamp:{set:{plateT:4,textT:2},signText:"HANDMADE"},
+  qr:{set:{shape:"round",width:80,height:80,ring:false,keyT:3,border:3,res:0.25,colors:2},qr:"https://epix3d.com"}
 };
-function mkNameTagStart(){ const pr=MK_PRESETS[MK.mode]; if(!pr||MK.els.length) return; Object.assign(MK,pr.set); if(!pr.text) return;
+function mkNameTagStart(){ const pr=MK_PRESETS[MK.mode]; if(!pr||MK.els.length||(pr.signText&&(MK.text||"").trim())) return; Object.assign(MK,pr.set); if(pr.signText) MK.text=pr.signText; if(pr.qr) setTimeout(()=>mkQrMake(pr.qr),0); if(!pr.text) return;
   const e={id:mkId("t"),type:"text",text:pr.text,font:"Archivo Black",weight:400,size:pr.size,align:"center",x:0.5,y:0.5,rot:pr.rot||0,color:"#1d1d1f",spacing:0,stroke:0,strokeColor:"#1d1d1f"};
   MK.els.push(e); MK.sel=null; MK.comp=null; mkFontReady(e.font,e.weight); }
 /* background (the outline the box or tag follows) */
@@ -276,11 +280,11 @@ const MK={mode:"lightbox", els:[], pics:new Map(), sel:null, selHole:null, pop:n
   busy:false, parts:[], node:null, dirty:true, keyTol:40, L:null, sealed:null, fontGen:0, comp:null, hist:[], fut:[], draftId:null};
 const LB=MK; /* legacy alias */
 /* what undo, redo and saved designs keep */
-const MK_SAVE=["mode","shape","bgType","width","height","res","colors","border","gap","depth","wallT","frameW","imgT","diffuse","backT","reflect","reverse","lid","lidT","holes","stand","bed","printer","nozzle","keyT","ring","text","font","textT","plateT","name","minT","maxT","lres","arc","invert","bright","contrast","blur","inkMap","frameInk","backInk"];
+const MK_SAVE=["qrText","mode","shape","bgType","width","height","res","colors","border","gap","depth","wallT","frameW","imgT","diffuse","backT","reflect","reverse","lid","lidT","holes","stand","bed","printer","nozzle","keyT","ring","text","font","textT","plateT","name","minT","maxT","lres","arc","invert","bright","contrast","blur","inkMap","frameInk","backInk"];
 let mkUid=0; const mkId=p=>p+(++mkUid).toString(36)+Date.now().toString(36).slice(-4);
 
 function mkRound(n,d){ return Math.round(n*(d||10))/(d||10); }
-function mkTitle(){ return ({lightbox:"Light box",keychain:"Keychain",nametag:"Name tag",sign:"Sign",litho:"Lithophane",relief:"Relief",bookmark:"Bookmark",ornament:"Ornament",coaster:"Coaster",magnet:"Fridge magnet"})[MK.mode]||"Maker"; }
+function mkTitle(){ return ({lightbox:"Light box",keychain:"Keychain",nametag:"Name tag",sign:"Sign",litho:"Lithophane",relief:"Relief",bookmark:"Bookmark",ornament:"Ornament",coaster:"Coaster",magnet:"Fridge magnet",lantern:"Lantern",stamp:"Stamp",qr:"QR code sign"})[MK.mode]||"Maker"; }
 function mkDefName(){ return mkTitle()+" design"; }
 /* the weight to draw a font in: the asked weight if that font has it, else its heaviest (holds up best at 0.4 mm) */
 function mkFontW(f,w){ const x=MK_FONTS.find(a=>a[0]===f); if(!x) return +w||700; return x[2].includes(+w)?+w:x[2][x[2].length-1]; }
@@ -388,7 +392,8 @@ function lbMount(){ const m=document.getElementById("lbMount"); if(!m) return; M
         <div id="mkElProps" hidden></div>
         <div id="mkOverallBody">
           ${MK_SOLO?"":`<label class="fld ph-mode">What to make<select id="mkModeSel">${opt(MK_MODES.map(x=>[x[0],x[1]]),MK.mode)}</select></label>`}
-          ${mkAcc("signtext","Text",`<div class="stack" style="margin-top:12px"><label class="fld">Sign text<input type="text" id="mkText" maxlength="40" placeholder="e.g. THE LEWIS FAMILY" value="${esc(MK.text)}"></label><label class="fld">Font<select id="mkFont">${opt(MK_FONTS.map(f=>[f[0],f[0]]),MK.font)}</select></label></div>`,"sign")}
+          ${mkAcc("qrcode","QR code",`<div class="stack" style="margin-top:12px"><label class="fld">Link or text<input type="text" id="mkQrText" maxlength="300" placeholder="https://your-site.com" value="${esc(MK.qrText||"")}"></label><button type="button" class="btn sm block" id="mkQrGo">Make the code</button><p class="small muted" style="margin:0">Keep it short: shorter links make bigger squares that scan from further away. Test it with your phone before you order.</p></div>`,"qr",1)}
+          ${mkAcc("signtext","Text",`<div class="stack" style="margin-top:12px"><label class="fld">${MK.mode==="stamp"?"Stamp text":"Sign text"}<input type="text" id="mkText" maxlength="40" placeholder="e.g. THE LEWIS FAMILY" value="${esc(MK.text)}"></label><label class="fld">Font<select id="mkFont">${opt(MK_FONTS.map(f=>[f[0],f[0]]),MK.font)}</select></label></div>`,"sign")}
           ${mkAcc("color","Color",`<div id="lbPal"></div><label class="fld mk-color" style="margin-top:12px">Colours taken from the image<select id="mkColors">${opt([2,3,4,5,6,8].map(n=>[n,n]),MK.colors)}</select></label>`,"lightbox keychain nametag sign litho",1)}
           ${mkAcc("background","Background",`<div class="k">Type</div>${mkSegw("mkBgType",[["standard","Standard shape"],["outline","Outline"]],MK.bgType)}
             <div class="tiles" id="mkBgShape"${MK.bgType==="outline"?" hidden":""}>${MK_SHAPES.map(s=>`<button type="button" data-v="${s[0]}" title="${s[1]}" aria-label="${s[1]}" aria-pressed="${MK.shape===s[0]}">${MK_BG_SVG[s[0]]}</button>`).join("")}</div>
@@ -419,10 +424,11 @@ function lbMount(){ const m=document.getElementById("lbMount"); if(!m) return; M
   const ed=m.querySelector("#mkEd"), drop=m.querySelector("#lbDrop"), file=m.querySelector("#lbFile"), $=s=>m.querySelector(s);
   drop.onclick=()=>file.click(); drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); file.click(); } };
   file.onchange=()=>{ lbAddFiles(file.files); file.value=""; };
+  const qg=m.querySelector("#mkQrGo"); if(qg) qg.onclick=()=>mkQrMake(m.querySelector("#mkQrText").value);
   ["dragenter","dragover"].forEach(ev=>m.addEventListener(ev,e=>{ if(![...(e.dataTransfer&&e.dataTransfer.types||[])].includes("Files")) return; e.preventDefault(); drop.classList.add("over"); })); ["dragleave","drop"].forEach(ev=>m.addEventListener(ev,e=>{ if(![...(e.dataTransfer&&e.dataTransfer.types||[])].includes("Files")) return; e.preventDefault(); drop.classList.remove("over"); }));
   m.addEventListener("drop",e=>{ if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length) lbAddFiles(e.dataTransfer.files); });
   if(!MK.docBound){ MK.docBound=true;
-    document.addEventListener("paste",e=>{ if(!MK.node||!document.body.contains(MK.node)||MK.mode==="sign") return; const fs=[...(e.clipboardData&&e.clipboardData.files||[])].filter(f=>/^image\//.test(f.type)); if(fs.length){ e.preventDefault(); lbAddFiles(fs); } });
+    document.addEventListener("paste",e=>{ if(!MK.node||!document.body.contains(MK.node)||mkBase()==="sign") return; const fs=[...(e.clipboardData&&e.clipboardData.files||[])].filter(f=>/^image\//.test(f.type)); if(fs.length){ e.preventDefault(); lbAddFiles(fs); } });
     document.addEventListener("keydown",mkKeys); document.addEventListener("pointerdown",mkOutside); }
   /* top bar */
   $("#mkBack").onclick=mkDraftsUI; $("#mkDrafts").onclick=mkDraftsUI; $("#mkExport").onclick=mkExport;
@@ -488,7 +494,7 @@ function mkMenuClose(){ const x=document.getElementById("mkFloatMenu"); if(x) x.
 function mkSetMode(md){ if(!MK_MODES.some(x=>x[0]===md)) return; const m=MK.node; mkFlush(); MK.mode=md; mkNameTagStart();
   m.querySelectorAll("#mkModes [data-mode]").forEach(x=>x.setAttribute("aria-checked",x.dataset.mode===md)); m.querySelector("#mkModeBtn span").textContent=mkTitle(); m.querySelector("#mkModes").hidden=true; m.querySelector("#mkModeBtn").setAttribute("aria-expanded","false");
   const s=m.querySelector("#mkModeSel"); if(s) s.value=md; m.querySelector("#lbName").placeholder=mkDefName();
-  if(md==="sign") MK.sec="signtext"; else if(MK.sec==="signtext") MK.sec="color";
+  if(mkBase(md)==="sign") MK.sec="signtext"; else if(MK.sec==="signtext") MK.sec="color";
   if(MK.three) MK.three.key=null; MK.pv="render"; MK.plate=1; MK.inkOpen=null; mkClosePop(); mkShowOpts(); mkPvUI(); lbPreview(); }
 function mkSetDP(dp){ const m=MK.node; MK.dp=dp==="preview"?"preview":"design"; m.querySelector("#mkEd").dataset.dp=MK.dp; m.querySelector("#mkStageC").dataset.dp=MK.dp;
   m.querySelectorAll("#mkDP [data-dp]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.dp===MK.dp)); mkClosePop(); mkMenuClose();
@@ -498,7 +504,7 @@ function mkSheet(s){ MK.sheet=s; const ed=MK.node.querySelector("#mkEd"); if(s) 
 function mkTool(t){ const m=MK.node;
   if(t==="settings"){ mkClosePop(); mkSheet(MK.sheet==="props"?null:"props"); return; }
   if(MK.dp!=="design") mkSetDP("design");
-  if(t==="text"){ mkClosePop(); if(MK.mode==="sign"){ mkSelect(null); MK.sec="signtext"; mkAccUI(); if(mkPhone()) mkSheet("props"); setTimeout(()=>{ const i=m.querySelector("#mkText"); if(i) i.focus(); },0); return; } mkAddText(); return; }
+  if(t==="text"){ mkClosePop(); if(mkBase()==="sign"){ mkSelect(null); MK.sec="signtext"; mkAccUI(); if(mkPhone()) mkSheet("props"); setTimeout(()=>{ const i=m.querySelector("#mkText"); if(i) i.focus(); },0); return; } mkAddText(); return; }
   if(MK.pop===t){ mkClosePop(); return; } MK.pop=t; if(mkPhone()&&MK.sheet) mkSheet(null); mkPopUI(); }
 function mkPopUI(){ const m=MK.node; if(!m) return; const p=m.querySelector("#mkPop"), t=MK.pop; p.hidden=!t;
   if(t){ p.querySelectorAll("[data-pop]").forEach(s=>s.hidden=s.dataset.pop!==t); m.querySelector("#mkPopTitle").textContent=t==="image"?([...MK.pics.values()].some(x=>!x.gone)?"Your images":"Image"):t==="shape"?"Shape":"Layer";
@@ -509,12 +515,12 @@ function mkRailState(){ const m=MK.node; if(!m) return; m.querySelectorAll("#mkR
 function mkAccUI(){ const m=MK.node; if(!m) return; m.querySelectorAll("#mkOverallBody .acc").forEach(s=>{ const o=s.dataset.sec===MK.sec; s.classList.toggle("open",o); s.querySelector(".ah").setAttribute("aria-expanded",o); }); if(MK.L!==undefined) mkInksUI(MK.L); }
 function mkBgUI(){ const m=MK.node; m.querySelectorAll("#mkBgType [data-v]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===MK.bgType)); m.querySelectorAll("#mkBgShape [data-v]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===MK.shape)); m.querySelector("#mkBgShape").hidden=MK.bgType==="outline"; m.querySelector("#mkBgOutline").hidden=MK.bgType!=="outline"; }
 function mkShowOpts(){ const m=MK.node; if(!m) return; const md=MK.mode;
-  const rule={"mk-lightbox":md==="lightbox","mk-keychain":mkKC(md),"mk-sign":md==="sign","mk-litho":mkBase(md)==="litho","mk-color":md==="lightbox"||mkKC(md),"mk-notsign":md!=="sign","mk-notlitho":mkBase(md)!=="litho"};
+  const rule={"mk-lightbox":md==="lightbox","mk-keychain":mkKC(md),"mk-sign":mkBase(md)==="sign","mk-litho":mkBase(md)==="litho","mk-color":md==="lightbox"||mkKC(md),"mk-notsign":mkBase(md)!=="sign","mk-notlitho":mkBase(md)!=="litho"};
   m.querySelectorAll(".ed-props [class*='mk-'], .pop [class*='mk-']").forEach(x=>{ const cls=[...x.classList].filter(c=>c in rule); if(cls.length) x.hidden=!cls.some(c=>rule[c]); });
   const vis=[]; m.querySelectorAll("#mkOverallBody .acc").forEach(s=>{ const ms=s.dataset.modes.split(" "); const on=ms.includes(md)||ms.includes(mkBase(md)); s.hidden=!on; if(on) vis.push(s.dataset.sec); });
   if(MK.sec&&!vis.includes(MK.sec)) MK.sec=vis[0];
-  for(const t of ["image","shape","layer"]) m.querySelector(".r-"+t).hidden=md==="sign"; if(md==="sign") mkClosePop();
-  m.querySelector("#mkEmpty [data-act=text]").hidden=mkBase(md)==="litho"; m.querySelector("#mkEmpty [data-act=upload]").hidden=md==="sign";
+  for(const t of ["image","shape","layer"]) m.querySelector(".r-"+t).hidden=mkBase(md)==="sign"; if(mkBase(md)==="sign") mkClosePop();
+  m.querySelector("#mkEmpty [data-act=text]").hidden=mkBase(md)==="litho"; m.querySelector("#mkEmpty [data-act=upload]").hidden=mkBase(md)==="sign";
   mkAccUI(); mkBgUI(); mkRailState(); mkElUI(); mkPvUI(); }
 function mkHand(on){ MK.hand=!!on; const m=MK.node; m.querySelector("#mkToolSel").setAttribute("aria-pressed",!MK.hand); m.querySelector("#mkToolHand").setAttribute("aria-pressed",MK.hand); m.querySelector("#mkStage").classList.toggle("grab",MK.hand); }
 function mkZoom(f){ MK.zoom=Math.min(6,Math.max(0.3,MK.zoom*f)); mkDraw(); }
@@ -532,7 +538,7 @@ function mkPvUI(){ const m=MK.node; if(!m) return; const pv=MK.dp==="preview", m
   m.querySelectorAll("#mkTbar .t-d").forEach(x=>x.hidden=pv); m.querySelector("#mkFramePill").hidden=pv||md!=="lightbox"; mkChipUI(); }
 function mkPlateList(){ const L=MK.L; if(!L||L.litho) return []; if(MK.thumbs&&MK.thumbs.gen===MK.Lgen) return MK.thumbs.list;
   const th=(cells,flip)=>{ const c=document.createElement("canvas"); c.width=c.height=112; const x=c.getContext("2d"); x.fillStyle="#3c3c3f"; x.fillRect(0,0,112,112); const r=cells.height/cells.width, w=r>1?Math.round(92/r):92, h=r>1?92:Math.round(92*r); x.drawImage(mkUp(cells,w,h,flip),(112-w)/2,(112-h)/2); return c.toDataURL("image/png"); };
-  const list=[[1,MK.mode==="lightbox"?"Plate 1 – Front and side":"Plate 1",th(mkFaceCells(L,false).face,MK.mode!=="sign")]];
+  const list=[[1,MK.mode==="lightbox"?"Plate 1 – Front and side":"Plate 1",th(mkFaceCells(L,false).face,mkBase()!=="sign")]];
   if(MK.mode==="lightbox"&&L.lidPlate){ const bc=mkRgb(MK.backInk).map(v=>Math.round(v*0.85+28)); list.push([2,MK.stand?"Plate 2 – Back and base":"Plate 2 – Back",th(mkCells(L.cols,L.rows,i=>L.lidPlate[i]?bc:null),false)]); }
   MK.thumbs={gen:MK.Lgen,list}; return list; }
 /* ---- elements: pictures, text and shapes on the design. x, y = centre as a fraction of the design; w = width as a fraction; rot in degrees ---- */
@@ -571,7 +577,7 @@ function mkMoveLayer(from,to){ const i=MK.els.findIndex(e=>e.id===from), j=MK.el
 function mkDelBtn(){ const b=MK.node&&MK.node.querySelector("#mkDel"); if(b) b.disabled=!MK.sel&&!MK.selHole; }
 /* the right panel: the selected element's settings, or Overall */
 function mkElUI(){ const m=MK.node; if(!m) return; const box=m.querySelector("#mkElProps"), ov=m.querySelector("#mkOverallBody"), title=m.querySelector("#mkPropsTitle"), back=m.querySelector("#mkOverall");
-  const e=(MK.mode==="sign"||MK.dp!=="design")?null:mkSelEl(); box.hidden=!e; ov.hidden=!!e; back.hidden=!e; mkDelBtn();
+  const e=(mkBase()==="sign"||MK.dp!=="design")?null:mkSelEl(); box.hidden=!e; ov.hidden=!!e; back.hidden=!e; mkDelBtn();
   if(!e){ box.innerHTML=""; title.textContent="Overall"; return; }
   title.textContent=e.type==="text"?"Text":e.type==="shape"?"Shape":"Image"; let body="";
   const colRow=(k,label,id,swId)=>`<div class="k">${label}</div><div class="colrow"><span class="cdot" style="background:${esc(e[k])}"></span><input type="text" class="hex" id="${id}" value="${esc(String(e[k]).replace("#","").toUpperCase())}" maxlength="7" aria-label="${label} as a hex code"></div>${mkSwatches(swId,e[k])}`;
@@ -633,6 +639,11 @@ function mkPrepPic(img,id){ const s=Math.min(1,1600/Math.max(img.naturalWidth||i
   const t=Math.min(1,1000/Math.max(w,h)); const sm=document.createElement("canvas"); sm.width=Math.max(1,Math.round(w*t)); sm.height=Math.max(1,Math.round(h*t)); sm.getContext("2d").drawImage(cv,0,0,sm.width,sm.height);
   return {id:id||mkId("p"),img:cv,w,h,alpha,cut:alpha?null:mkCutBg(cv),data:sm.toDataURL(alpha?"image/png":"image/jpeg",0.9)}; }
 function mkLoadImg(url){ return new Promise((ok,no)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=()=>no(new Error("unreadable")); im.src=url; }); }
+/* QR code sign: makes the code as a crisp black-on-white picture and places it like an uploaded image. */
+function mkQrCanvas(text){ if(!window.qrcode) throw new Error("The QR code library did not load."); if(qrcode.stringToBytesFuncs&&qrcode.stringToBytesFuncs["UTF-8"]) qrcode.stringToBytes=qrcode.stringToBytesFuncs["UTF-8"]; const q=qrcode(0,"M"); q.addData(text); q.make(); const n=q.getModuleCount(), quiet=2, px=12; const c=document.createElement("canvas"); c.width=c.height=(n+quiet*2)*px; const x=c.getContext("2d"); x.fillStyle="#ffffff"; x.fillRect(0,0,c.width,c.height); x.fillStyle="#000000"; for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) x.fillRect((k+quiet)*px,(r+quiet)*px,px,px); return {canvas:c,modules:n}; }
+async function mkQrMake(text){ text=String(text||"").trim(); if(!text){ toast("Type a link or some text for the code."); return; } let made; try{ made=mkQrCanvas(text); }catch(e){ toast(e.message); return; }
+  MK.qrText=text; MK.qrModules=made.modules; const blob=await new Promise(r=>made.canvas.toBlob(r,"image/png")); MK.els=MK.els.filter(e=>!(e.type==="image"&&e.qr)); const before=MK.els.length;
+  await lbAddFiles([new File([blob],"qr-code.png",{type:"image/png"})]); const e=MK.els.find(x=>x.type==="image"&&!x.qr&&MK.els.indexOf(x)>=0&&x.pic&&MK.pics.get(x.pic)); if(e){ e.qr=true; e.w=0.82; e.x=0.5; e.y=0.5; } if(!MK.name||/^qr[ -]code$/i.test(MK.name)) MK.name="QR code sign"; if(typeof mkRemount==="function") mkRemount(); if(typeof mkCommitNow==="function") mkCommitNow(); }
 async function lbAddFiles(files){ const fs=[...(files||[])].filter(f=>/^image\//.test(f.type)).slice(0,8); if(!fs.length){ toast("That isn't a picture."); return; }
   for(const f of fs){ const url=URL.createObjectURL(f); try{ const p=mkPrepPic(await mkLoadImg(url)); MK.pics.set(p.id,p);
       const first=!MK.els.some(e=>e.type==="image");
@@ -668,7 +679,7 @@ function mkHoleMask(h,C,R,cx,cy,res){ const k=1/res; if(h.type==="circle") retur
   /* keyhole: screw head goes in the round part, the box drops onto the slot above it */ const sw=2.4*k; box(cx-sw,cx+sw,cy-h.h*k,cy); const a=mkDisk(C,R,cx,cy,h.w/2*k,m); return mkDisk(C,R,cx,cy-h.h*k,sw,a); }
 
 /* ---- source picture: the layers drawn onto the design (sign: its own text) ---- */
-function mkSource(){ if(MK.mode==="sign"){ const t=(MK.text||"").trim()||"YOUR TEXT"; const cv=document.createElement("canvas"); const ctx=cv.getContext("2d"); const fs=200, f=`${mkFontW(MK.font)} ${fs}px "${MK.font}"`; ctx.font=f; const tw=Math.ceil(ctx.measureText(t).width)+fs*0.6; cv.width=Math.max(300,tw); cv.height=Math.round(fs*1.5); ctx.font=f; ctx.textBaseline="middle"; ctx.textAlign="center"; ctx.fillStyle="#000"; ctx.fillText(t,cv.width/2,cv.height/2+fs*0.05); return {img:cv,w:cv.width,h:cv.height,alpha:true}; }
+function mkSource(){ if(mkBase()==="sign"){ const t=(MK.text||"").trim()||"YOUR TEXT"; const cv=document.createElement("canvas"); const ctx=cv.getContext("2d"); const fs=200, f=`${mkFontW(MK.font)} ${fs}px "${MK.font}"`; ctx.font=f; const tw=Math.ceil(ctx.measureText(t).width)+fs*0.6; cv.width=Math.max(300,tw); cv.height=Math.round(fs*1.5); ctx.font=f; ctx.textBaseline="middle"; ctx.textAlign="center"; ctx.fillStyle="#000"; ctx.fillText(t,cv.width/2,cv.height/2+fs*0.05); return {img:cv,w:cv.width,h:cv.height,alpha:true}; }
   return mkComposite(); }
 function mkElOk(e){ return e.type==="image"?MK.pics.has(e.pic):e.type==="text"?!!(e.text||"").trim():true; }
 /* one layer onto a canvas of cw×ch px, k px per mm; returns its unturned size in px */
@@ -686,7 +697,7 @@ function mkComposite(){ const els=MK.els.filter(mkElOk); if(!els.length) return 
   const k=Math.min(10,1800/Math.max(W,H)), cw=Math.max(1,Math.round(W*k)), ch=Math.max(1,Math.round(H*k)); const cv=document.createElement("canvas"); cv.width=cw; cv.height=ch; const ctx=cv.getContext("2d");
   for(const e of els){ const s=mkDrawEl(ctx,e,cw,ch,k); e._wh=[s[0]/k,s[1]/k]; } for(const e of MK.els) if(!mkElOk(e)) e._wh=null;
   MK.comp={img:cv,w:cw,h:ch,alpha:true,textOnly:!els.some(e=>e.type!=="text"),key}; return MK.comp; }
-function lbDims(src){ src=src||mkSource(); if(MK.mode==="sign"){ const w=MK.width; return {w,h:Math.min(320,Math.max(10,src?Math.round(w*src.h/src.w):Math.round(w*0.3)))}; } return {w:MK.width,h:MK.height}; }
+function lbDims(src){ src=src||mkSource(); if(mkBase()==="sign"){ const w=MK.width; return {w,h:Math.min(320,Math.max(10,src?Math.round(w*src.h/src.w):Math.round(w*0.3)))}; } return {w:MK.width,h:MK.height}; }
 /* sample the picture into a cols×rows grid: rgba per cell */
 function mkSample(src,cols,rows,filters){ const cv=document.createElement("canvas"); cv.width=cols; cv.height=rows; const ctx=cv.getContext("2d",{willReadFrequently:true}); const sc=Math.max(cols/src.w,rows/src.h), dw=src.w*sc, dh=src.h*sc;
   const f=[]; if(filters){ if(MK.blur>0&&mkBase()==="litho") f.push(`blur(${(MK.blur*0.6).toFixed(2)}px)`); if(MK.bright) f.push(`brightness(${(1+MK.bright/100).toFixed(2)})`); if(MK.contrast) f.push(`contrast(${(1+MK.contrast/100).toFixed(2)})`); } try{ ctx.filter=f.join(" ")||"none"; }catch{}
@@ -721,13 +732,13 @@ function mkClean(idx,mask,C,R,k){ if(k<=1) return 0; const thin=new Uint8Array(C
   return changed; }
 
 /* ---- masks (Uint8Array cols*rows) ---- */
-function mkShapeMask(d,cols,rows,src){ const n=cols*rows, m=new Uint8Array(n); const shape=(MK.shape==="trace"&&src&&src.textOnly&&MK.mode!=="sign")?"round":MK.shape;
-  if(shape==="trace"||MK.mode==="sign"){ let hasAlpha=false; for(let i=0;i<n;i++) if(d[i*4+3]<128){ hasAlpha=true; break; }
+function mkShapeMask(d,cols,rows,src){ const n=cols*rows, m=new Uint8Array(n); const shape=(MK.shape==="trace"&&src&&src.textOnly&&mkBase()!=="sign")?"round":MK.shape;
+  if(shape==="trace"||mkBase()==="sign"){ let hasAlpha=false; for(let i=0;i<n;i++) if(d[i*4+3]<128){ hasAlpha=true; break; }
     if(hasAlpha){ for(let i=0;i<n;i++) m[i]=d[i*4+3]>=128?1:0; }
     else { /* key out the background colour sampled from the corners */ const cs=[0,cols-1,(rows-1)*cols,rows*cols-1].map(i=>[d[i*4],d[i*4+1],d[i*4+2]]); const bg=cs.reduce((a,c)=>[a[0]+c[0]/4,a[1]+c[1]/4,a[2]+c[2]/4],[0,0,0]); const tol=MK.keyTol*MK.keyTol*3;
       for(let i=0;i<n;i++){ const dr=d[i*4]-bg[0],dg=d[i*4+1]-bg[1],db=d[i*4+2]-bg[2]; m[i]=(dr*dr+dg*dg+db*db)>tol?1:0; }
       /* only cells reachable from the edge through background count as outside */ const out=mkFlood(m,cols,rows); for(let i=0;i<n;i++) m[i]=out[i]?0:1; }
-    if(MK.mode==="sign") return m; /* letters only; plate is built separately */
+    if(mkBase()==="sign") return m; /* letters only; plate is built separately */
     const out=mkFlood(m,cols,rows); for(let i=0;i<n;i++) m[i]=out[i]?0:1; /* fill holes */ return m; }
   if(shape==="rect"){ m.fill(1); return m; }
   const cv=document.createElement("canvas"); cv.width=cols; cv.height=rows; const c=cv.getContext("2d",{willReadFrequently:true}); c.translate(cols/2,rows/2); mkPath(c,shape,cols,rows,0.12); c.fillStyle="#000"; c.fill();
@@ -746,7 +757,7 @@ function mkGapE(){ return MK.bgType==="outline"?Math.max(0,+MK.gap||0):0; }
 function mkLayout(){ const src=mkSource(); if(!src) return null; const {w,h}=lbDims(src); const res=MK.res; const cols=Math.min(800,Math.round(w/res)), rows=Math.max(4,Math.min(800,Math.round(h/res)));
   const d=mkSample(src,cols,rows,true); let shape=mkShapeMask(d,cols,rows,src); const L={w,h,res,cols,rows,cols0:cols,rows0:rows,d,shape,parts:[],pad:0,cleaned:0,src,minFeat:mkMinFeat()};
   /* see-through cells inside the outline show the white backing (or, reversed, the solid background) */ const clear=new Uint8Array(cols*rows);
-  if(MK.mode!=="sign") for(let i=0;i<cols*rows;i++) if(d[i*4+3]<128){ if(shape[i]) clear[i]=1; d[i*4]=d[i*4+1]=d[i*4+2]=245; d[i*4+3]=255; }
+  if(mkBase()!=="sign") for(let i=0;i<cols*rows;i++) if(d[i*4+3]<128){ if(shape[i]) clear[i]=1; d[i*4]=d[i*4+1]=d[i*4+2]=245; d[i*4+3]=255; }
   const cellsOf=(mm)=>mm/res; const minRun=Math.ceil(L.minFeat/res-1e-9); const fc=mkRgb(MK.frameInk), white=[245,245,245], gapE=mkGapE();
   const colourParts=(q,S0,idx,C,R,z1)=>q.palette.forEach((col,ci)=>{ const m=new Uint8Array(C*R); let any=0; for(let i=0;i<C*R;i++) if(S0[i]&&idx[i]===ci){ m[i]=1; any=1; } if(any) L.parts.push({name:`Colour ${ci+1} ${mkHex(col)}`,color:col,mask:m,z0:0,z1,mirror:true,lit:true}); });
   if(MK.mode==="lightbox"){ const fr=mkFrame(), rev=!!MK.reverse, bc=mkRgb(MK.backInk||MK.frameInk); const front=mkZ(MK.imgT+(MK.diffuse?MK.backT:0)); const pad=Math.ceil(cellsOf(gapE+fr.border+fr.wallT))+2; const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; const S0=P.m;
@@ -774,9 +785,9 @@ function mkLayout(){ const src=mkSource(); if(!src) return null; const {w,h}=lbD
     Object.assign(L,{cols:C,rows:R,pad,palette:ik.palette,inks:ik.inks,idx,shape:S0,outer:base,area,mat:mkSub(area,S0)});
     colourParts(ik,S0,idx,C,R,mkZ(MK.imgT));
     L.parts.push({name:"Base",color:fc,mask:base,z0:mkZ(MK.imgT),z1:MK.keyT,mirror:true}); if(gapE>0) L.parts.push({name:"White margin",color:white,mask:L.mat,z0:0,z1:mkZ(MK.imgT),mirror:true}); const edge=mkSub(base,area); L.parts.push({name:"Base edge",color:fc,mask:edge,z0:0,z1:mkZ(MK.imgT),mirror:true}); }
-  else if(MK.mode==="sign"){ const pad=Math.ceil(cellsOf(6)); const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; const letters=P.m; const plate=new Uint8Array(C*R); const rad=cellsOf(4); for(let r=0;r<R;r++) for(let c=0;c<C;c++){ const ix=Math.max(0,Math.max(rad-c,c-(C-1-rad))), iy=Math.max(0,Math.max(rad-r,r-(R-1-rad))); plate[r*C+c]=ix*ix+iy*iy<=rad*rad?1:0; }
+  else if(mkBase()==="sign"){ const pad=Math.ceil(cellsOf(6)); const P=mkPad(shape,cols,rows,pad); const C=P.cols,R=P.rows; const letters=P.m; const plate=new Uint8Array(C*R); const rad=cellsOf(4); for(let r=0;r<R;r++) for(let c=0;c<C;c++){ const ix=Math.max(0,Math.max(rad-c,c-(C-1-rad))), iy=Math.max(0,Math.max(rad-r,r-(R-1-rad))); plate[r*C+c]=ix*ix+iy*iy<=rad*rad?1:0; }
     Object.assign(L,{cols:C,rows:R,pad,palette:[[250,250,250],[30,30,30]],shape:letters,outer:plate,w:C*res,h:R*res,letterMm:mkRound(h*(200/300)*0.72)});
-    L.parts.push({name:"Plate",color:[30,30,30],mask:plate,z0:0,z1:MK.plateT}); L.parts.push({name:"Letters",color:[250,250,250],mask:letters,z0:MK.plateT,z1:mkZ(MK.plateT+MK.textT)}); }
+    const mir=MK.mode==="stamp"; L.parts.push({name:mir?"Stamp block":"Plate",color:[30,30,30],mask:plate,z0:0,z1:MK.plateT,mirror:mir}); L.parts.push({name:mir?"Stamp face (mirrored)":"Letters",color:[250,250,250],mask:letters,z0:MK.plateT,z1:mkZ(MK.plateT+MK.textT),mirror:mir}); }
   return L; }
 /* ---- print check ---- */
 function mkPrinterName(){ const p=MK_PRINTERS.find(x=>x[0]===MK.printer); return p&&p[1]===MK.bed?p[0]:mkBed()[1]; }
@@ -794,8 +805,8 @@ function mkChecks(L){ const out=[]; const ok=t=>out.push(["ok",t]), warn=t=>out.
     if(MK.stand) ok("Base prints on plate 2 with the back cover and holds the box upright.");
     L.palette.forEach((c,i)=>{ if(mkLum(c)<0.12) info(`Colour ${i+1} is very dark and will look almost black when lit.`); }); }
   if(mkKC()) ok(`${MK.keyT} mm thick${MK.ring?", 4.4 mm ring hole":""}.`);
-  if(MK.mode==="sign") (L.letterMm>=minLetter?ok:warn)(L.letterMm>=minLetter?`Letters about ${L.letterMm} mm tall.`:`Letters are about ${L.letterMm} mm tall. Make the sign wider so they're at least ${minLetter} mm.`);
-  if(MK.mode!=="sign"){ for(const e of MK.els){ if(e.type!=="text"||!(e.text||"").trim()) continue; const mm=mkRound(e.size*L.h*0.7); const nm=String(e.text).split("\n")[0]; (mm>=minLetter?ok:warn)(mm>=minLetter?`"${nm}" letters about ${mm} mm tall.`:`"${nm}" letters are about ${mm} mm tall. Make them at least ${minLetter} mm so they print clean with a ${nz} mm nozzle.`); }
+  if(mkBase()==="sign") (L.letterMm>=minLetter?ok:warn)(L.letterMm>=minLetter?`Letters about ${L.letterMm} mm tall.`:`Letters are about ${L.letterMm} mm tall. Make the sign wider so they're at least ${minLetter} mm.`);
+  if(mkBase()!=="sign"){ for(const e of MK.els){ if(e.type!=="text"||!(e.text||"").trim()) continue; const mm=mkRound(e.size*L.h*0.7); const nm=String(e.text).split("\n")[0]; (mm>=minLetter?ok:warn)(mm>=minLetter?`"${nm}" letters about ${mm} mm tall.`:`"${nm}" letters are about ${mm} mm tall. Make them at least ${minLetter} mm so they print clean with a ${nz} mm nozzle.`); }
     if(L.cleaned){ const pic=L.shape.reduce((s,v)=>s+v,0)||1; const pct=L.cleaned/pic; (pct>0.03?warn:info)(pct>0.03?`A lot of fine detail is thinner than ${mf} mm (the finest a ${nz} mm nozzle prints) and was merged into nearby colours. Make it bigger or use bolder art.`:`${L.cleaned} tiny spots thinner than ${mf} mm were merged into the colour next to them so a ${nz} mm nozzle can print them.`); }
     const fil=new Set(L.palette.map(mkHex)); fil.add(MK.frameInk); if(MK.mode==="lightbox"){ if(MK.lid) fil.add(MK.backInk); if(MK.diffuse||MK.reflect||mkGapE()>0) fil.add("#f5f5f5"); } (fil.size<=4?ok:info)(fil.size<=4?`${fil.size} filaments: fits one AMS.`:`${fil.size} filaments: needs a second AMS or a filament swap.`); }
   if(MK.sealed&&MK.sealed.mode===MK.mode&&!MK.dirty) (MK.sealed.ok?ok:warn)(MK.sealed.ok?`All ${MK.sealed.n} parts are sealed solids (checked).`:`${MK.sealed.bad} part(s) aren't sealed. Try another detail level.`);
@@ -803,17 +814,17 @@ function mkChecks(L){ const out=[]; const ok=t=>out.push(["ok",t]), warn=t=>out.
 /* ---- preview ---- */
 let lbPrevTimer=null; function lbPreview(ms){ clearTimeout(lbPrevTimer); lbPrevTimer=setTimeout(lbPreviewNow,ms==null?150:ms); mkCommit(); }
 function lbPreviewNow(){ const m=MK.node; if(!m) return; const st=m.querySelector("#lbStat"), size=m.querySelector("#mkSize"), ck=m.querySelector("#mkCheck"); MK.dirty=true; MK.parts=[]; const dl=m.querySelector("#lbDl"); if(dl) dl.innerHTML="";
-  const src=mkSource(); const hint=m.querySelector("#mkShapeHint"); if(hint) hint.hidden=!(MK.shape==="trace"&&src&&src.textOnly&&MK.mode!=="sign");
+  const src=mkSource(); const hint=m.querySelector("#mkShapeHint"); if(hint) hint.hidden=!(MK.shape==="trace"&&src&&src.textOnly&&mkBase()!=="sign");
   const L=mkBase()==="litho"?(src?mkLithoLayout():null):mkLayout(); MK.L=L; MK.Lgen=(MK.Lgen||0)+1; MK.thumbs=null;
-  m.querySelector("#mkEmpty").hidden=!!L; m.querySelector("#mkEmptyMsg").textContent=MK.mode==="sign"?"Type your sign text to start.":mkBase()==="litho"?"Upload a photo to start.":"Add an image, some text or a shape to start.";
+  m.querySelector("#mkEmpty").hidden=!!L; m.querySelector("#mkEmptyMsg").textContent=mkBase()==="sign"?"Type your sign text to start.":mkBase()==="litho"?"Upload a photo to start.":"Add an image, some text or a shape to start.";
   if(!L){ size.innerHTML=""; ck.innerHTML=""; st.textContent=""; mkInksUI(null); mkPvUI(); mkDraw(); return; }
   const row=(a,b)=>`<dt>${a}</dt><dd>${b}</dd>`;
   if(mkBase()==="litho") size.innerHTML=row("Size",`${L.w} × ${L.h} mm`)+row("Thickness",`${MK.minT}–${mkRound(Math.max(MK.minT+0.3,MK.maxT))} mm`)+row("Prints","standing up");
   else { const W=mkRound(L.cols*L.res), H=mkRound(L.rows*L.res); const nh=(L.holes||[]).length;
-    size.innerHTML=row("Outside",`${W} × ${H} mm`)+(MK.mode==="lightbox"?row("Depth",`${MK.depth} mm`)+row("Back cover",MK.lid?(nh?`${nh} hole${nh>1?"s":""}`:"no holes"):"none")+(MK.stand?row("Base","yes"):""):mkKC()?row("Thickness",`${MK.keyT} mm`):row("Thickness",`${mkZ(MK.plateT+MK.textT)} mm`))+row("Prints",MK.mode==="sign"?"face up":"face down"); }
+    size.innerHTML=row("Outside",`${W} × ${H} mm`)+(MK.mode==="lightbox"?row("Depth",`${MK.depth} mm`)+row("Back cover",MK.lid?(nh?`${nh} hole${nh>1?"s":""}`:"no holes"):"none")+(MK.stand?row("Base","yes"):""):mkKC()?row("Thickness",`${MK.keyT} mm`):row("Thickness",`${mkZ(MK.plateT+MK.textT)} mm`))+row("Prints",mkBase()==="sign"?"face up":"face down"); }
   mkInksUI(L);
   ck.innerHTML=mkChecks(L).map(([k,t])=>`<li class="${k}">${ICON[k]}<span>${esc(t)}</span></li>`).join("");
-  st.textContent=mkBase()==="litho"?"Prints standing up in white PLA.":MK.mode==="sign"?"Prints face up.":"Prints face down, colours first.";
+  st.textContent=mkBase()==="litho"?"Prints standing up in white PLA.":mkBase()==="sign"?"Prints face up.":"Prints face down, colours first.";
   mkPvUI(); mkDraw(); }
 /* Color section: Plate 1 front colours and side, Plate 2 back. Click a dot to pick its filament */
 function mkInksUI(L){ const pal=MK.node&&MK.node.querySelector("#lbPal"); if(!pal) return; const md=MK.mode;
@@ -821,7 +832,7 @@ function mkInksUI(L){ const pal=MK.node&&MK.node.querySelector("#lbPal"); if(!pa
   const grp=(label,rows,empty)=>`<div class="pk">${label}</div><div class="dots">${rows.map(dot).join("")||`<span class="small muted">${empty||""}</span>`}</div>`;
   let html="", all=[];
   if(md==="litho") html=`<div class="pl">Plate 1</div><div class="plate">${grp("Lithophane",[{label:"Lithophane",cur:"#f4f3ef",sub:"White PLA"}])}</div>`;
-  else if(md==="sign") html=`<div class="pl">Plate 1</div><div class="plate">${grp("Letters",[{label:"Letters",cur:"#f4f3ef",sub:"White"}])}${grp("Plate",[{label:"Plate",cur:"#1d1d1f",sub:"Black"}])}</div>`;
+  else if(mkBase(md)==="sign") html=`<div class="pl">Plate 1</div><div class="plate">${grp("Letters",[{label:"Letters",cur:"#f4f3ef",sub:"White"}])}${grp("Plate",[{label:"Plate",cur:"#1d1d1f",sub:"Black"}])}</div>`;
   else { const front=((L&&L.inks)||[]).map((x,i)=>({key:"c:"+x.src,label:`Front colour ${i+1}`,cur:x.cur,sel:x.mapped?x.cur:"",orig:true,sub:x.mapped?mkInkName(x.cur):"Image colour"}));
     const side={key:"frame",label:md==="lightbox"?"Side":"Base",cur:MK.frameInk,sel:MK.frameInk,sub:mkInkName(MK.frameInk)}; all=[...front,side];
     if(md==="lightbox"){ const back={key:"back",label:"Back",cur:MK.backInk,sel:MK.backInk,sub:mkInkName(MK.backInk)}; all.push(back);
@@ -863,7 +874,7 @@ function mkDrawDesign(ctx,W,H,L,dpr){ const b=mkBed(); ctx.fillStyle=mkCss("--st
     ctx.save(); ctx.shadowColor="rgba(0,0,0,.16)"; ctx.shadowBlur=12*dpr; ctx.shadowOffsetY=3*dpr; ctx.fillStyle="#f4f3ef"; ctx.fillRect(F.ox,F.oy,F.w,F.h); ctx.restore();
     if(src){ ctx.save(); try{ ctx.filter="grayscale(1)"; }catch{} ctx.drawImage(src.img,F.ox,F.oy,F.w,F.h); ctx.restore(); } mkDrawSel(ctx,dpr); return; }
   const s=k*L.res; const F={s,w:L.cols*s,h:L.rows*s,ox:cx-L.cols*s/2,oy:cy-L.rows*s/2}; MK.vp=F;
-  if(MK.mode==="sign"||(MK.frame&&MK.mode==="lightbox")) mkDrawFront(ctx,W,H,L,"off",dpr,F);
+  if(mkBase()==="sign"||(MK.frame&&MK.mode==="lightbox")) mkDrawFront(ctx,W,H,L,"off",dpr,F);
   else { /* the outline the box or tag follows, faint, then the design exactly as placed */
     ctx.drawImage(mkUp(mkCells(L.cols,L.rows,i=>L.outer[i]?[0,0,0,mkKC()?38:20]:null),F.w,F.h),F.ox,F.oy);
     const comp=mkComposite(); if(comp){ ctx.save(); ctx.imageSmoothingQuality="high"; ctx.drawImage(comp.img,F.ox+L.pad*s,F.oy+L.pad*s,L.cols0*s,L.rows0*s); ctx.restore(); } }
@@ -873,14 +884,14 @@ function mkFit(W,H,cols,rows,extraX,extraY){ const s=Math.min((W*0.62-(extraX||0
 /* where an element sits on the canvas (canvas px): centre, half size, turn */
 function mkElGeom(e){ const v=MK.vp, L=MK.L; if(!v||!L||!e||!e._wh) return null; const k=L.cols0*v.s/MK.width; return {cx:v.ox+(L.pad+e.x*L.cols0)*v.s, cy:v.oy+(L.pad+e.y*L.rows0)*v.s, hw:e._wh[0]*k/2, hh:e._wh[1]*k/2, a:(e.rot||0)*Math.PI/180}; }
 function mkLocal(g,p){ const dx=p[0]-g.cx, dy=p[1]-g.cy, c=Math.cos(-g.a), s=Math.sin(-g.a); return [dx*c-dy*s,dx*s+dy*c]; }
-function mkDrawSel(ctx,dpr){ if(MK.mode==="sign") return; const g=mkElGeom(mkSelEl()); if(!g) return; const p=4*dpr, st=20*dpr; ctx.save(); ctx.translate(g.cx,g.cy); ctx.rotate(g.a); const col=mkCss("--sel","#3d6be0");
+function mkDrawSel(ctx,dpr){ if(mkBase()==="sign") return; const g=mkElGeom(mkSelEl()); if(!g) return; const p=4*dpr, st=20*dpr; ctx.save(); ctx.translate(g.cx,g.cy); ctx.rotate(g.a); const col=mkCss("--sel","#3d6be0");
   ctx.strokeStyle=col; ctx.lineWidth=1.4*dpr; ctx.strokeRect(-g.hw-p,-g.hh-p,2*(g.hw+p),2*(g.hh+p));
   ctx.beginPath(); ctx.moveTo(0,-g.hh-p); ctx.lineTo(0,-g.hh-p-st); ctx.stroke();
   ctx.fillStyle="#fff"; ctx.lineWidth=1.4*dpr; ctx.beginPath(); ctx.arc(0,-g.hh-p-st,5.5*dpr,0,Math.PI*2); ctx.fill(); ctx.stroke();
   const hs=9*dpr; ctx.fillRect(g.hw+p-hs/2,g.hh+p-hs/2,hs,hs); ctx.strokeRect(g.hw+p-hs/2,g.hh+p-hs/2,hs,hs); ctx.restore(); }
 /* face of the print as seen from the front: lit = LEDs on in a dark room, off/front = daylight */
 function mkFaceCells(L,lit){ const C=L.cols,R=L.rows; const fc=mkRgb(MK.frameInk); const frame=lit?fc.map(v=>Math.round(v*0.45+8)):fc.map(v=>Math.round(v*0.92+6)), white=lit?[255,248,236]:[236,234,229];
-  if(MK.mode==="sign") return {face:mkCells(C,R,i=>L.outer[i]?[34,35,38]:null),top:mkCells(C,R,i=>L.shape[i]?[244,243,239]:null)};
+  if(mkBase()==="sign") return {face:mkCells(C,R,i=>L.outer[i]?[34,35,38]:null),top:mkCells(C,R,i=>L.shape[i]?[244,243,239]:null)};
   const bg=i=>!!(L.bgm&&L.bgm[i]), glows=i=>(L.shape[i]&&!bg(i))||(!!(L.mat&&L.mat[i])&&!L.rev);
   let f=null; if(lit){ const [cx,cy]=mkCentroid(L.shape,C,R); const md=Math.hypot(C,R)/2; const k=MK.reflect?0.12:0.2; f=i=>{ const c=i%C, r=(i-c)/C; const d=Math.hypot(c-cx,r-cy)/md; return (1-k)+k*(1-Math.min(1,d*d)); }; }
   const glow=(c,k)=>[0,1,2].map(j=>Math.min(255,Math.round(255*Math.pow(c[j]/255,0.62)*k*[1,0.975,0.92][j]*(MK.diffuse?1:1.05)+6)));
@@ -888,9 +899,9 @@ function mkFaceCells(L,lit){ const C=L.cols,R=L.rows; const fc=mkRgb(MK.frameInk
   const pic=lit?mkCells(C,R,i=>{ if(glows(i)){ const c=L.shape[i]?L.palette[L.idx[i]]:white; return glow(c,f(i)); } return null; }):null;
   const fr=mkCells(C,R,i=>(!glows(i)&&(L.outer[i]||bg(i)))?frame:null);
   return {face,pic,fr}; }
-function mkDrawFront(ctx,W,H,L,view,dpr,F,flip){ const lit=MK.mode==="lightbox"&&view==="lit"; F=F||mkFit(W,H,L.cols,L.rows); MK.vp=F; flip=!!flip&&MK.mode!=="sign"; const {face,pic,fr,top}=mkFaceCells(L,lit);
+function mkDrawFront(ctx,W,H,L,view,dpr,F,flip){ const lit=MK.mode==="lightbox"&&view==="lit"; F=F||mkFit(W,H,L.cols,L.rows); MK.vp=F; flip=!!flip&&mkBase()!=="sign"; const {face,pic,fr,top}=mkFaceCells(L,lit);
   const up=mkUp(face,F.w,F.h,flip);
-  if(MK.mode==="sign"){ mkShade(up,"rgba(255,255,255,.10)","rgba(0,0,0,.25)"); mkGrain(up,0.05); const t=mkGrain(mkUp(top,F.w,F.h),0.04);
+  if(mkBase()==="sign"){ mkShade(up,"rgba(255,255,255,.10)","rgba(0,0,0,.25)"); mkGrain(up,0.05); const t=mkGrain(mkUp(top,F.w,F.h),0.04);
     ctx.save(); ctx.shadowColor="rgba(0,0,0,.3)"; ctx.shadowBlur=26*dpr; ctx.shadowOffsetY=12*dpr; ctx.drawImage(up,F.ox,F.oy); ctx.restore();
     ctx.save(); ctx.shadowColor="rgba(0,0,0,.55)"; ctx.shadowBlur=3*dpr; ctx.shadowOffsetX=1.2*dpr; ctx.shadowOffsetY=2*dpr; ctx.drawImage(t,F.ox,F.oy); ctx.restore(); return; }
   const frU=mkShade(mkUp(fr,F.w,F.h,flip),lit?"rgba(255,255,255,.07)":"rgba(255,255,255,.16)","rgba(0,0,0,.30)");
@@ -937,11 +948,11 @@ function mkStageEvents(){ const cv=MK.node.querySelector("#mkStage"); let drag=n
     const pan=()=>{ drag={type:"pan",x0:e.clientX,y0:e.clientY,p0:MK.pan.slice()}; cv.setPointerCapture(e.pointerId); cv.classList.add("panning"); e.preventDefault(); };
     if(MK.hand||e.button===1||!L||!MK.vp) return pan();
     const hitEl=el=>{ const gg=mkElGeom(el); if(!gg) return false; const l=mkLocal(gg,p); return Math.abs(l[0])<=gg.hw+6*q&&Math.abs(l[1])<=gg.hh+6*q; };
-    const sel=MK.mode==="sign"?null:mkSelEl(), g=mkElGeom(sel);
+    const sel=mkBase()==="sign"?null:mkSelEl(), g=mkElGeom(sel);
     if(g){ const l=mkLocal(g,p), pd=4*q; if(Math.hypot(l[0],l[1]+g.hh+pd+20*q)<12*q) drag={type:"rot",e:sel,g}; else if(Math.abs(l[0]-g.hw-pd)<12*q&&Math.abs(l[1]-g.hh-pd)<12*q) drag={type:"size",e:sel,d0:Math.max(1,Math.hypot(l[0],l[1])),w0:sel.w,s0:sel.size}; else if(hitEl(sel)) drag={type:"move",e:sel,f0:frac(p),x0:sel.x,y0:sel.y,moved:false}; }
     if(!drag&&MK.vpH&&MK.mode==="lightbox"&&MK.lid){ const F=MK.vpH; for(const x of [...(L.holes||[])].reverse()){ const b=mkHoleBoxF(x,F,L.res); if(p[0]>=b[0]-6*q&&p[0]<=b[2]+6*q&&p[1]>=b[1]-6*q&&p[1]<=b[3]+6*q){
       const h=x.h; MK.selHole=h.id; MK.sel=null; MK.holeType=h.type; MK.holeW=h.w; MK.holeH=h.h; mkHoleFields(); mkHolesUI(); mkLayersUI(); mkElUI(); drag={type:"hole",h,dx:p[0]-b[4],dy:p[1]-b[5]}; mkDraw(); break; } } }
-    if(!drag&&MK.mode!=="sign"){ let hit=null; for(let i=MK.els.length-1;i>=0;i--) if(hitEl(MK.els[i])){ hit=MK.els[i]; break; }
+    if(!drag&&mkBase()!=="sign"){ let hit=null; for(let i=MK.els.length-1;i>=0;i--) if(hitEl(MK.els[i])){ hit=MK.els[i]; break; }
       if(hit){ if(MK.sel!==hit.id) mkSelect(hit.id); drag={type:"move",e:hit,f0:frac(p),x0:hit.x,y0:hit.y,moved:false}; } }
     if(!drag){ if(MK.sel) mkSelect(null); if(MK.selHole){ MK.selHole=null; mkHolesUI(); mkElUI(); mkDraw(); } return pan(); }
     mkFlush(); cv.setPointerCapture(e.pointerId); e.preventDefault(); });
@@ -958,12 +969,12 @@ function mkStageEvents(){ const cv=MK.node.querySelector("#mkStage"); let drag=n
   cv.addEventListener("pointerup",end); cv.addEventListener("pointercancel",end);
   cv.addEventListener("wheel",e=>{ if(MK.dp!=="design") return; e.preventDefault(); mkZoom(e.deltaY<0?1.1:1/1.1); },{passive:false});
   cv.addEventListener("dblclick",e=>{ if(MK.dp!=="design"||MK.sel) return; MK.zoom=1; MK.pan=[0,0]; mkDraw(); });
-  cv.addEventListener("keydown",e=>{ const el=mkSelEl(); if(!el||MK.mode==="sign"||!MK.vp) return; const s=e.shiftKey?0.05:0.01; const mv={ArrowLeft:[-s,0],ArrowRight:[s,0],ArrowUp:[0,-s],ArrowDown:[0,s]}[e.key]; if(!mv) return; e.preventDefault(); el.x=Math.min(1.2,Math.max(-0.2,el.x+mv[0])); el.y=Math.min(1.2,Math.max(-0.2,el.y+mv[1])); MK.comp=null; lbPreview(60); }); }
+  cv.addEventListener("keydown",e=>{ const el=mkSelEl(); if(!el||mkBase()==="sign"||!MK.vp) return; const s=e.shiftKey?0.05:0.01; const mv={ArrowLeft:[-s,0],ArrowRight:[s,0],ArrowUp:[0,-s],ArrowDown:[0,s]}[e.key]; if(!mv) return; e.preventDefault(); el.x=Math.min(1.2,Math.max(-0.2,el.x+mv[0])); el.y=Math.min(1.2,Math.max(-0.2,el.y+mv[1])); MK.comp=null; lbPreview(60); }); }
 /* keyboard: undo, redo, delete the selected element or hole, V and H for the canvas tools */
 function mkKeys(e){ if(!MK.node||!document.body.contains(MK.node)) return; const t=e.target, typing=t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable); const k=e.key.toLowerCase(), mod=e.ctrlKey||e.metaKey;
   if(document.querySelector(".modal")) return;
   if(mod&&k==="z"&&!typing){ e.preventDefault(); if(e.shiftKey) mkRedo(); else mkUndo(); return; } if(mod&&k==="y"&&!typing){ e.preventDefault(); mkRedo(); return; }
-  if(typing) return; if((k==="delete"||k==="backspace")&&MK.sel&&MK.mode!=="sign"){ e.preventDefault(); mkElOp(MK.sel,"del"); return; } if((k==="delete"||k==="backspace")&&MK.selHole){ e.preventDefault(); mkDelHole(MK.selHole); return; }
+  if(typing) return; if((k==="delete"||k==="backspace")&&MK.sel&&mkBase()!=="sign"){ e.preventDefault(); mkElOp(MK.sel,"del"); return; } if((k==="delete"||k==="backspace")&&MK.selHole){ e.preventDefault(); mkDelHole(MK.selHole); return; }
   if(!mod&&MK.dp==="design"&&(k==="v"||k==="h")){ mkHand(k==="h"); return; }
   if(k==="escape"){ if(document.getElementById("mkFloatMenu")){ mkMenuClose(); return; } if(MK.pop){ mkClosePop(); return; } if(MK.sel) mkSelect(null); } }
 /* ---- 3D view (three.js r128: the console's own copy first, then a CDN) ---- */
@@ -1020,6 +1031,15 @@ function lbGridSolid(cols,rows,cell,Hfn){ const top=new Float32Array(cols*rows*3
   for(let r=0;r<rows-1;r++){ const a=P(0,r),b=P(0,r+1); put(a[0],a[1],0,...b,b[0],b[1],0); put(a[0],a[1],0,...a,...b); const e=P(cols-1,r),f=P(cols-1,r+1); put(e[0],e[1],0,f[0],f[1],0,...f); put(e[0],e[1],0,...f,...e); }
   return out.subarray(0,o); }
 function lbBend(tri,W,arcDeg){ const arc=arcDeg*Math.PI/180, R=W/arc; const out=new Float32Array(tri.length); for(let i=0;i<tri.length;i+=3){ const x=tri[i],y=tri[i+1],z=tri[i+2]; const th=(x/W-0.5)*arc; const r=R+z; out[i]=r*Math.sin(th); out[i+1]=y; out[i+2]=-(r*Math.cos(th)-R); } return out; }
+/* Lantern: the picture wrapped all the way round. Built as one closed tube (no seam), axis along y. */
+function lbTubeSolid(cols,rows,cell,H){ const R=cols*cell/(2*Math.PI), out=[]; const P=(c,r,rad)=>{ const a=(c%cols)/cols*2*Math.PI; return [rad*Math.sin(a),r*cell,rad*Math.cos(a)]; };
+  const t=(a,b,c)=>out.push(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);
+  for(let r=0;r<rows-1;r++) for(let c=0;c<cols;c++){ const c1=(c+1)%cols; const A=P(c,r,R+H(c,r)),B=P(c1,r,R+H(c1,r)),C=P(c1,r+1,R+H(c1,r+1)),D=P(c,r+1,R+H(c,r+1)); t(A,B,C); t(A,C,D);
+    const a=P(c,r,R),b=P(c1,r,R),cc=P(c1,r+1,R),d=P(c,r+1,R); t(a,cc,b); t(a,d,cc); }
+  for(let c=0;c<cols;c++){ const c1=(c+1)%cols; const top=rows-1;
+    t(P(c,0,R),P(c1,0,R),P(c1,0,R+H(c1,0))); t(P(c,0,R),P(c1,0,R+H(c1,0)),P(c,0,R+H(c,0)));
+    t(P(c,top,R),P(c1,top,R+H(c1,top)),P(c1,top,R)); t(P(c,top,R),P(c,top,R+H(c,top)),P(c1,top,R+H(c1,top))); }
+  return new Float32Array(out); }
 function lbStandUp(tri){ for(let i=0;i<tri.length;i+=3){ const y=tri[i+1], z=tri[i+2]; tri[i+1]=-z; tri[i+2]=y; } return tri; }
 /* mask → maximal rectangles, used to keep the flat faces light */
 function mkRects(mask,cols,rows){ const used=new Uint8Array(cols*rows); const out=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ const i=r*cols+c; if(!mask[i]||used[i]) continue; let c1=c; while(c1+1<cols&&mask[r*cols+c1+1]&&!used[r*cols+c1+1]) c1++; let r1=r; outer: while(r1+1<rows){ for(let x=c;x<=c1;x++){ const j=(r1+1)*cols+x; if(!mask[j]||used[j]) break outer; } r1++; } for(let y=r;y<=r1;y++) for(let x=c;x<=c1;x++) used[y*cols+x]=1; out.push([c,r,c1+1,r1+1]); } return out; }
@@ -1091,8 +1111,8 @@ function mkStandMesh(L){ const res=0.5, Wg=L.cols*L.res; const len=Math.min(160,
   const f=mkField(hm,C,R,res,0,false); return {verts:f.verts,tris:f.tris,name:"Stand",color:mkRgb(MK.frameInk),len:C*res,wS:R*res,deep}; }
 /* ---- export: a reminder about holes for the light's cable, then the printer and nozzle, then the files ---- */
 const MK_TIPKEY="c3d-maker-hole-tip-off";
-function mkHasContent(){ return MK.mode==="sign"?!!(MK.text||"").trim():MK.els.some(mkElOk); }
-function mkExport(){ if(MK.busy) return; if(!mkHasContent()){ toast(MK.mode==="sign"?"Type your sign text first.":"Add an image, some text or a shape first."); return; }
+function mkHasContent(){ return mkBase()==="sign"?!!(MK.text||"").trim():MK.els.some(mkElOk); }
+function mkExport(){ if(MK.busy) return; if(!mkHasContent()){ toast(mkBase()==="sign"?"Type your sign text first.":"Add an image, some text or a shape first."); return; }
   let off=false; try{ off=localStorage.getItem(MK_TIPKEY)==="1"; }catch{}
   if(MK.mode==="lightbox"&&!MK.holes.length&&!off) mkHoleTip(); else mkPrinterDlg(); }
 function mkDlg(id,title,body,foot,wide){ const old=document.getElementById(id); if(old) old.remove(); const back=document.activeElement; const wrap=document.createElement("div"); wrap.className="modal"+(wide?" wide":""); wrap.id=id; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-labelledby",id+"T");
@@ -1121,7 +1141,7 @@ async function lbBuild(opts){ opts=opts||{}; if(MK.busy) return; if(!mkHasConten
   clearTimeout(lbPrevTimer); lbPreviewNow();
   MK.busy=true; const m=MK.node, st=m.querySelector("#lbStat"), btn=m.querySelector("#mkExport"); btn.disabled=true; btn.textContent="Exporting…"; st.textContent="Building the print files…"; await new Promise(r=>setTimeout(r,30));
   try{ const name=MK.name||mkDefName(); const slug=lbSlug(name); const parts=[]; const stl=MK.withStl!==false; MK.meta={}; let sealed={ok:true,n:0,bad:0,mode:MK.mode}, plates=[];
-    if(mkBase()==="litho"){ const src=mkSource(); const {w,h}=lbDims(src); const cell=MK.lres; const cols=Math.round(w/cell)+1, rows=Math.round(h/cell)+1; const T=lbThick(lbGrey(src,cols,rows)); let tri=lbGridSolid(cols,rows,cell,(c,r)=>T[(rows-1-r)*cols+c]); if(MK.arc>0) tri=lbBend(tri,(cols-1)*cell,MK.arc); tri=lbStandUp(tri); parts.push({name:slug+(MK.mode==="relief"?"-relief.stl":"-lithophane.stl"),blob:lbSTL(tri,name),label:MK.mode==="relief"?"Relief STL":"Lithophane STL"}); sealed.n=1; MK.meta={w,h}; }
+    if(mkBase()==="litho"){ const src=mkSource(); const {w,h}=lbDims(src); const cell=MK.lres; const cols=Math.round(w/cell)+1, rows=Math.round(h/cell)+1; const T=lbThick(lbGrey(src,cols,rows)); let tri; if(MK.mode==="lantern"){ const bb=Math.round(3/cell), tb=Math.round(2/cell); tri=lbTubeSolid(cols-1,rows+bb+tb,cell,(c,r)=>(r<bb||r>=bb+rows)?MK.maxT:T[(rows-1-(r-bb))*cols+c]); } else { tri=lbGridSolid(cols,rows,cell,(c,r)=>T[(rows-1-r)*cols+c]); if(MK.arc>0) tri=lbBend(tri,(cols-1)*cell,MK.arc); } tri=lbStandUp(tri); const kind=MK.mode==="relief"?"relief":MK.mode==="lantern"?"lantern":"lithophane"; parts.push({name:slug+"-"+kind+".stl",blob:lbSTL(tri,name),label:kind[0].toUpperCase()+kind.slice(1)+" STL"}); sealed.n=1; MK.meta={w,h}; }
     else { const L=mkLayout(); if(!L) throw new Error("no source"); const fp=L.parts.filter(p=>!p.lid), lp=L.parts.filter(p=>p.lid); const front=fp.map(p=>mkMesh(p,L)), lid=lp.map(p=>mkMesh(p,L));
       const one=mkUnion(fp,L), oneLid=lp.length?mkUnion(lp,L):null, stand=MK.mode==="lightbox"&&MK.stand?mkStandMesh(L):null; if(stand) stand.name="Base";
       for(const x of [...front,...lid,one,...(oneLid?[oneLid]:[]),...(stand?[stand]:[])]){ if(!mkSealed(x)){ sealed.ok=false; sealed.bad++; } } sealed.n=front.length+lid.length+(stand?1:0);
