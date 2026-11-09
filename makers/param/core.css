@@ -1,0 +1,52 @@
+/* EPIX3D parametric makers: same look as the site (white panels, ink buttons, Inter, one purple accent). */
+:root { --pm-bg: #ffffff; --pm-sunk: #f5f4f1; --pm-line: #e6e4df; --pm-line-2: #d4d1ca; --pm-ink: #15171c; --pm-muted: #5d636f; --pm-accent: #6d28d9; --pm-ok: #1d7a55; --pm-warn: #9a5800; --pm-bad: #b4232c; color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--pm-bg); color: var(--pm-ink); font: 14px/1.45 "Inter", "Segoe UI", system-ui, sans-serif; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+#pm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pm-ed { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr) 290px; }
+.pm-panel, .pm-print { background: var(--pm-bg); overflow: auto; padding: 18px 18px 28px; }
+.pm-panel { border-right: 1px solid var(--pm-line); }
+.pm-print { border-left: 1px solid var(--pm-line); }
+.pm-head { padding-bottom: 6px; }
+.pm-name { width: 100%; font: 600 16px/1.3 inherit; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; margin: -6px -8px 4px; background: transparent; color: var(--pm-ink); }
+.pm-name:hover { border-color: var(--pm-line); } .pm-name:focus { outline: none; border-color: var(--pm-ink); }
+.pm-intro { margin: 0; color: var(--pm-muted); font-size: 13px; }
+.pm-sec { border-top: 1px solid var(--pm-line); margin-top: 16px; padding-top: 14px; }
+.pm-sec h3, .pm-print h3 { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--pm-muted); }
+.pm-print h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+.pm-f { display: grid; gap: 6px; margin-bottom: 14px; font-size: 13px; }
+.pm-f > span { display: flex; justify-content: space-between; gap: 8px; color: var(--pm-ink); font-weight: 500; }
+.pm-f > span b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--pm-muted); }
+.pm-f small { color: var(--pm-muted); font-size: 12px; line-height: 1.4; }
+.pm-f input[type=range] { width: 100%; accent-color: var(--pm-ink); }
+.pm-f select, .pm-f input[type=text] { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--pm-line-2); border-radius: 8px; background: #fff; color: var(--pm-ink); }
+.pm-f select:focus, .pm-f input[type=text]:focus { outline: none; border-color: var(--pm-ink); }
+.pm-chk { grid-template-columns: auto 1fr; align-items: center; } .pm-chk input { width: 16px; height: 16px; accent-color: var(--pm-ink); margin: 0; } .pm-chk small { grid-column: 1 / -1; }
+.pm-col { grid-template-columns: 1fr auto; align-items: center; } .pm-col input { width: 44px; height: 30px; border: 1px solid var(--pm-line-2); border-radius: 8px; padding: 2px; background: #fff; } .pm-col small { grid-column: 1 / -1; }
+.pm-drop { font: inherit; font-weight: 600; padding: 18px 12px; border: 1px solid var(--pm-line); border-radius: 10px; background: var(--pm-sunk); color: var(--pm-ink); cursor: pointer; }
+.pm-drop:hover { border-color: var(--pm-line-2); }
+.pm-view { position: relative; min-width: 0; min-height: 0; background: radial-gradient(120% 95% at 50% 28%, #f8f9fa 0%, #e6e8eb 52%, #cdd1d7 100%); }
+.pm-gl { position: absolute; inset: 0; } .pm-gl canvas { display: block; width: 100%; height: 100%; }
+.pm-tag { position: absolute; left: 12px; top: 12px; font-size: 12px; font-weight: 600; background: rgba(255, 255, 255, .94); border: 1px solid var(--pm-line); border-radius: 6px; padding: 4px 8px; color: var(--pm-muted); }
+.pm-busy { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); font-size: 12.5px; font-weight: 600; background: var(--pm-ink); color: #fff; border-radius: 6px; padding: 5px 10px; }
+.pm-cam { position: absolute; right: 12px; top: 12px; display: flex; gap: 2px; background: rgba(255, 255, 255, .94); border: 1px solid var(--pm-line); border-radius: 9px; padding: 3px; }
+.pm-cam button { font: 600 12px "Inter", system-ui, sans-serif; border: 0; background: none; color: var(--pm-muted); padding: 5px 9px; border-radius: 6px; cursor: pointer; } .pm-cam button:hover { background: var(--pm-sunk); color: var(--pm-ink); }
+.pm-plates { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px; } .pm-plates span { font-size: 12px; background: rgba(255, 255, 255, .94); border: 1px solid var(--pm-line); border-radius: 6px; padding: 4px 8px; color: var(--pm-ink); }
+.pm-kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0 0 18px; font-size: 13px; } .pm-kv dt { color: var(--pm-muted); } .pm-kv dd { margin: 0; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.pm-checks { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; font-size: 13px; }
+.pm-checks li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; } .pm-checks svg { width: 18px; height: 18px; }
+.pm-checks .ok svg { color: var(--pm-ok); } .pm-checks .warn svg { color: var(--pm-warn); } .pm-checks .bad svg { color: var(--pm-bad); }
+.pm-btn { display: flex; align-items: center; justify-content: center; width: 100%; font: 600 14px "Inter", system-ui, sans-serif; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--pm-line-2); background: #fff; color: var(--pm-ink); cursor: pointer; margin-bottom: 8px; }
+.pm-btn:hover { border-color: var(--pm-ink); } .pm-primary { background: var(--pm-ink); border-color: var(--pm-ink); color: #fff; } .pm-primary:hover { background: #2b2e36; }
+.pm-note { font-size: 12.5px; color: var(--pm-muted); margin: 8px 0 0; }
+.pm-tabs { display: none; }
+@media (max-width: 860px) {
+  .pm-ed { grid-template-columns: minmax(0, 1fr); grid-template-rows: 46vh minmax(0, 1fr); }
+  .pm-view { grid-row: 1; } .pm-panel, .pm-print { grid-row: 2; border: 0; border-top: 1px solid var(--pm-line); padding-bottom: 80px; }
+  #pm[data-tab="pmPanel"] .pm-print, #pm[data-tab="pmPrint"] .pm-panel { display: none; }
+  .pm-tabs { display: grid; grid-template-columns: 1fr 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: #fff; border-top: 1px solid var(--pm-line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); gap: 6px; }
+  .pm-tabs button { font: 600 14px "Inter", system-ui, sans-serif; border: 0; border-radius: 8px; padding: 10px; background: none; color: var(--pm-muted); }
+  .pm-tabs button[aria-pressed="true"] { background: var(--pm-ink); color: #fff; }
+}

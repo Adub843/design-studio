@@ -77,6 +77,11 @@ export const MAKER_SEO = {
   "license-plate": { name: "License plate", title: "License Plate Frame Maker | EPIX3D", desc: `Design a custom license plate frame or novelty plate with your own text and colours. ${ORDER_LINE}` },
   "nameplate": { name: "Nameplate", title: "Nameplate Maker: Layered 3D Printed Nameplates | EPIX3D", desc: `Design a layered, multi-colour 3D printed nameplate from a style or your own picture. ${ORDER_LINE}` },
   "hype-chain": { name: "Hype chain", title: "Hype Chain Maker: Custom 3D Printed Pendants | EPIX3D", h1: "Hype chain maker", desc: `Turn a logo or your own text into a chunky 3D printed pendant with a printed chain. ${ORDER_LINE}` },
+  "vase": { name: "Vase", title: "Vase Maker: Custom 3D Printed Vases | EPIX3D", h1: "Vase maker", desc: `Design a custom 3D printed vase: shape the profile, add sides, a twist or ribs. ${ORDER_LINE}` },
+  "organizer": { name: "Desk organizer", title: "Desk Organizer Maker: Custom 3D Printed Trays | EPIX3D", h1: "Desk organizer maker", desc: `Design a custom 3D printed desk organizer with your own size and number of bins. ${ORDER_LINE}` },
+  "pixel-puzzle": { name: "Pixel puzzle", title: "Pixel Puzzle Maker: Photo to 3D Printed Puzzle | EPIX3D", h1: "Pixel puzzle maker", desc: `Turn a picture into a 3D printed pixel puzzle of coloured tiles and a tray. ${ORDER_LINE}` },
+  "dice": { name: "Dice", title: "Dice Maker: Custom 3D Printed Dice | EPIX3D", h1: "Dice maker", desc: `Design custom 3D printed dice with rounded edges and two-colour pips. ${ORDER_LINE}` },
+  "flexi": { name: "Flexi animal", title: "Flexi Animal Maker: Print-in-Place Flexi Toys | EPIX3D", h1: "Flexi animal maker", desc: `Design a print-in-place flexi animal with ball joints that wiggle straight off the printer. ${ORDER_LINE}` },
   "ai3d": { name: "Photo to 3D", title: "Photo to 3D Model Maker | EPIX3D", h1: "Photo to 3D maker", desc: `Turn a photo of one object into a printable 3D model; the photo stays on your device. ${ORDER_LINE}` },
 };
 export const makerUrl = (id) => { const m = MAKER_SEO[id]; return m.mode ? `/makers/lightbox/?mode=${m.mode}` : `/makers/${id}/`; };
