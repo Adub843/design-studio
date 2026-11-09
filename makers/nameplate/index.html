@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-maker="nameplate">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -17,8 +17,8 @@ img { max-width: 100%; }
 <title>Nameplate Maker | EPIX3D</title>
 <meta name="description" content="Design a layered, multi-colour 3D printed nameplate from a subject, a style or your own picture. Order a print made in Charleston, SC, or download the 3MF with Platinum.">
 <link rel="canonical" href="https://epix3d.com/makers/nameplate/">
-<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Nameplate Maker | EPIX3D"><meta property="og:description" content="Design a layered, multi-colour 3D printed nameplate from a subject, a style or your own picture. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/nameplate/"><meta property="og:image" content="https://epix3d.com/assets/img/og.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@500;600&display=swap">
+<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Nameplate Maker | EPIX3D"><meta property="og:description" content="Design a layered, multi-colour 3D printed nameplate from a subject, a style or your own picture. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/nameplate/"><meta property="og:image" content="https://epix3d.com/assets/img/og.jpg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
 <link rel="stylesheet" href="/assets/epix-bridge.css">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -279,7 +279,7 @@ summary { cursor: pointer; font: 600 17px var(--f-display); }
 .chart td, .chart th { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
-</head>
+<link rel="stylesheet" href="/assets/epix-theme.css"></head>
 <body><header id="epix-bar"></header>
 <div class="wrap">
   <header>
@@ -582,7 +582,7 @@ summary { cursor: pointer; font: 600 17px var(--f-display); }
   </section>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/makers/vendor/three.min.js"></script>
 <script id="engine-src">/* Nameplate engine \u2014 dependency-free geometry + 3MF writer.
    Works in the browser (window.NP) and in Node (module.exports). Units: mm, y up. */
 (function (root) {

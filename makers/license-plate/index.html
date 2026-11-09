@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-maker="license-plate">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>License Plate Frame Maker | EPIX3D</title>
 <meta name="description" content="Design a custom license plate frame or novelty plate with your own text and colours. Order a print made in Charleston, SC, or download the 3MF with Platinum.">
 <link rel="canonical" href="https://epix3d.com/makers/license-plate/">
-<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="License Plate Frame Maker | EPIX3D"><meta property="og:description" content="Design a custom license plate frame or novelty plate with your own text and colours. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/license-plate/"><meta property="og:image" content="https://epix3d.com/assets/img/og.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@500;600&display=swap">
+<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="License Plate Frame Maker | EPIX3D"><meta property="og:description" content="Design a custom license plate frame or novelty plate with your own text and colours. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/license-plate/"><meta property="og:image" content="https://epix3d.com/assets/img/og.jpg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
 <link rel="stylesheet" href="/assets/epix-bridge.css">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#15223f">
@@ -54,20 +54,20 @@ button, input, select { font: inherit; color: inherit; }
 #ds-back-bar h1 { min-width: 0; font-size: 15px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ds-back-bar .sub { color: rgba(247, 242, 232, .7); font-weight: 400; }
 #ds-back-bar .spacer { flex: 1; }
-#ds-back-bar { background: #fff8ef; color: #23203a; border-bottom: 1px solid #eadfcd; }
-#ds-back-bar a { color: #23203a; }
-#ds-back-bar .sep { background: #eadfcd; }
-#ds-back-bar .sub { color: #5e5a73; }
-.lp-home { font: 700 18px/1 "Fredoka", "Inter", system-ui, sans-serif; gap: 7px !important; }
+#ds-back-bar { background: #ffffff; color: #15171c; border-bottom: 1px solid #e6e4df; }
+#ds-back-bar a { color: #15171c; }
+#ds-back-bar .sep { background: #e6e4df; }
+#ds-back-bar .sub { color: #5d636f; }
+.lp-home { font: 700 17px/1 "Inter", system-ui, sans-serif; gap: 7px !important; }
 .lp-home svg { display: block; }
-.lp-status { flex: none; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #5e5a73; font-size: 13px; }
+.lp-status { flex: none; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #5d636f; font-size: 13px; }
 .lp-acct { font-weight: 600 !important; }
 .lp-acct .epx-pill { margin-right: 6px; }
-.bar-btn.ghost, .bar-btn.lp-save { color: #23203a !important; border-color: #23203a !important; background: #fff !important; }
-.bar-btn.ghost:hover, .bar-btn.lp-save:hover { background: #f6eee1 !important; }
-.btn.primary { background: #ff6b3d !important; border-color: #ff6b3d !important; color: #23203a !important; }
-.btn.primary:hover { background: #ff8259 !important; }
-.btn.bar-btn, .btn.primary { border-radius: 999px; }
+.bar-btn.ghost, .bar-btn.lp-save { color: #15171c !important; border: 1px solid #d4d1ca !important; background: #fff !important; }
+.bar-btn.ghost:hover, .bar-btn.lp-save:hover { border-color: #15171c !important; }
+.btn.primary { background: #15171c !important; border-color: #15171c !important; color: #fff !important; }
+.btn.primary:hover { background: #2b2e36 !important; border-color: #2b2e36 !important; }
+.btn.bar-btn, .btn.primary { border-radius: 8px; }
 .can-order .bar-btn.primary[data-download] { background: #fff !important; color: #23203a !important; border-color: #23203a !important; }
 .can-order .dl .btn.primary { background: #fff !important; color: #23203a !important; border-color: #cfc8b9 !important; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-strong);
@@ -195,18 +195,19 @@ input[type="range"] { width: 100%; margin: 6px 0 0; accent-color: var(--accent);
 }
 @media (prefers-reduced-motion: reduce) { .panel { transition: none; } }
 </style>
-</head>
+<link rel="stylesheet" href="/assets/epix-theme.css"></head>
 <body>
 <div class="app">
   <header id="ds-back-bar">
-    <a class="lp-home" href="/" aria-label="EPIX3D home"><svg viewBox="0 0 32 32" aria-hidden="true" width="26" height="26"><path d="M16 2.5c5.6 0 11.9 2.6 12.9 8.4 1 5.9-1.6 9.5-3.4 12.6-2.1 3.6-5.2 6.2-9.7 6.2-5.2 0-9.6-2.5-11.6-7.2C2.4 17.9 2.6 12 5.7 7.8 8.2 4.4 11.6 2.5 16 2.5z" fill="#ff6b3d"/><path d="M16 8.6 23 12.4v7.2L16 23.4l-7-3.8v-7.2z" fill="#fff8ef"/><path d="M16 16.2v7.2l7-3.8v-7.2z" fill="#ffc23d"/><path d="M16 16.2 9 12.4v7.2l7 3.8z" fill="#23b5a0"/></svg><span>EPIX3D</span></a>
+    <a class="lp-home" href="/" aria-label="EPIX3D home"><svg viewBox="0 0 32 32" aria-hidden="true" width="26" height="26"><rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="#15171c"/><path d="M16 7.6 23.6 11.8v8.4L16 24.4l-7.6-4.2v-8.4z" fill="#ffffff"/><path d="M16 16v8.4l7.6-4.2v-8.4z" fill="#6d28d9"/><path d="M16 16 8.4 11.8v8.4l7.6 4.2z" fill="#c4c8cf"/></svg><span>EPIX3D</span></a>
     <span class="sep" aria-hidden="true"></span>
+    <span data-epix-switch></span>
     <h1><span id="title">License plate frame</span> <span class="sub">· License Plate Maker</span></h1>
     <span class="spacer"></span>
     <span class="epx-status lp-status" role="status" aria-live="polite"></span>
     <button class="btn bar-btn lp-save" type="button" data-epix-save>Save</button>
     <button class="btn bar-btn ghost" type="button" data-download="stl">STL</button>
-    <button class="btn bar-btn primary bar-order" type="button" data-order>Order print</button>
+    <button class="btn bar-btn primary bar-order" type="button" data-order>Order<span class="lg"> a print</span></button>
     <button class="btn bar-btn primary" type="button" data-download="3mf"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="lg">Download </span>3MF</span></button>
     <a class="lp-acct" data-epix-account href="/account/">Sign in</a>
   </header>

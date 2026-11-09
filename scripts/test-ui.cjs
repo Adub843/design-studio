@@ -112,15 +112,15 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
 
     await step(`${label}: home lists every maker with its own picture; SEO tags are there`, async () => {
       await page.goto(BASE + "/", { waitUntil: "networkidle" });
-      assert.equal(await page.locator(".makers .mk").count(), 8);
-      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
+      assert.equal(await page.locator(".makers .mk").count(), 9);
+      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=nametag", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
         assert.equal(await page.locator(`.makers a[href="${href}"]`).count(), 1, href);
-      await page.locator(".makers img").last().scrollIntoViewIfNeeded();
+      for (const img of await page.locator(".makers img").all()) await img.scrollIntoViewIfNeeded(); // lazy images load as they come into view
       await until(page, () => [...document.querySelectorAll(".makers img")].every((i) => i.complete && i.naturalWidth > 0));
-      assert.equal(await page.locator('meta[property="og:image"]').getAttribute("content"), "https://epix3d.com/assets/img/og.png");
+      assert.equal(await page.locator('meta[property="og:image"]').getAttribute("content"), "https://epix3d.com/assets/img/og.jpg");
       const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
-      assert.match(ld, /"Organization"/); assert.match(ld, /"WebSite"/);
-      for (const f of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/assets/img/og.png"]) assert.equal((await page.request.get(BASE + f)).status(), 200, f);
+      assert.match(ld, /"OnlineStore"/); assert.match(ld, /"WebSite"/); assert.match(ld, /"priceRange":"\$\$"/); assert.doesNotMatch(ld, /streetAddress|telephone|postalCode/);
+      for (const f of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/assets/img/og.jpg"]) assert.equal((await page.request.get(BASE + f)).status(), 200, f);
       const body = await page.locator("body").innerText();
       assert.doesNotMatch(body, /Design Studio|Elevated Designs|Creative Lab|Netlify/i);
       const links = await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
@@ -267,6 +267,31 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       assert.ok(list.items.some((p) => p.name === "Key tag" && p.mode === "keychain"));
     });
 
+    await step(`${label}: the Name tag maker starts with a name badge and builds a 3MF`, async () => {
+      await page.goto(BASE + "/makers/lightbox/?mode=nametag", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      const st = await page.evaluate(() => ({ mode: MK.mode, w: MK.width, h: MK.height, ring: MK.ring, text: MK.els[0] && MK.els[0].text, title: EPIX_MAKER.title() }));
+      assert.deepEqual(st, { mode: "nametag", w: 76, h: 26, ring: false, text: "YOUR NAME", title: "Name tag maker" });
+      const parts = await page.evaluate(async () => (await lbBuild({ collect: true })).map((p) => [p.name, p.blob.size]));
+      const f = parts.find(([n]) => /\.3mf$/.test(n));
+      assert.ok(f && f[1] > 2000, "a real 3MF: " + JSON.stringify(parts));
+      await shot("maker-nametag", false);
+    });
+
+    await step(`${label}: "All makers" on every maker lists the whole studio and moves between makers`, async () => {
+      for (const m of ["/makers/lightbox/?mode=nametag", "/makers/license-plate/"]) {
+        await page.goto(BASE + m, { waitUntil: "load" });
+        await until(page, () => document.documentElement.dataset.epixReady === "1");
+        await page.click(".epx-switch");
+        await page.waitForSelector(".epx-switch-menu:not([hidden]) li a");
+        assert.equal(await page.locator(".epx-switch-menu li a").count(), 9, m);
+        assert.equal(await page.locator('.epx-switch-menu [aria-current="page"] b').innerText(), m.includes("nametag") ? "Name tag" : "License plate");
+      }
+      await shot("maker-switcher", false);
+      await page.locator(".epx-switch-menu li a", { hasText: "Hype chain" }).click();
+      await page.waitForURL(/\/makers\/hype-chain\/$/);
+    });
+
     await step(`${label}: the other makers load with the EPIX3D bar and their gate`, async () => {
       for (const m of ["license-plate", "nameplate", "hype-chain", "ai3d"]) {
         const r = await page.goto(`${BASE}/makers/${m}/`, { waitUntil: "load" });
@@ -280,6 +305,25 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
         if (m === "nameplate") { await until(page, () => !!document.querySelector("#arrange svg")); const th = await page.evaluate(() => window.EPIX_MAKER.thumb()); assert.ok(th.startsWith("data:image/jpeg;base64,") && th.length > 8000, "the nameplate thumbnail is a real picture"); }
         await shot(`maker-${m}`, false);
       }
+    });
+
+    await step(`${label}: Hype chain: the chain prints on its own plate, never hung in the pendant, in every link style`, async () => {
+      await page.goto(BASE + "/makers/hype-chain/", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1", null, { timeout: 30000 });
+      const design = await page.evaluate(() => ({ chainMeshes: V.groups.chain.children.length, note: !document.querySelector("#plateBar").hidden }));
+      assert.deepEqual(design, { chainMeshes: 0, note: true }, "design view shows the pendant only, with a note that the chain has its own plate");
+      await page.click('#plateBar [data-plate="go"]');
+      await until(page, () => S.view === "plates" && V.groups.chain.children.length > 0);
+      assert.ok(await page.locator('#plateBar [data-plate="1"]').count(), "a Plate 2 button");
+      await page.click('#plateBar [data-plate="1"]');
+      assert.equal(await page.evaluate(() => V.focusPlate), 1);
+      const styles = await page.evaluate(() => Object.keys(CHAIN));
+      assert.ok(styles.length >= 11, "at least 11 chain styles: " + styles.join(","));
+      for (const k of ["cuban14", "miami", "curb", "box20"]) {
+        const r = await page.evaluate(async (k) => { S.d.chain.style = k; commit(); rebuild(false); const f = await EPIX_MAKER.buildPrintFile(); const z = await JSZip.loadAsync(f.blob); return { size: f.blob.size, plates: Object.keys(z.files).filter((n) => /plate_\d+\.png$/.test(n)).length }; }, k);
+        assert.ok(r.size > 100000 && r.plates >= 2, k + " " + JSON.stringify(r));
+      }
+      await shot("maker-hype-chain-plates", false);
     });
 
     await step(`${label}: no script errors`, async () => { assert.deepEqual(errors, []); });
