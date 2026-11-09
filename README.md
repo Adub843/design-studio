@@ -3,7 +3,7 @@
 A standalone site where anyone can use our 3D makers: design in the browser, save projects to a free
 account, order a print made in Charleston, SC, or pay for Platinum ($15 a month) to download the
 3MF/STL files and print at home. Orders and Platinum check out on the Charleston3D Shopify store.
-The makers live only here and in the Business Console.
+The makers live only here and in the Creative Lab engine.
 
 One Cloudflare Worker (`design-studio`, `worker/index.mjs`) serves the site, its API and, unchanged,
 the image library and E: drive APIs that the Elevated Designs shirt app and the console use.
@@ -14,7 +14,7 @@ Backup address: https://design-studio.business-console.workers.dev.
 The studio's own pages are gone from epix3d.com: home, library, shirt designer, brand switcher, Go to
 menu and Maker Studio tabs (`index.html`, `assets/app.js`, `api.js`, `brands.js`, `home.js`,
 `library.js`, `studio.js`, `confirm.js`, `drive.js`, `makers.js`, `util.js`, `styles.css`,
-`assets/blanks/`, `assets/brand/`, `makers/index.html`). Art is managed in the Business Console.
+`assets/blanks/`, `assets/brand/`, `makers/index.html`). Art is managed in the Creative Lab engine.
 
 ## What stays exactly as it was (other apps depend on it)
 

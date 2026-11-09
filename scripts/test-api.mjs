@@ -57,7 +57,7 @@ await test("uploads need the key, keep their brand, are private, and can't be El
   for (const b of ["ed", "bogus"]) assert.equal((await (await post(e, { "x-brand": b })).json()).item.brand, "epix3d");
 });
 
-// Puts an image straight into the shared namespace, the way the Business Console saves shirt art.
+// Puts an image straight into the shared namespace, the way the Creative Lab engine saves shirt art.
 const seed = (e, key, metadata) => e.IMAGES.put(`image:${key}`, PNG, { metadata: { name: `${key}.png`, type: "image/png", added: 1, ...metadata } });
 
 await test("Elevated Designs shirt art in the shared library is invisible here", async () => {
