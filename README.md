@@ -32,7 +32,7 @@ menu and Maker Studio tabs (`index.html`, `assets/app.js`, `api.js`, `brands.js`
 |---|---|
 | Home `/`, Makers `/makers/`, Pricing, FAQ, Privacy, Terms, 404 | `site/pages/*.html` wrapped in `site/layout.html` |
 | Account `/account/`, My projects `/projects/` | same, filled in by `assets/site.js` |
-| The makers `/makers/lightbox/` (also `?mode=keychain`, `nametag`, `sign`, `litho`), `/makers/ai3d/`, `/makers/license-plate/`, `/makers/nameplate/`, `/makers/hype-chain/` | `makers/` |
+| The makers `/makers/lightbox/` (also `?mode=keychain`, `nametag`, `sign`, `litho`, `relief`, `bookmark`, `ornament`, `coaster`, `magnet`), `/makers/ai3d/`, `/makers/license-plate/`, `/makers/nameplate/`, `/makers/hype-chain/` | `makers/` |
 
 **One site, one link.** Every maker lives here and nowhere else: no maker gets its own address, app or QR
 code (Aaron, 8 Nov 2026). Each maker page carries the same EPIX3D bar with an **All makers** switcher
@@ -98,7 +98,7 @@ npm run dev          # local Worker
 
 Built into `scripts/build.mjs` and `worker/index.mjs`, checked by `npm test`:
 - Every page: title, description, canonical, meta robots, Open Graph and Twitter tags, `geo.region US-SC` / `geo.placename Charleston`, and JSON-LD (OnlineStore + LocalBusiness at city level only, WebSite, BreadcrumbList; ItemList of makers on home and /makers/; FAQPage on /faq/; Product on /pricing/).
-- Maker pages get the same tags at build time, plus WebApplication JSON-LD and a hidden h1 where the app has none. Keychain, Name tag, Sign and Lithophane each have their own title and canonical (`/makers/lightbox/?mode=...`): the Worker serves the copy in `makers/lightbox/m/<mode>/`.
+- Maker pages get the same tags at build time, plus WebApplication JSON-LD and a hidden h1 where the app has none. Keychain, Name tag, Sign, Lithophane, Relief, Bookmark, Ornament, Coaster and Fridge magnet each have their own title and canonical (`/makers/lightbox/?mode=...`): the Worker serves the copy in `makers/lightbox/m/<mode>/`.
 - `robots.txt` names Google, Bing, Apple, DuckDuckGo and the AI crawlers (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended and more); `sitemap.xml` lists all 15 public URLs; `llms.txt` is the summary for AI assistants.
 - IndexNow: Aaron sets `npx.cmd wrangler secret put INDEXNOW_KEY` (32 letters/digits); the Worker then serves `/<key>.txt`.
 
