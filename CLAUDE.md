@@ -31,6 +31,7 @@
 15. **Don't waste his usage.** Don't redo work, re-ask settled questions, poll, or write long replies. If you're unsure, start on the most likely reading and say which one you chose.
 16. **Never say "done" unless you checked it live yourself:** the live site, store, app or console, not another thread's report.
 17. **No personal Gmail as a public contact** on any site. Use hello@charleston3d.com (ImprovMX), hello@elevatedshirts.com (forwarding) or the store contact form.
+18. **Check before you ask Aaron for anything.** Aaron, 2026-11-07, after saying it many times: never ask him to do, connect, sign in to or set up anything until you have checked (a) project memory, (b) the console database, and (c) the live service in Claude in Chrome or through its connector, and confirmed you cannot do it yourself. Holo, Kittl, Shopify, Cloudflare and GitHub are already connected. If you must ask, say what you checked and give a direct link. Only secrets, payment methods, Publish/Deploy presses and typed OKs for irreversible steps are truly his.
 
 ## 2. How Aaron wants to work
 
@@ -180,12 +181,11 @@ The skills live in project files `agent-skills-catalog/skills/` and on the Deskt
   - each repo's `CLAUDE.md` (repo copies leave out account emails and add a short "This repo" section)
 - Never put secret values in any copy.
 
-## This repo: design-studio
+## This repo: design-studio (now the EPIX3D site)
 
-- The Design Studio: one Cloudflare Worker (`design-studio`) with static assets, for every brand's art and the shirt designer. Aaron chose one studio for all brands (2026-10-27), with a separate library per brand: every image carries `brand` (c3d, ed or epix3d; old images count as ed).
-- It shares the console's IMAGES KV namespace (`a4c25d0fee6e45448ada053a44b19bcc`), so designs saved here show up in the console and the shirt apps. Charleston 3D art can never be public, so it never reaches an Elevated Designs shirt app (enforced in `lib/images.mjs`).
-- The studio key is the same `CONSOLE_KEY` secret as the console. Aaron sets it himself with `npx.cmd wrangler secret put CONSOLE_KEY`.
-- The Kittl sync cron stays in the console; the studio only reads its result (`sync:kittl`).
-- Deploy by hand from Aaron's PC: `npx.cmd wrangler deploy` in the repo folder, after `npm run check`, `npm test` and `npm run test:ui` pass. A production deploy needs Aaron's typed OK.
-- The studio is live at https://epix3d.com and www.epix3d.com (the epix3d.com DNS zone moved from Wix to Cloudflare on 2026-10-27 with Aaron's typed OK; the registration stays at Wix). Backup address: design-studio.business-console.workers.dev. Both custom domains are declared in `wrangler.toml`.
-- Every page has a "Go to" menu in the top bar (the Business Console, both shops, both apps, the accounts map and the Master Links sheet). Keep it in step with the console's own Go to menu.
+- Since 2026-11-07 (Aaron: "dissolve the design studio"), epix3d.com is EPIX3D: a standalone site where people make a free account, use our 3D makers, save projects, order a print (Charleston3D Shopify cart, $0 quote line Aaron prices) or pay for Platinum ($15 a month, Aaron's price) to download 3MF/STL. EPIX3D is sold through the Charleston3D store. The makers live only here and in the console. See README.md.
+- The Worker is still named `design-studio`. It keeps the old APIs unchanged for the shirt apps and console: `/api/images` (shares the console's IMAGES KV `a4c25d0fee6e45448ada053a44b19bcc`; C3D art never public, enforced in `lib/images.mjs`), `/api/drive/*`, `/api/library-sync`, `/api/plate-order`, `/hq`.
+- Accounts, projects and order files live in the ACCOUNTS KV namespace (id set at deploy time). Shopify ids are only in `lib/shop-config.mjs`. Secrets (CONSOLE_KEY, SHOPIFY_WEBHOOK_SECRET) are set by Aaron with `npx.cmd wrangler secret put`.
+- Pages: `site/pages/*.html` + `site/layout.html`, built by `scripts/build.mjs`. Makers talk to the site through `assets/epix-bridge.js` (`window.EPIX_MAKER` in each maker). Copies of console makers here are EPIX3D-branded; when copying a maker from the console again, keep the EPIX_MAKER block, the bridge script tag and the branding.
+- Deploy by hand from Aaron's PC: `npx.cmd wrangler deploy` after `npm run check`, `npm test` and `npm run test:ui` pass. A production deploy needs Aaron's typed OK.
+- epix3d.com and www.epix3d.com are custom domains in `wrangler.toml` (DNS on Cloudflare, registration at Wix). Backup address: design-studio.business-console.workers.dev.

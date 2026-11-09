@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow">
-<title>Light Box Maker · Charleston 3D</title>
+<title>Light Box, Keychain, Sign and Lithophane Maker | EPIX3D</title>
+<meta name="description" content="Design a glowing light box, a multi-colour keychain, a raised sign or a photo lithophane in your browser. Order a print made in Charleston, SC, or download the 3MF with Platinum.">
+<link rel="canonical" href="https://epix3d.com/makers/lightbox/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Light Box, Keychain, Sign and Lithophane Maker | EPIX3D"><meta property="og:description" content="Design a glowing light box, a multi-colour keychain, a raised sign or a photo lithophane in your browser. Order a print made in Charleston, SC, or download the 3MF with Platinum."><meta property="og:url" content="https://epix3d.com/makers/lightbox/"><meta property="og:image" content="https://epix3d.com/assets/img/og.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@500;600&display=swap">
+<link rel="stylesheet" href="/assets/epix-bridge.css">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;600;800&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@400;700&family=Montserrat:wght@400;700;800&family=Roboto+Slab:wght@400;700&family=Playfair+Display:wght@400;700;800&family=Great+Vibes&display=swap">
@@ -217,7 +222,7 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stro
 </head>
 <body>
 <!-- Copy of tools/maker/index.html from Adub843/Business-console, plus the back bar. Change it there first, then copy it here. -->
-<div id="ds-back-bar" style="position:sticky;top:0;z-index:2147483000;display:flex;align-items:center;gap:12px;height:40px;flex:none;padding:0 16px;background:#15223f;color:#f7f2e8;font:500 14px/1 Inter,system-ui,sans-serif"><a href="/#makers" style="color:#f7f2e8;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><span aria-hidden="true">&#8592;</span> Back to Design Studio</a><span style="opacity:.6;margin-left:auto">Light Box Maker</span></div>
+<header id="epix-bar"></header>
 <div id="lbMount"></div>
 <script>
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -231,7 +236,7 @@ function dlBlob(name,blob){name=String(name||"file").replace(/[\\/:*?"<>|]+/g,"-
    Layout: Image, Text, Shape and Layer on a narrow rail (small pop-overs), the design on the printer bed in the middle,
    the Overall settings (or the selected element's settings) on the right. Design and Preview at the top. A bottom bar on phones. */
 const MK_MODES=[["lightbox","Light box","Pictures, text and shapes glowing in a box. The lights glue inside through the back cover."],["keychain","Keychain","Picture or text traced into a flat multi-colour tag with a ring hole."],["sign","Sign","Raised lettering on a plate. Name plates, badges, shelf signs."],["litho","Lithophane","Photo as a thin plate that shows the picture when lit from behind."]];
-/* inside the Design Studio (the page has its back bar) the maker is the light box only */
+/* MK_SOLO: the light box only (when the page carries the old studio back bar). On epix3d.com every mode is open and ?mode= picks one. */
 const MK_SOLO=!!document.getElementById("ds-back-bar");
 /* background (the outline the box or tag follows) */
 const MK_SHAPES=[["trace","None"],["rect","Square"],["round","Rounded square"],["circle","Circle"]];
@@ -1030,7 +1035,7 @@ function mkField(hm,C,R,res,z0,mirror){ const lv=[...new Set([z0,...Array.from(h
 /* every edge used by exactly two triangles = sealed */
 function mkSealed(mesh){ const n=mesh.verts.length/3, cnt=new Map(); const T=mesh.tris; for(let i=0;i<T.length;i+=3) for(let k=0;k<3;k++){ const a=T[i+k], b=T[i+(k+1)%3]; const key=a<b?a*n+b:b*n+a; cnt.set(key,(cnt.get(key)||0)+1); } for(const v of cnt.values()) if(v!==2) return false; return T.length>0; }
 function mkTriArray(mesh){ const o=new Float32Array(mesh.tris.length*3); for(let i=0;i<mesh.tris.length;i++){ const v=mesh.tris[i]*3; o[i*3]=mesh.verts[v]; o[i*3+1]=mesh.verts[v+1]; o[i*3+2]=mesh.verts[v+2]; } return o; }
-function lbSTL(tri,name){ const n=tri.length/9; const buf=new ArrayBuffer(84+n*50); const dv=new DataView(buf); const hdr=("Charleston 3D maker "+(name||"")).slice(0,79); for(let i=0;i<hdr.length;i++) dv.setUint8(i,hdr.charCodeAt(i)&127); dv.setUint32(80,n,true); let o=84;
+function lbSTL(tri,name){ const n=tri.length/9; const buf=new ArrayBuffer(84+n*50); const dv=new DataView(buf); const hdr=("EPIX3D maker "+(name||"")).slice(0,79); for(let i=0;i<hdr.length;i++) dv.setUint8(i,hdr.charCodeAt(i)&127); dv.setUint32(80,n,true); let o=84;
   for(let t=0;t<n;t++){ const i=t*9; const ux=tri[i+3]-tri[i],uy=tri[i+4]-tri[i+1],uz=tri[i+5]-tri[i+2],vx=tri[i+6]-tri[i],vy=tri[i+7]-tri[i+1],vz=tri[i+8]-tri[i+2]; const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx; const l=Math.hypot(nx,ny,nz)||1; dv.setFloat32(o,nx/l,true); dv.setFloat32(o+4,ny/l,true); dv.setFloat32(o+8,nz/l,true); o+=12; for(let k=0;k<9;k++){ dv.setFloat32(o,tri[i+k],true); o+=4; } dv.setUint16(o,0,true); o+=2; }
   return new Blob([buf],{type:"model/stl"}); }
 /* ---- 3MF (zip, stored) with one object per part, named by colour ---- */
@@ -1057,7 +1062,7 @@ function mk3MF(objects,title){ const esc1=s=>String(s).replace(/&/g,"&amp;").rep
       else { aid=++id; objs+=`<object id="${aid}" name="${esc1(o.name)}" type="model"><components>${comps.join("")}</components></object>`; }
       const h=o._bb[3]-o._bb[2], tx=ox+b[2]/2-(o._bb[0]+o._bb[1])/2, ty=oy+top-h/2-(o._bb[2]+o._bb[3])/2; top-=h+gap;
       items+=`<item objectid="${aid}" transform="1 0 0 0 1 0 0 0 1 ${tx.toFixed(3)} ${ty.toFixed(3)} 0"/>`; cfg.push({aid,name:o.name,parts,plate:pi+1,pname:o.plateName||o.name}); delete o._bb; } });
-  const model=`<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">${esc1(title)}</metadata><metadata name="Application">Charleston 3D Maker</metadata><resources>${objs}</resources><build>${items}</build></model>`;
+  const model=`<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">${esc1(title)}</metadata><metadata name="Application">EPIX3D Maker</metadata><resources>${objs}</resources><build>${items}</build></model>`;
   const conf=`<?xml version="1.0" encoding="UTF-8"?>\n<config>\n${cfg.map(o=>`  <object id="${o.aid}">\n    <metadata key="name" value="${esc1(o.name)}"/>\n${o.parts.map(([pid,n])=>`    <part id="${pid}" subtype="normal_part">\n      <metadata key="name" value="${esc1(n)}"/>\n    </part>\n`).join("")}  </object>\n`).join("")}${[...new Set(cfg.map(o=>o.plate))].map(p=>{ const os=cfg.filter(o=>o.plate===p); return `  <plate>\n    <metadata key="plater_id" value="${p}"/>\n    <metadata key="plater_name" value="${esc1(os[0].pname)}"/>\n    <metadata key="locked" value="false"/>\n${os.map(o=>`    <model_instance>\n      <metadata key="object_id" value="${o.aid}"/>\n      <metadata key="instance_id" value="0"/>\n    </model_instance>\n`).join("")}  </plate>\n`; }).join("")}</config>\n`;
   return mkZip([{name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>`},{name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`},{name:"3D/3dmodel.model",data:model},{name:"Metadata/model_settings.config",data:conf}]); }
 function lbSlug(s){ return String(s||"maker").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48)||"maker"; }
@@ -1097,7 +1102,7 @@ function mkPrinterDlg(){ const cur=(MK_PRINTERS.find(p=>p[0]===MK.printer&&p[1]=
   w.querySelector("#mkPrinter").onchange=fit; w.querySelector("#mkNozzle").onchange=fit; fit();
   w.querySelector("#mkPrGo").onclick=()=>{ const p=pick(); MK.printer=p[0]; MK.bed=p[1]; MK.nozzle=parseFloat(w.querySelector("#mkNozzle").value)||0.4; MK.withStl=w.querySelector("#mkWithStl").checked; w.close(); mkCommitNow(); lbBuild(); };
   w.querySelector("#mkPrGo").focus(); }
-async function lbBuild(){ if(MK.busy) return; if(!mkHasContent()){ toast("Add an image, some text or a shape first."); return; }
+async function lbBuild(opts){ opts=opts||{}; if(MK.busy) return; if(!mkHasContent()){ toast("Add an image, some text or a shape first."); return; }
   clearTimeout(lbPrevTimer); lbPreviewNow();
   MK.busy=true; const m=MK.node, st=m.querySelector("#lbStat"), btn=m.querySelector("#mkExport"); btn.disabled=true; btn.textContent="Exporting…"; st.textContent="Building the print files…"; await new Promise(r=>setTimeout(r,30));
   try{ const name=MK.name||mkDefName(); const slug=lbSlug(name); const parts=[]; const stl=MK.withStl!==false; MK.meta={}; let sealed={ok:true,n:0,bad:0,mode:MK.mode}, plates=[];
@@ -1117,8 +1122,8 @@ async function lbBuild(){ if(MK.busy) return; if(!mkHasContent()){ toast("Add an
     const dl=m.querySelector("#lbDl"); dl.innerHTML=`<button type="button" class="btn sm block" data-lbdlall>Download all again (.zip)</button>`+parts.map((p,i)=>`<button type="button" class="btn sm block" data-lbdl="${i}">${esc(p.label||p.name)} only</button>`).join("");
     dl.querySelector("[data-lbdlall]").onclick=()=>lbDownloadZip(MK.parts,slug+"-print-files.zip");
     dl.querySelectorAll("[data-lbdl]").forEach(b=>b.onclick=()=>lbDownloadZip([MK.parts[+b.dataset.lbdl]],MK.parts[+b.dataset.lbdl].name.replace(/\.\w+$/,"")+".zip"));
-    await lbDownloadZip(parts,slug+"-print-files.zip"); toast("Print files downloaded.");
-  }catch(e){ console.error("maker build",e); st.textContent="Couldn't build that: "+String(e&&e.message||e).slice(0,120)+". Try a smaller size or less detail."; toast("Couldn't build the print files. See Print check."); }
+    if(opts.collect){ MK.busy=false; btn.disabled=false; btn.textContent="Export"; st.textContent=""; return parts; } await lbDownloadZip(parts,slug+"-print-files.zip"); toast("Print files downloaded.");
+  }catch(e){ console.error("maker build",e); if(opts.collect){ MK.busy=false; btn.disabled=false; btn.textContent="Export"; throw e; } st.textContent="Couldn't build that: "+String(e&&e.message||e).slice(0,120)+". Try a smaller size or less detail."; toast("Couldn't build the print files. See Print check."); }
   MK.busy=false; btn.disabled=false; btn.textContent="Export"; }
 async function lbDownloadZip(list,zipName){ try{ const files=[]; for(const p of list) files.push({name:p.name,data:new Uint8Array(await p.blob.arrayBuffer())});
   const made=`Made for the ${mkPrinterName()} with a ${MK.nozzle} mm nozzle.\r\n`;
@@ -1160,6 +1165,23 @@ function mkDraftOp(op,id,row,w){ const list=mkDraftsLoad(); const d=list.find(x=
 
 const MK_DEF=mkSnap();
 lbMount();
+/* EPIX3D: what the site bridge (/assets/epix-bridge.js) needs from this maker */
+{ const setMode0=mkSetMode; mkSetMode=function(md){ setMode0(md); if(window.EPIX) window.EPIX.refreshTitle(); }; }
+window.EPIX_MAKER={
+  id:"lightbox",
+  title:()=>mkTitle()+" maker",
+  mode:()=>MK.mode,
+  name:()=>MK.name||mkDefName(),
+  hasContent:()=>mkHasContent(),
+  getState(){ mkFlush(); const pics={}; for(const e of MK.els) if(e.type==="image"&&!pics[e.pic]){ const p=MK.pics.get(e.pic); if(p) pics[e.pic]=p.data; } return {v:1,mode:MK.mode,name:MK.name,state:mkSnap(),pics}; },
+  async setState(d){ if(!d||!d.state) throw new Error("no design"); await mkOpenDraft({id:mkId("d"),name:d.name,mode:d.mode,state:d.state,pics:d.pics||{}}); if(window.EPIX) window.EPIX.refreshTitle(); },
+  thumb:()=>mkThumb(),
+  async buildPrintFile(){ const parts=await lbBuild({collect:true}); if(!parts||!parts.length) throw new Error("The print file couldn't be built."); const f=parts.find(p=>/\.3mf$/.test(p.name))||parts[0]; const m=MK.meta||{};
+    const size=m.w&&m.h?`${m.w} x ${m.h} mm`:""; const cols=(m.palette||[]).map(h=>mkInkName(String(h).toLowerCase())).join(", ");
+    return {blob:f.blob,name:f.name,details:[mkTitle(),size,cols?"colours: "+cols:"",MK.mode==="lightbox"&&MK.stand?"with stand":""].filter(Boolean).join(", ")}; },
+  downloadSelector:"#mkExport, [data-lbdl], [data-lbdlall]",
+};
 </script>
+<script src="/assets/epix-bridge.js"></script>
 </body>
 </html>

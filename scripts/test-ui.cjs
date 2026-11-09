@@ -1,18 +1,42 @@
-// Browser test for the Design Studio: the real Worker (worker/index.mjs) serving dist/ with an in-memory
-// image library, driven by Playwright at desktop (1280) and phone (390) widths, light and dark.
-// Run: npm run build && NODE_PATH=$(npm root -g) node scripts/test-ui.cjs
-// Optional: SCREENS=/path/to/dir saves screenshots there.
-const { chromium } = require("playwright");
-const http = require("node:http");
+// Browser test for epix3d.com: the real Worker (worker/index.mjs) serving dist/ with in-memory KV
+// (IMAGES and ACCOUNTS), driven by Playwright at desktop (1280) and phone (390) widths.
+// Run: npm run build && npm run test:ui
+// Playwright is not a repo dependency: it comes from PLAYWRIGHT_PATH (a folder holding node_modules/playwright),
+// NODE_PATH, or the global npm folder (npm root -g), so this runs the same on Windows, macOS and Linux.
+// SHOTS=/path/to/dir saves a screenshot of every page.
 const path = require("node:path");
+const pw = (() => {
+  if (process.env.PLAYWRIGHT_PATH) return require(path.join(process.env.PLAYWRIGHT_PATH, "node_modules", "playwright"));
+  try {
+    return require("playwright");
+  } catch (err) {
+    if (err.code !== "MODULE_NOT_FOUND") throw err;
+    const root = require("node:child_process").execSync("npm root -g", { encoding: "utf8" }).trim();
+    return require(path.join(root, "playwright"));
+  }
+})();
+const { chromium } = pw;
+const http = require("node:http");
 const fs = require("node:fs");
+const { pathToFileURL } = require("node:url");
 const assert = require("node:assert/strict");
 
 const ROOT = path.resolve(__dirname, "..");
 const DIST = path.join(ROOT, "dist");
-const SCREENS = process.env.SCREENS || "";
+const SHOTS = process.env.SHOTS || "";
 const KEY = "ui-test-key-0123456789";
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".jpg": "image/jpeg", ".png": "image/png" };
+const QUOTE_VARIANT = 67895111745723;
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".jpg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".txt": "text/plain", ".xml": "application/xml" };
+
+// Polls a page function with evaluate. (waitForFunction evaluates a string, which the makers' policy blocks.)
+async function until(page, fn, arg, { timeout = 30000 } = {}) {
+  const end = Date.now() + timeout;
+  for (;;) {
+    try { if (await page.evaluate(fn, arg)) return; } catch (e) { if (!/context was destroyed|navigation/i.test(e.message)) throw e; }
+    if (Date.now() > end) throw new Error("timed out waiting for " + String(fn).slice(0, 120));
+    await new Promise((r) => setTimeout(r, 100));
+  }
+}
 
 let failures = 0;
 const step = async (name, fn) => {
@@ -30,210 +54,236 @@ function memoryKV() {
     async delete(k) { m.delete(k); },
   };
 }
+// Workers static assets: a folder serves its index.html, a missing file serves 404.html.
 const ASSETS = { async fetch(req) {
   let p = decodeURIComponent(new URL(req.url).pathname);
-  if (p.endsWith("/")) p += "index.html"; // Workers static assets serve a folder's index.html the same way
+  if (p.endsWith("/")) p += "index.html";
   const file = path.join(DIST, path.normalize(p));
-  if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) return new Response("Not found", { status: 404 });
+  if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory())
+    return new Response(fs.readFileSync(path.join(DIST, "404.html")), { status: 404, headers: { "content-type": TYPES[".html"] } });
   return new Response(fs.readFileSync(file), { headers: { "content-type": TYPES[path.extname(file)] ?? "application/octet-stream" } });
 } };
 
-// Print-style art with transparent backgrounds, drawn by the browser so the test needs no image files.
-const ART = [
-  ["Lowcountry Sunrise", "ed", true, "Coastal", "#b8892a", "Playfair Display", "LOWCOUNTRY"],
-  ["Holy City Script", "ed", true, "Charleston", "#15223f", "Pacifico", "Holy City"],
-  ["Pluff Mud Club", "ed", false, "Coastal", "#3d3f43", "Oswald", "PLUFF MUD CLUB"],
-  ["Rainbow Row Badge", "c3d", false, "Charleston", "#0e7c74", "Bebas Neue", "RAINBOW ROW"],
-  ["Print Cube Mark", "c3d", false, "Logos", "#15223f", "Archivo Black", "C3D"],
-  ["Neon Grid Tiger", "epix3d", true, "Animals", "#5b47a8", "Anton", "EPIX"],
-  ["Stay Curious", "epix3d", true, "Words", "#b3262e", "Permanent Marker", "Stay curious"],
-];
+const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/", "/privacy/", "/terms/", "/no-such-page/"];
 
 (async () => {
-  const { handleRequest } = await import(path.join(ROOT, "worker/index.mjs"));
-  const env = { IMAGES: memoryKV(), CONSOLE_KEY: KEY, ASSETS };
+  const { handleRequest } = await import(pathToFileURL(path.join(ROOT, "worker/index.mjs")).href);
+  const env = { IMAGES: memoryKV(), ACCOUNTS: memoryKV(), CONSOLE_KEY: KEY, SHOPIFY_WEBHOOK_SECRET: "whsec-ui-test", ASSETS };
+  // The Charleston3D store's product feed, with only its free custom request product (quote mode).
+  const storeFetch = async () => Object.defineProperty(new Response(JSON.stringify({ products: [
+    { id: 15442527223995, handle: "custom-request", title: "Custom request", tags: ["request-product"], variants: [{ id: QUOTE_VARIANT, title: "Default Title", price: "0.00", available: true }] },
+  ] }), { headers: { "content-type": "application/json" } }), "url", { value: "https://charleston3d.com/products.json" });
   const server = http.createServer(async (req, res) => {
     const chunks = []; for await (const c of req) chunks.push(c);
     const body = chunks.length ? Buffer.concat(chunks) : undefined;
-    const r = await handleRequest(new Request(`http://${req.headers.host}${req.url}`, { method: req.method, headers: req.headers, body: ["GET", "HEAD"].includes(req.method) ? undefined : body, duplex: "half" }), env);
-    res.writeHead(r.status, Object.fromEntries(r.headers));
+    const r = await handleRequest(new Request(`http://${req.headers.host}${req.url}`, { method: req.method, headers: req.headers, body: ["GET", "HEAD"].includes(req.method) ? undefined : body, duplex: "half" }), env, storeFetch);
+    const h = {}; r.headers.forEach((v, k) => { if (k !== "set-cookie") h[k] = v; });
+    // The test server is plain http, so the Secure flag is dropped here or the browser would ignore the cookie.
+    const sc = r.headers.getSetCookie(); if (sc.length) h["set-cookie"] = sc.map((c) => c.replace("; Secure", ""));
+    res.writeHead(r.status, h);
     res.end(Buffer.from(await r.arrayBuffer()));
   });
   await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
-  const BASE = `http://127.0.0.1:${server.address().port}/`;
+  const BASE = `http://127.0.0.1:${server.address().port}`;
   const browser = await chromium.launch();
-  const shot = async (page, name) => { if (SCREENS) await page.screenshot({ path: path.join(SCREENS, `${name}.png`), fullPage: false }); };
-
-  await step("seed the library through the upload API", async () => {
-    const p = await browser.newPage();
-    await p.route("https://fonts.googleapis.com/**", (r) => r.abort());
-    for (const [name, brand, pub, cat, color, font, text] of ART) {
-      await p.setContent(`<body style="margin:0;background:transparent"><div id="a" style="display:inline-block;padding:24px 32px;font:700 88px '${font}',Georgia,serif;color:${color};letter-spacing:.02em;border:6px solid ${color};border-radius:18px">${text}</div></body>`);
-      const png = await p.locator("#a").screenshot({ omitBackground: true });
-      const r = await fetch(`${BASE}api/images`, { method: "POST", body: png, headers: { "content-type": "image/png", "x-filename": `${name}.png`, "x-brand": brand, "x-category": cat, "x-console-key": KEY, ...(pub ? { "x-public": "1" } : {}) } });
-      assert.equal(r.status, 201, name);
-    }
-    await p.close();
-  });
+  if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 
   for (const [width, label] of [[1280, "desktop"], [390, "phone"]]) {
-    for (const scheme of ["light", "dark"]) {
-      const ctx = await browser.newContext({ viewport: { width, height: width > 500 ? 860 : 844 }, colorScheme: scheme, deviceScaleFactor: width > 500 ? 1 : 2 });
-      const page = await ctx.newPage();
-      const errors = [];
-      page.on("pageerror", (e) => errors.push(String(e)));
-      page.on("console", (m) => { if (m.type() === "error" && !/fonts\.g|Failed to load resource/.test(m.text())) errors.push(m.text()); });
-      const tag = `${label}-${scheme}`;
+    const ctx = await browser.newContext({ viewport: { width, height: width > 500 ? 800 : 844 }, deviceScaleFactor: 1, acceptDownloads: true });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    page.on("console", (m) => { if (m.type() === "error" && !/fonts\.g|Failed to load resource|vendor\/|cdnjs|jsdelivr/.test(m.text())) errors.push(m.text()); });
+    const shot = async (name, full = true) => { if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-${width}.png`), fullPage: full }); };
+    const email = `maker-${width}@example.com`;
 
-      await step(`${tag}: home shows public art for all brands without a key`, async () => {
-        await page.goto(BASE);
-        await page.waitForSelector(".kpis");
-        assert.equal(await page.locator(".bs[aria-pressed=true]").innerText().then((t) => t.trim()), width > 1100 ? "All brands" : "All");
-        assert.equal(await page.locator(".kpi b").first().innerText(), "4"); // public only: 2 ED + 2 EPIX3D
-        assert.equal(await page.locator(".start").count(), 6);
-        if (width > 760) assert.equal(await page.locator(".bcard").count(), 3);
-        await page.waitForFunction(() => [...document.querySelectorAll(".start img")].every((i) => i.complete && i.naturalWidth > 0));
-        await shot(page, `${tag}-home-locked`);
+    await step(`${label}: every page loads with its title, no sideways scroll`, async () => {
+      for (const p of PAGES) {
+        const r = await page.goto(BASE + p, { waitUntil: "networkidle" });
+        assert.equal(r.status(), p === "/no-such-page/" ? 404 : 200, p);
+        assert.match(await page.title(), /EPIX3D/, p);
+        const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        assert.ok(over <= 0, `${p} scrolls sideways by ${over}px`);
+        await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } scrollTo(0, 0); });
+        await until(page, () => [...document.images].every((i) => i.complete && i.naturalWidth > 0));
+        await shot((p.replace(/\//g, "-").replace(/^-|-$/g, "") || "home") + "-signed-out");
+      }
+    });
+
+    await step(`${label}: home lists every maker with its own picture; SEO tags are there`, async () => {
+      await page.goto(BASE + "/", { waitUntil: "networkidle" });
+      assert.equal(await page.locator(".makers .mk").count(), 8);
+      for (const href of ["/makers/lightbox/", "/makers/lightbox/?mode=keychain", "/makers/lightbox/?mode=sign", "/makers/lightbox/?mode=litho", "/makers/license-plate/", "/makers/nameplate/", "/makers/hype-chain/", "/makers/ai3d/"])
+        assert.equal(await page.locator(`.makers a[href="${href}"]`).count(), 1, href);
+      await page.locator(".makers img").last().scrollIntoViewIfNeeded();
+      await until(page, () => [...document.querySelectorAll(".makers img")].every((i) => i.complete && i.naturalWidth > 0));
+      assert.equal(await page.locator('meta[property="og:image"]').getAttribute("content"), "https://epix3d.com/assets/img/og.png");
+      const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
+      assert.match(ld, /"Organization"/); assert.match(ld, /"WebSite"/);
+      for (const f of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/assets/img/og.png"]) assert.equal((await page.request.get(BASE + f)).status(), 200, f);
+      const body = await page.locator("body").innerText();
+      assert.doesNotMatch(body, /Design Studio|Elevated Designs|Creative Lab|Netlify/i);
+      const links = await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+      assert.ok(!links.some((h) => /^\/#(home|library|designer|makers)/.test(h)), "no links to the old studio pages");
+    });
+
+    await step(`${label}: sign up from the account page`, async () => {
+      await page.goto(BASE + "/account/?mode=signup", { waitUntil: "networkidle" });
+      await page.waitForSelector("[data-form=signup]:not([hidden])");
+      await page.fill("#su-email", email);
+      await page.fill("#su-pass", "short");
+      await page.click("[data-form=signup] button[type=submit]");
+      assert.match(await page.locator("[data-form=signup] .form-msg").innerText(), /10 characters/);
+      await page.fill("#su-pass", "a-good-long-password");
+      await page.click("[data-form=signup] button[type=submit]");
+      await page.waitForSelector("[data-account]:not([hidden])");
+      assert.equal(await page.locator("[data-me-email]").innerText(), email);
+      assert.equal(await page.locator("[data-member-title]").innerText(), "Free account");
+      const cookie = (await ctx.cookies()).find((c) => c.name === "epx_session");
+      assert.ok(cookie && cookie.httpOnly && cookie.sameSite === "Lax", "HttpOnly, SameSite=Lax session cookie");
+      await shot("account-signed-in");
+    });
+
+    let projectId;
+    await step(`${label}: save a light box design to My projects`, async () => {
+      await page.goto(BASE + "/makers/lightbox/", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      assert.match(await page.locator("[data-epix-account]").innerText(), /My projects/);
+      await page.evaluate(() => {
+        MK.els = [
+          { id: "u1", type: "shape", kind: "heart", x: 0.3, y: 0.5, w: 0.3, ar: 1, rot: 0, color: "#c8202c" },
+          { id: "u2", type: "text", text: "TEST", font: "Archivo Black", weight: 400, size: 0.2, align: "center", x: 0.66, y: 0.5, rot: 0, color: "#1f5fbf", spacing: 0, stroke: 0, strokeColor: "#1d1d1f" },
+        ];
+        MK.name = "Heart box"; mkRemount(); mkCommitNow();
       });
+      await page.waitForTimeout(600);
+      await page.click("[data-epix-save]");
+      await until(page, () => new URL(location.href).searchParams.get("project"));
+      projectId = new URL(page.url()).searchParams.get("project");
+      assert.match(await page.locator("#epx-toast").innerText(), /Saved to My projects/);
+      await shot("maker-lightbox", false);
+    });
 
-      await step(`${tag}: unlocking shows private art and the C3D images`, async () => {
-        await page.locator(".key-btn").click();
-        await page.fill("#key-in", KEY);
-        await page.click("#key-save");
-        await page.waitForFunction(() => document.querySelector(".kpi b")?.textContent === "7");
-        await page.waitForFunction(() => [...document.querySelectorAll(".rcard img")].every((i) => i.complete && i.naturalWidth > 0));
-        await shot(page, `${tag}-home`);
-      });
+    await step(`${label}: the project shows in My projects and opens again`, async () => {
+      await page.goto(BASE + "/projects/", { waitUntil: "networkidle" });
+      await page.waitForSelector(".proj");
+      assert.equal(await page.locator(".proj").count(), 1);
+      assert.equal(await page.locator(".proj-name").innerText(), "Heart box");
+      await until(page, () => { const i = document.querySelector(".proj-pic img"); return i && i.complete && i.naturalWidth > 0; });
+      await shot("projects-signed-in");
+      await page.locator(".proj .btn", { hasText: "Duplicate" }).click();
+      await until(page, () => document.querySelectorAll(".proj").length === 2);
+      page.once("dialog", (d) => d.accept());
+      await page.locator(".proj").first().locator(".btn", { hasText: "Delete" }).click();
+      await until(page, () => document.querySelectorAll(".proj").length === 1);
+      await page.locator(".proj a.btn", { hasText: "Open" }).click();
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      assert.equal(new URL(page.url()).searchParams.get("project"), projectId);
+      assert.equal(await page.evaluate(() => MK.els.length), 2);
+      assert.equal(await page.evaluate(() => MK.name), "Heart box");
+    });
 
-      await step(`${tag}: the brand switcher narrows the studio to one brand`, async () => {
-        await page.locator(".bs-c3d").click();
-        await page.waitForFunction(() => document.querySelector(".kpi b")?.textContent === "2");
-        assert.equal(await page.evaluate(() => document.documentElement.dataset.brand), "c3d");
-        assert.equal(await page.locator(".bcard").count(), 0);
-        await page.locator(".bs-all").click();
-        await page.waitForFunction(() => document.querySelector(".kpi b")?.textContent === "7");
-      });
+    await step(`${label}: a Free member sees the Platinum prompt on Download`, async () => {
+      let downloaded = false; page.once("download", () => { downloaded = true; });
+      await page.click("#mkExport");
+      await page.waitForSelector("#epx-dialog");
+      assert.match(await page.locator("#epx-dialog h2").innerText(), /Platinum/);
+      assert.equal(await page.locator("#mkPrinterDlg").count(), 0, "the export didn't start");
+      await shot("upgrade-prompt", false);
+      await page.keyboard.press("Escape");
+      assert.equal(await page.locator("#epx-dialog").count(), 0);
+      // The license plate's download buttons are gated the same way.
+      await page.goto(BASE + "/makers/license-plate/", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await page.evaluate(() => document.querySelector("[data-download='3mf']").click());
+      await page.waitForSelector("#epx-dialog");
+      await page.keyboard.press("Escape");
+      assert.equal(downloaded, false);
+    });
 
-      await step(`${tag}: library cards, filter, search and the details sheet`, async () => {
-        await page.goto(`${BASE}#library`);
-        await page.waitForSelector(".acard");
-        assert.equal(await page.locator(".acard").count(), 7);
-        await page.locator(".seg-btn[data-f=private]").click();
-        assert.equal(await page.locator(".acard").count(), 3);
-        await page.locator(".seg-btn[data-f=all]").click();
-        await page.fill(".toolbar input[type=search]", "holy");
-        assert.equal(await page.locator(".acard").count(), 1);
-        await page.fill(".toolbar input[type=search]", "");
-        await page.waitForFunction(() => [...document.querySelectorAll(".acard img")].every((i) => i.complete && i.naturalWidth > 0));
-        await shot(page, `${tag}-library`);
-        await page.locator(".acard", { hasText: "Lowcountry Sunrise" }).click();
-        await page.waitForSelector("dialog.sheet[open]");
-        await page.waitForTimeout(300); // let the slide-in finish
-        await shot(page, `${tag}-library-sheet`);
-        // Moving art to Charleston 3D turns off the shirt-app option.
-        const sheet = page.locator("dialog.sheet[open]");
-        await sheet.locator("select").selectOption("c3d");
-        assert.equal(await sheet.locator("input[type=checkbox]").isDisabled(), true);
-        assert.equal(await sheet.locator("input[type=checkbox]").isChecked(), false);
-        await sheet.locator("select").selectOption("ed");
-        await sheet.locator("input[type=checkbox]").check();
-        await sheet.locator("input.field").first().fill("Lowcountry Sunrise Tee");
-        await sheet.locator("button[type=submit]").click();
-        await page.waitForSelector("dialog.sheet[open]", { state: "detached", timeout: 3000 }).catch(() => {});
-        await page.waitForFunction(() => [...document.querySelectorAll(".acard .a-name")].some((n) => n.textContent === "Lowcountry Sunrise Tee"));
-      });
+    await step(`${label}: Platinum (set with the admin key) can download`, async () => {
+      const r = await page.request.post(BASE + "/api/admin/platinum", { data: { email, days: 35 }, headers: { "x-console-key": KEY } });
+      assert.equal(r.status(), 200);
+      await page.goto(`${BASE}/makers/lightbox/?project=${projectId}`, { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && document.documentElement.dataset.epixDownloads === "on");
+      assert.match(await page.locator("[data-epix-account]").textContent(), /Platinum/i);
+      const dl = page.waitForEvent("download", { timeout: 60000 });
+      await page.click("#mkExport");
+      const tip = page.locator("#mkHoleGo"); if (await tip.count()) await tip.click();
+      await page.waitForSelector("#mkPrinterDlg");
+      await page.click("#mkPrGo");
+      const file = await dl;
+      assert.match(file.suggestedFilename(), /heart-box-print-files\.zip$/);
+      assert.equal(await page.locator("#epx-dialog").count(), 0);
+      await page.goto(BASE + "/account/", { waitUntil: "networkidle" });
+      await page.waitForSelector("[data-account]:not([hidden])");
+      assert.equal(await page.locator("[data-member-title]").innerText(), "Platinum member");
+    });
 
-      await step(`${tag}: use in designer puts the art on the shirt photo`, async () => {
-        await page.locator(".acard", { hasText: "Holy City Script" }).click();
-        await page.locator("dialog.sheet[open] button", { hasText: "Use in designer" }).click();
-        await page.waitForSelector(".editor .layer");
-        await page.waitForFunction(() => document.querySelector(".ed-stage")?.classList.contains("is-ready"));
-        assert.equal(await page.locator(".editor .layer").count() >= 1, true);
-        await page.waitForTimeout(300);
-        await shot(page, `${tag}-designer`);
-      });
+    await step(`${label}: Order a print stores the 3MF and hands off to the Charleston3D cart`, async () => {
+      let post = null;
+      await page.route("https://charleston3d.com/cart/add", async (r) => { post = r.request(); await r.fulfill({ status: 200, contentType: "text/html", body: "<p>cart</p>" }); });
+      await page.goto(`${BASE}/makers/lightbox/?project=${projectId}`, { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await page.click("[data-epix-order]");
+      await page.waitForSelector("#epx-dialog");
+      await shot("order-dialog", false);
+      await page.locator("#epx-dialog .epx-primary").click();
+      await page.waitForURL("https://charleston3d.com/cart/add", { timeout: 60000 });
+      const form = new URLSearchParams(post.postData());
+      assert.equal(form.get("id"), String(QUOTE_VARIANT));
+      assert.equal(form.get("properties[Project]"), "Heart box");
+      assert.equal(form.get("properties[Item]"), "EPIX3D Light box");
+      assert.equal(form.get("properties[_EPIX3D account]"), email);
+      const link = form.get("properties[_Print file]");
+      assert.match(link, /\/files\/[A-Za-z0-9_-]{32}\/heart-box\.3mf$/);
+      const f = await page.request.get(link.replace(/^https?:\/\/[^/]+/, BASE));
+      assert.equal(f.status(), 200);
+      const bytes = await f.body();
+      assert.deepEqual([...bytes.subarray(0, 2)], [0x50, 0x4b], "the stored file is the 3MF (a zip)");
+      await page.unroute("https://charleston3d.com/cart/add");
+    });
 
-      await step(`${tag}: the search palette finds images and pages`, async () => {
-        await page.goto(`${BASE}#home`);
-        await page.waitForSelector(".kpis");
-        await page.locator(".jump").click();
-        await page.waitForSelector("#palette[open]");
-        await page.fill("#pal-q", "pluff");
-        await page.waitForFunction(() => document.querySelector("#pal-list button")?.textContent.includes("Pluff Mud Club"));
-        await shot(page, `${tag}-palette`);
-        await page.keyboard.press("Enter");
-        await page.waitForSelector("dialog.sheet[open]");
-        assert.match(await page.locator("dialog.sheet[open] h2").innerText(), /Pluff Mud Club/);
-        await page.keyboard.press("Escape");
-      });
+    await step(`${label}: signed out, Save asks them to sign in and keeps the design`, async () => {
+      await page.goto(BASE + "/account/", { waitUntil: "networkidle" });
+      await page.click("[data-signout]");
+      await page.waitForSelector("[data-auth]:not([hidden])");
+      await page.goto(BASE + "/makers/lightbox/?mode=keychain", { waitUntil: "load" });
+      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      assert.equal(await page.evaluate(() => MK.mode), "keychain", "?mode= picks the light box mode");
+      await page.evaluate(() => { MK.els = [{ id: "k1", type: "text", text: "KEY", font: "Archivo Black", weight: 400, size: 0.3, align: "center", x: 0.5, y: 0.5, rot: 0, color: "#1f5fbf", spacing: 0, stroke: 0, strokeColor: "#1d1d1f" }]; MK.name = "Key tag"; mkRemount(); mkCommitNow(); });
+      await page.click("[data-epix-save]");
+      await page.waitForSelector("#epx-dialog");
+      assert.match(await page.locator("#epx-dialog h2").innerText(), /Sign in to save/);
+      await page.locator("#epx-dialog a", { hasText: "Sign in" }).click();
+      await page.waitForURL(/\/account\/\?next=/);
+      await page.fill("#si-email", email);
+      await page.fill("#si-pass", "a-good-long-password");
+      await page.click("[data-form=signin] button[type=submit]");
+      await page.waitForURL(/\/makers\/lightbox\//);
+      await until(page, () => new URL(location.href).searchParams.get("project"), null, { timeout: 30000 });
+      assert.equal(await page.evaluate(() => MK.name), "Key tag", "the design came back and was saved");
+      const list = await (await page.request.get(BASE + "/api/projects")).json();
+      assert.ok(list.items.some((p) => p.name === "Key tag" && p.mode === "keychain"));
+    });
 
-      await step(`${tag}: the Go to menu reaches the console and every site from every page`, async () => {
-        const want = ["claude.ai/artifact/U8rNeWMPq7NfF7f88AEuPK", "charleston3d.com", "app.charleston3d.com",
-          "elevatedshirts.com", "design.elevatedshirts.com", "claude.ai/artifact/", "docs.google.com/spreadsheets/"];
-        for (const r of ["home", "library", "designer", "makers"]) {
-          await page.goto(`${BASE}#${r}`);
-          await page.locator(".go-btn").click();
-          await page.waitForSelector("#go-menu:popover-open");
-          const hrefs = await page.locator("#go-menu a").evaluateAll((as) => as.map((a) => [a.href, a.target, a.rel]));
-          for (const w of want) assert.ok(hrefs.some(([h]) => h.includes(w)), `${r}: Go to is missing ${w}`);
-          for (const [h, t, rel] of hrefs) { assert.match(h, /^https:\/\//); assert.equal(t, "_blank"); assert.match(rel, /noopener/); }
-          const box = await page.locator("#go-menu").boundingBox();
-          assert.ok(box.x >= 0 && box.x + box.width <= width, `${r}: Go to menu runs off the screen`);
-          if (r === "home") await shot(page, `${tag}-go-to`);
-          await page.keyboard.press("Escape");
-          assert.equal(await page.locator("#go-menu:popover-open").count(), 0);
-        }
-        await page.locator(".jump").click();
-        await page.fill("#pal-q", "order app");
-        await page.waitForFunction(() => document.querySelector("#pal-list button")?.textContent.includes("Charleston 3D order app"));
-        await page.keyboard.press("Escape"); // the first Escape clears the search box, the second closes the palette
-        await page.keyboard.press("Escape");
-        assert.equal(await page.locator("#palette[open]").count(), 0);
-      });
+    await step(`${label}: the other makers load with the EPIX3D bar and their gate`, async () => {
+      for (const m of ["license-plate", "nameplate", "hype-chain", "ai3d"]) {
+        const r = await page.goto(`${BASE}/makers/${m}/`, { waitUntil: "load" });
+        assert.equal(r.status(), 200);
+        await until(page, () => document.documentElement.dataset.epixReady === "1", null, { timeout: 30000 });
+        assert.equal(await page.locator("[data-epix-save]").count(), 1, m);
+        assert.equal(await page.locator("[data-epix-order], [data-order]").count() >= 1, true, m);
+        assert.match(await page.title(), /EPIX3D/);
+        assert.match(r.headers()["content-security-policy"], /form-action 'self' https:\/\/charleston3d\.com/);
+        await page.waitForTimeout(m === "license-plate" ? 300 : 2500);
+        if (m === "nameplate") { await until(page, () => !!document.querySelector("#arrange svg")); const th = await page.evaluate(() => window.EPIX_MAKER.thumb()); assert.ok(th.startsWith("data:image/jpeg;base64,") && th.length > 8000, "the nameplate thumbnail is a real picture"); }
+        await shot(`maker-${m}`, false);
+      }
+    });
 
-      await step(`${tag}: the 3D makers open and come back to the studio`, async () => {
-        // Their own tab: the makers load three.js from public CDNs, which this test's sandbox may block,
-        // so their script errors are not the studio's.
-        const page = await ctx.newPage();
-        for (const [name, slug] of [["Light Box Maker", "lightbox"], ["Hype Chain Maker", "hype-chain"], ["Nameplate Maker", "nameplate"], ["License Plate Maker", "license-plate"]]) {
-          await page.goto(`${BASE}#makers`);
-          await page.locator(".maker a", { hasText: name }).click();
-          await page.waitForURL(`**/makers/${slug}/`);
-          const res = await page.request.get(`${BASE}makers/${slug}/`);
-          assert.match(res.headers()["content-security-policy"], /cdnjs\.cloudflare\.com/);
-          assert.equal(res.headers()["x-frame-options"], "DENY");
-          const bar = page.locator("#ds-back-bar a");
-          assert.match((await bar.getAttribute("aria-label")) || (await bar.innerText()), /Back to Design Studio/);
-          if (scheme === "light") await shot(page, `${tag}-${slug}`);
-          await bar.click();
-          await page.waitForSelector(".maker-grid");
-        }
-        const site = await page.request.get(BASE);
-        assert.doesNotMatch(site.headers()["content-security-policy"], /cdnjs/); // the studio itself keeps the strict policy
-        await page.close();
-      });
-
-      await step(`${tag}: no horizontal scroll on any page`, async () => {
-        for (const r of ["home", "library", "designer", "makers"]) {
-          await page.goto(`${BASE}#${r}`);
-          await page.waitForTimeout(250);
-          const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-          assert.ok(over <= 0, `${r} scrolls sideways by ${over}px`);
-        }
-      });
-
-      if (width > 760) await step(`${tag}: the sidebar collapses to icons`, async () => {
-        await page.goto(`${BASE}#home`);
-        await page.locator(".side-toggle").click();
-        assert.equal(await page.evaluate(() => document.documentElement.classList.contains("side-min")), true);
-        assert.ok((await page.locator(".side").boundingBox()).width < 80);
-        await shot(page, `${tag}-collapsed`);
-        await page.locator(".side-toggle").click();
-      });
-
-      await step(`${tag}: no script errors`, async () => { assert.deepEqual(errors, []); });
-      await ctx.close();
-    }
+    await step(`${label}: no script errors`, async () => { assert.deepEqual(errors, []); });
+    await ctx.close();
   }
 
   await browser.close();
