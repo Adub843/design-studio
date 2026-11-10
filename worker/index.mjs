@@ -42,11 +42,18 @@ export const PHOTO3D_HEADERS = {
   ...MAKER_HEADERS,
   "content-security-policy": MAKER_HEADERS["content-security-policy"].replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'"),
 };
+// The geometry worker for the CSG makers (organizer, dice, flexi). manifold-3d's WebAssembly bindings build
+// their glue functions at run time, so this one script (a worker: no page, no DOM, no cookies to steal) may
+// evaluate code. Every page keeps its stricter policy.
+export const CSG_WORKER_HEADERS = {
+  ...MAKER_HEADERS,
+  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'",
+};
 const MAKER_PAGE = /^\/makers\/[a-z0-9-]+\//;
 // The Light box engine also runs the Keychain, Name tag, Sign and Lithophane makers (?mode=...). Each
 // mode has its own copy of the page with its own title, description and canonical (scripts/build.mjs puts
 // them in makers/lightbox/m/<mode>/), so search engines see five separate makers. The address stays the same.
-export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet"];
+export const LIGHTBOX_MODES = ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet", "lantern", "stamp", "qr"];
 export function lightboxModeRequest(req) {
   const u = new URL(req.url);
   if (u.pathname !== "/makers/lightbox/" || (req.method !== "GET" && req.method !== "HEAD")) return null;
@@ -59,6 +66,14 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" },
 });
 const envReader = (env) => (k) => typeof env?.[k] === "string" ? env[k] : undefined;
+
+// Account emails (password reset) go out through Cloudflare Email Service: the EMAIL send_email binding in
+// wrangler.toml, sending from noreply@epix3d.com once epix3d.com is onboarded to Email Sending.
+export const MAIL_FROM = { email: "noreply@epix3d.com", name: "EPIX3D" };
+export const MAIL_REPLY_TO = "hello@charleston3d.com";
+export const mailer = (env) => (typeof env?.EMAIL?.send === "function"
+  ? (msg) => env.EMAIL.send({ from: MAIL_FROM, replyTo: MAIL_REPLY_TO, ...msg })
+  : null);
 
 // The site API: accounts, projects, orders, Platinum. Everything but /api/config needs ACCOUNTS.
 const SITE_API = /^\/api\/(config$|me$|auth\/|projects($|\/)|orders$|exports\/|shopify\/webhook$|admin\/platinum$)/;
@@ -73,7 +88,7 @@ async function handleSite(req, env, pathname, fetchImpl) {
   if (pathname === "/api/admin/platinum") return handleAdminPlatinum(req, kv, envReader(env));
   // Writes must come from this site's own pages.
   if (req.method !== "GET" && req.method !== "HEAD" && !sameOrigin(req)) throw new ApiError(403, "cross_site", "Not allowed from another site.");
-  if (pathname === "/api/me" || pathname.startsWith("/api/auth/")) return handleAuth(req, kv);
+  if (pathname === "/api/me" || pathname.startsWith("/api/auth/")) return handleAuth(req, kv, { mail: mailer(env) });
   if (pathname === "/api/projects" || pathname.startsWith("/api/projects/")) return handleProjects(req, kv);
   if (pathname === "/api/orders") {
     if (req.method === "POST") return createOrder(req, kv, { fetchImpl });
@@ -123,7 +138,7 @@ export async function handleRequest(req, env, fetchImpl = fetch) {
   if (!env?.ASSETS) return new Response("Not found", { status: 404, headers: SITE_HEADERS });
   const res = await env.ASSETS.fetch(lightboxModeRequest(req) || req);
   const out = new Response(res.body, res);
-  const headers = pathname.startsWith("/makers/ai3d/") ? PHOTO3D_HEADERS : MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
+  const headers = pathname === "/makers/param/csg-worker.js" ? CSG_WORKER_HEADERS : pathname.startsWith("/makers/ai3d/") ? PHOTO3D_HEADERS : MAKER_PAGE.test(pathname) ? MAKER_HEADERS : SITE_HEADERS;
   for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
   return out;
 }

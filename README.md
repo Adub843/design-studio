@@ -102,6 +102,10 @@ Built into `scripts/build.mjs` and `worker/index.mjs`, checked by `npm test`:
 - `robots.txt` names Google, Bing, Apple, DuckDuckGo and the AI crawlers (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended and more); `sitemap.xml` lists all 15 public URLs; `llms.txt` is the summary for AI assistants.
 - IndexNow: Aaron sets `npx.cmd wrangler secret put INDEXNOW_KEY` (32 letters/digits); the Worker then serves `/<key>.txt`.
 
+## Password reset by email
+
+`/api/auth/forgot` stores a one-use, one-hour link (`reset:<sha256(token)>` in ACCOUNTS) and emails it through the `EMAIL` send_email binding (Cloudflare Email Service) from noreply@epix3d.com, reply-to hello@charleston3d.com. The answer is the same whether or not the email has an account; 3 emails an hour per address, 10 requests an hour per IP. `/api/auth/reset` sets the new password and signs out every other device. One-time setup (DNS change, Aaron's OK): Cloudflare dashboard > epix3d.com > Email > Email Sending > onboard the domain (adds SPF/DKIM records). Until then no email goes out.
+
 ## Deploy (from Aaron's PC, needs his typed OK)
 
 1. `npx.cmd wrangler kv namespace create ACCOUNTS` and put the id in `wrangler.toml` (replaces `REPLACE_AT_DEPLOY`).

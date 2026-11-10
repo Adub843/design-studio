@@ -37,8 +37,10 @@
   function setMsg(form, text, kind = "bad") { const m = $(".form-msg", form); if (m) { m.textContent = text || ""; m.className = `form-msg ${text ? kind : ""}`; } }
   function showTab(which) {
     for (const b of $$("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === which));
-    for (const f of $$("[data-form=signin], [data-form=signup]")) f.hidden = f.dataset.form !== which;
+    for (const f of $$("[data-form=signin], [data-form=signup], [data-form=forgot], [data-form=reset]")) f.hidden = f.dataset.form !== which;
+    const tabs = $(".auth .tabs"); if (tabs) tabs.hidden = which === "forgot" || which === "reset";
   }
+  const resetToken = () => { const t = params.get("reset"); return t && /^[A-Za-z0-9_-]{20,100}$/.test(t) ? t : ""; };
   async function submitAuth(form, kind) {
     const email = form.email.value.trim(), password = form.password.value;
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setMsg(form, "Enter your email address.");
@@ -61,6 +63,7 @@
     $("[data-account]").hidden = !me;
     $("[data-acct-title]").textContent = me ? "Your account" : params.get("mode") === "signup" ? "Make a free account" : "Sign in";
     $("[data-acct-lead]").textContent = me ? "Membership, print requests and password." : "Save projects and order prints. Designing is always free.";
+    if (!me && resetToken()) { $("[data-acct-title]").textContent = "Set a new password"; $("[data-acct-lead]").textContent = "Choose a new password for your account."; showTab("reset"); return; }
     if (!me) { showTab(params.get("mode") === "signup" ? "signup" : "signin"); return; }
     $("[data-me-email]").textContent = me.email;
     $("[data-me-since]").textContent = fmtDate(me.createdAt);
@@ -87,6 +90,26 @@
     for (const b of $$("[data-tab]")) b.addEventListener("click", () => showTab(b.dataset.tab));
     $("[data-form=signin]").addEventListener("submit", (e) => { e.preventDefault(); submitAuth(e.currentTarget, "signin"); });
     $("[data-form=signup]").addEventListener("submit", (e) => { e.preventDefault(); submitAuth(e.currentTarget, "signup"); });
+    for (const b of $$("[data-show-forgot]")) b.addEventListener("click", () => { const f = $("[data-form=forgot]"); const si = $("[data-form=signin]"); if (si.email.value) f.email.value = si.email.value; setMsg(f, ""); showTab("forgot"); f.email.focus(); });
+    $("[data-back-signin]").addEventListener("click", () => showTab("signin"));
+    $("[data-form=forgot]").addEventListener("submit", async (e) => {
+      e.preventDefault(); const f = e.currentTarget; const email = f.email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setMsg(f, "Enter your email address.");
+      const btn = $("button[type=submit]", f); btn.disabled = true; setMsg(f, "");
+      try { await api("/api/auth/forgot", { method: "POST", json: { email } }); setMsg(f, "If that email has an account, a reset link is on its way. Check your inbox and spam folder.", "ok"); }
+      catch (err) { setMsg(f, err.message); }
+      finally { btn.disabled = false; }
+    });
+    $("[data-form=reset]").addEventListener("submit", async (e) => {
+      e.preventDefault(); const f = e.currentTarget;
+      if (f.password.value.length < 10) return setMsg(f, "Use a password of at least 10 characters.");
+      const btn = $("button[type=submit]", f); btn.disabled = true; setMsg(f, "");
+      try {
+        const r = await api("/api/auth/reset", { method: "POST", json: { token: resetToken(), password: f.password.value } });
+        me = r.user; params.delete("reset"); history.replaceState(null, "", "/account/"); paintHeader(); paintAccount();
+      } catch (err) { setMsg(f, err.message); }
+      finally { btn.disabled = false; }
+    });
     $("[data-form=password]").addEventListener("submit", async (e) => {
       e.preventDefault(); const f = e.currentTarget;
       if (f.next.value.length < 10) return setMsg(f, "Use a new password of at least 10 characters.");

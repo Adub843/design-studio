@@ -616,12 +616,48 @@ await test("config: Platinum shows as not open until its Shopify ids are set", a
   assert.equal(cfg.accounts, true);
 });
 
+await test("accounts: password reset by email: same answer for any address, one-use link, signs other devices out", async () => {
+  const sent = [];
+  const e = siteEnv({ EMAIL: { send: async (m) => { sent.push(m); return { messageId: "m1" }; } } });
+  const old = await signUp(e);
+  const r1 = await jcall(e, "/api/auth/forgot", { method: "POST", body: { email: " MAKER@example.com " } });
+  const r2 = await jcall(e, "/api/auth/forgot", { method: "POST", body: { email: "nobody@example.com" } });
+  assert.equal(r1.status, 200); assert.equal(r2.status, 200);
+  assert.deepEqual(await r1.json(), await r2.json(), "no hint about which emails have accounts");
+  assert.equal(sent.length, 1);
+  const m = sent[0];
+  assert.equal(m.to, "maker@example.com"); assert.equal(m.from.email, "noreply@epix3d.com"); assert.equal(m.replyTo, "hello@charleston3d.com");
+  assert.ok(m.text && m.html && m.subject);
+  const token = m.text.match(/https:\/\/epix3d\.com\/account\/\?reset=([A-Za-z0-9_-]+)/)[1];
+  assert.ok(m.html.includes(token));
+  assert.equal((await jcall(e, "/api/auth/reset", { method: "POST", body: { token, password: "short" } })).status, 400, "weak password refused");
+  const ok = await jcall(e, "/api/auth/reset", { method: "POST", body: { token, password: "a-brand-new-password" } });
+  assert.equal(ok.status, 200); const fresh = cookieOf(ok); assert.ok(fresh);
+  assert.equal((await me(e, fresh)).email, "maker@example.com");
+  assert.equal(await me(e, old), null, "the old session is signed out");
+  const again = await jcall(e, "/api/auth/reset", { method: "POST", body: { token, password: "another-long-password" } });
+  assert.equal(again.status, 400); assert.equal((await again.json()).code, "reset_invalid");
+  assert.equal((await jcall(e, "/api/auth/signin", { method: "POST", body: { email: "maker@example.com", password: "a-brand-new-password" } })).status, 200);
+  assert.equal((await jcall(e, "/api/auth/reset", { method: "POST", body: { token: "x".repeat(40), password: "a-brand-new-password" } })).status, 400);
+});
+
+await test("accounts: reset requests are rate limited and work without the email binding", async () => {
+  const sent = [];
+  const e = siteEnv({ EMAIL: { send: async (m) => { sent.push(m); } } });
+  await signUp(e);
+  for (let i = 0; i < 5; i++) assert.equal((await jcall(e, "/api/auth/forgot", { method: "POST", body: { email: "maker@example.com" } })).status, 200);
+  assert.equal(sent.length, 3, "at most 3 emails an hour per address");
+  const noMail = siteEnv(); await signUp(noMail);
+  assert.equal((await jcall(noMail, "/api/auth/forgot", { method: "POST", body: { email: "maker@example.com" } })).status, 200);
+  assert.equal((await jcall(noMail, "/api/auth/forgot", { method: "POST", body: { email: "not-an-email" } })).status, 400);
+});
+
 await test("SEO: each Light box mode is served from its own page copy, and other addresses are untouched", async () => {
   const seen = [];
   const e = env({ ASSETS: { fetch: async (r) => { seen.push(new URL(r.url).pathname); return new Response("<!doctype html>", { headers: { "content-type": "text/html" } }); } } });
-  for (const mode of ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet"]) await call(e, `/makers/lightbox/?mode=${mode}`);
+  for (const mode of ["keychain", "nametag", "sign", "litho", "relief", "bookmark", "ornament", "coaster", "magnet", "lantern", "stamp", "qr"]) await call(e, `/makers/lightbox/?mode=${mode}`);
   await call(e, "/makers/lightbox/?mode=lightbox"); await call(e, "/makers/lightbox/?mode=../../x"); await call(e, "/makers/nameplate/?mode=sign");
-  assert.deepEqual(seen, ["/makers/lightbox/m/keychain/", "/makers/lightbox/m/nametag/", "/makers/lightbox/m/sign/", "/makers/lightbox/m/litho/", "/makers/lightbox/m/relief/", "/makers/lightbox/m/bookmark/", "/makers/lightbox/m/ornament/", "/makers/lightbox/m/coaster/", "/makers/lightbox/m/magnet/", "/makers/lightbox/", "/makers/lightbox/", "/makers/nameplate/"]);
+  assert.deepEqual(seen, ["/makers/lightbox/m/keychain/", "/makers/lightbox/m/nametag/", "/makers/lightbox/m/sign/", "/makers/lightbox/m/litho/", "/makers/lightbox/m/relief/", "/makers/lightbox/m/bookmark/", "/makers/lightbox/m/ornament/", "/makers/lightbox/m/coaster/", "/makers/lightbox/m/magnet/", "/makers/lightbox/m/lantern/", "/makers/lightbox/m/stamp/", "/makers/lightbox/m/qr/", "/makers/lightbox/", "/makers/lightbox/", "/makers/nameplate/"]);
 });
 
 await test("SEO: the IndexNow key file is served only for the INDEXNOW_KEY secret", async () => {

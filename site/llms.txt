@@ -13,6 +13,14 @@
 - [Ornament](https://epix3d.com/makers/lightbox/?mode=ornament): a round hanging ornament with a name, date or picture.
 - [Coaster](https://epix3d.com/makers/lightbox/?mode=coaster): a round drink coaster with raised colour lettering or a picture.
 - [Fridge magnet](https://epix3d.com/makers/lightbox/?mode=magnet): a small multi-colour plaque with a magnet glued into the back.
+- [Lantern](https://epix3d.com/makers/lightbox/?mode=lantern): a photo wrapped into a round lithophane lantern that glows over a tea light.
+- [Stamp](https://epix3d.com/makers/lightbox/?mode=stamp): raised, mirrored lettering for ink stamps, wax seals and clay.
+- [QR code sign](https://epix3d.com/makers/lightbox/?mode=qr): a scannable QR code plaque for a menu, Wi-Fi or shop.
+- [Vase](https://epix3d.com/makers/vase/): a custom vase with a smooth profile, sides, twist or ribs; spiral or hollow.
+- [Desk organizer](https://epix3d.com/makers/organizer/): a tray with your own size and number of bins.
+- [Pixel puzzle](https://epix3d.com/makers/pixel-puzzle/): a picture turned into coloured square tiles and a tray.
+- [Dice](https://epix3d.com/makers/dice/): six-sided dice with rounded edges and two-colour pips.
+- [Flexi animal](https://epix3d.com/makers/flexi/): a print-in-place snake, fish or caterpillar with ball joints.
 - [License plate](https://epix3d.com/makers/license-plate/): custom plate frames and novelty plates with your own text.
 - [Nameplate](https://epix3d.com/makers/nameplate/): layered multi-colour nameplates from a subject and style, or your own picture.
 - [Hype chain](https://epix3d.com/makers/hype-chain/): a chunky pendant from a logo or text, with a printed chain.

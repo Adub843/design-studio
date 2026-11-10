@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-maker="dice">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dice Maker: Custom 3D Printed Dice | EPIX3D</title>
+<meta name="description" content="Design custom 3D printed dice with rounded edges and two-colour pips. Order a print from Charleston, SC, or download it with Platinum.">
+<link rel="canonical" href="https://epix3d.com/makers/dice/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="EPIX3D"><meta property="og:title" content="Dice Maker: Custom 3D Printed Dice | EPIX3D"><meta property="og:description" content="Design custom 3D printed dice with rounded edges and two-colour pips. Order a print from Charleston, SC, or download it with Platinum."><meta property="og:url" content="https://epix3d.com/makers/dice/"><meta property="og:image" content="https://epix3d.com/assets/img/og.jpg">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
+<link rel="stylesheet" href="/assets/epix-bridge.css">
+<link rel="stylesheet" href="/makers/param/core.css">
+<link rel="stylesheet" href="/assets/epix-theme.css">
+</head>
+<body>
+<header id="epix-bar"></header>
+<div id="pm"></div>
+<script src="/makers/vendor/three.min.js"></script>
+<script src="/makers/vendor/OrbitControls.js"></script>
+<script src="/makers/vendor/jszip.min.js"></script>
+<script>
+/* EPIX3D: what the site bridge (/assets/epix-bridge.js) needs from this maker. The engine
+   (/makers/param/core.js, a module, so it runs later) fills in window.PARAM; every call waits for it. */
+(() => {
+  let ready; const whenReady = new Promise((ok) => { ready = ok; });
+  window.PARAM_READY = ready;
+  const P = async () => { await whenReady; return window.PARAM; };
+  window.EPIX_MAKER = {
+    id: "dice",
+    title: () => "Dice maker",
+    mode: () => null,
+    name: () => (window.PARAM ? window.PARAM.name() : "Dice maker"),
+    hasContent: () => !!(window.PARAM && window.PARAM.hasContent()),
+    ready: whenReady,
+    getState: async () => (await P()).getState(),
+    setState: async (d) => (await P()).setState(d),
+    thumb: async () => (await P()).thumb(),
+    buildPrintFile: async () => (await P()).buildPrintFile(),
+    downloadSelector: "#pmExport, #pmStl",
+    orderNote: () => "We print it in Charleston, SC. Your design goes to checkout as a free print request: we check it, then reply with a price within 1-2 business days. You pay nothing now.",
+  };
+})();
+</script>
+<script type="module">
+import { startMaker } from "/makers/param/core.js";
+import gen from "/makers/dice/gen.js";
+startMaker(gen);
+</script>
+<script src="/assets/epix-bridge.js"></script>
+</body>
+</html>
