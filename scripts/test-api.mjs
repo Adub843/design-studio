@@ -652,6 +652,24 @@ await test("accounts: reset requests are rate limited and work without the email
   assert.equal((await jcall(noMail, "/api/auth/forgot", { method: "POST", body: { email: "not-an-email" } })).status, 400);
 });
 
+await test("accounts: reset emails go through Resend when RESEND_API_KEY is set", async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => { calls.push({ url: String(url), init }); return new Response(JSON.stringify({ id: "re_1" }), { status: 200 }); };
+  const e = siteEnv({ RESEND_API_KEY: "re_test_key", EMAIL: { send: async () => { throw new Error("binding should not be used"); } } });
+  await signUp(e);
+  const r = await handleRequest(new Request("https://studio.test/api/auth/forgot", { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN }, body: JSON.stringify({ email: "maker@example.com" }) }), e, fetchImpl);
+  assert.equal(r.status, 200);
+  const sent = calls.filter((c) => c.url === "https://api.resend.com/emails");
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].init.headers.authorization, "Bearer re_test_key");
+  const b = JSON.parse(sent[0].init.body);
+  assert.equal(b.from, "EPIX3D <noreply@epix3d.com>"); assert.deepEqual(b.to, ["maker@example.com"]); assert.equal(b.reply_to, "hello@charleston3d.com");
+  assert.ok(/\/account\/\?reset=[A-Za-z0-9_-]+/.test(b.text) && b.html && b.subject);
+  const failing = siteEnv({ RESEND_API_KEY: "re_test_key" }); await signUp(failing);
+  const r2 = await handleRequest(new Request("https://studio.test/api/auth/forgot", { method: "POST", headers: { "content-type": "application/json", origin: ORIGIN }, body: JSON.stringify({ email: "maker@example.com" }) }), failing, async () => new Response("no", { status: 403 }));
+  assert.equal(r2.status, 200, "a Resend error never changes the answer");
+});
+
 await test("SEO: each Light box mode is served from its own page copy, and other addresses are untouched", async () => {
   const seen = [];
   const e = env({ ASSETS: { fetch: async (r) => { seen.push(new URL(r.url).pathname); return new Response("<!doctype html>", { headers: { "content-type": "text/html" } }); } } });
