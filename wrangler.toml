@@ -43,8 +43,8 @@ id = "a4c25d0fee6e45448ada053a44b19bcc"
 binding = "ACCOUNTS"
 id = "22849576a606478292692b682a200b89"
 
-# Account emails (password reset links) through Cloudflare Email Service. epix3d.com must be onboarded to
-# Email Sending (Cloudflare dashboard > epix3d.com > Email > Email Sending) before mail goes out; until
-# then the Worker still answers reset requests the same way and logs that no email was sent.
+# Account emails (password reset links) go through Resend when the RESEND_API_KEY secret is set (Aaron's
+# choice, free plan). This Cloudflare Email Service binding is only the fallback: it needs Workers Paid and
+# epix3d.com onboarded to Email Sending. With neither, reset requests get the same answer and no email goes out.
 [[send_email]]
 name = "EMAIL"

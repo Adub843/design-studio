@@ -64,7 +64,7 @@ tells the bridge how to read and restore its design and build its print file (`w
 Accounts: email + password (PBKDF2-SHA256, 100,000 rounds, salt per user), HttpOnly Secure SameSite=Lax
 session cookie (30 days, token stored only as a hash), sign-in limited to 5 failures per email and 20
 per IP in 15 minutes, passwords of 10+ characters, generic error messages, writes refused from other
-sites. Password reset by email isn't built (no email sending is set up).
+sites. Password reset by email is below.
 
 Ordering: the order goes to the store's free "Custom request" product (read from the live feed, falling
 back to `lib/shop-config.mjs`), so it comes in at $0 for Aaron to quote. Line-item properties: Item,
@@ -104,7 +104,9 @@ Built into `scripts/build.mjs` and `worker/index.mjs`, checked by `npm test`:
 
 ## Password reset by email
 
-`/api/auth/forgot` stores a one-use, one-hour link (`reset:<sha256(token)>` in ACCOUNTS) and emails it through the `EMAIL` send_email binding (Cloudflare Email Service) from noreply@epix3d.com, reply-to hello@charleston3d.com. The answer is the same whether or not the email has an account; 3 emails an hour per address, 10 requests an hour per IP. `/api/auth/reset` sets the new password and signs out every other device. One-time setup (DNS change, Aaron's OK): Cloudflare dashboard > epix3d.com > Email > Email Sending > onboard the domain (adds SPF/DKIM records). Until then no email goes out.
+`/api/auth/forgot` stores a one-use, one-hour link (`reset:<sha256(token)>` in ACCOUNTS) and emails it from noreply@epix3d.com, reply-to hello@charleston3d.com. The answer is the same whether or not the email has an account; 3 emails an hour per address, 10 requests an hour per IP. `/api/auth/reset` sets the new password and signs out every other device.
+
+Sending: through Resend (free plan, 3,000 emails a month) when the `RESEND_API_KEY` secret is set; epix3d.com must be verified in Resend (its DKIM/SPF records go in the Cloudflare DNS for epix3d.com). Aaron chose Resend on 2026-11-10 because Cloudflare Email Sending needs Workers Paid. The `EMAIL` send_email binding is the fallback if Workers Paid is ever bought. With neither, no email goes out and the answer is unchanged.
 
 ## Deploy (from Aaron's PC, needs his typed OK)
 

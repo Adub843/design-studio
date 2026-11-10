@@ -67,13 +67,28 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 const envReader = (env) => (k) => typeof env?.[k] === "string" ? env[k] : undefined;
 
-// Account emails (password reset) go out through Cloudflare Email Service: the EMAIL send_email binding in
-// wrangler.toml, sending from noreply@epix3d.com once epix3d.com is onboarded to Email Sending.
+// Account emails (password reset). Sent through Resend (https://resend.com, free plan) when the RESEND_API_KEY
+// secret is set and epix3d.com is verified there; otherwise through the Cloudflare EMAIL send_email binding
+// (needs Workers Paid). With neither, reset requests still get the same answer and no email goes out.
 export const MAIL_FROM = { email: "noreply@epix3d.com", name: "EPIX3D" };
 export const MAIL_REPLY_TO = "hello@charleston3d.com";
-export const mailer = (env) => (typeof env?.EMAIL?.send === "function"
-  ? (msg) => env.EMAIL.send({ from: MAIL_FROM, replyTo: MAIL_REPLY_TO, ...msg })
-  : null);
+export const RESEND_URL = "https://api.resend.com/emails";
+export const resendMailer = (key, fetchImpl = fetch) => async (msg) => {
+  const from = msg.from || MAIL_FROM;
+  const r = await fetchImpl(RESEND_URL, {
+    method: "POST",
+    headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+    body: JSON.stringify({ from: `${from.name} <${from.email}>`, to: [msg.to], reply_to: msg.replyTo || MAIL_REPLY_TO, subject: msg.subject, text: msg.text, html: msg.html }),
+  });
+  if (!r.ok) { const e = new Error("resend failed"); e.code = `resend_${r.status}`; throw e; }
+  return r.json().catch(() => ({}));
+};
+export const mailer = (env, fetchImpl = fetch) => {
+  const key = typeof env?.RESEND_API_KEY === "string" ? env.RESEND_API_KEY.trim() : "";
+  if (key) return (msg) => resendMailer(key, fetchImpl)({ from: MAIL_FROM, replyTo: MAIL_REPLY_TO, ...msg });
+  if (typeof env?.EMAIL?.send === "function") return (msg) => env.EMAIL.send({ from: MAIL_FROM, replyTo: MAIL_REPLY_TO, ...msg });
+  return null;
+};
 
 // The site API: accounts, projects, orders, Platinum. Everything but /api/config needs ACCOUNTS.
 const SITE_API = /^\/api\/(config$|me$|auth\/|projects($|\/)|orders$|exports\/|shopify\/webhook$|admin\/platinum$)/;
@@ -88,7 +103,7 @@ async function handleSite(req, env, pathname, fetchImpl) {
   if (pathname === "/api/admin/platinum") return handleAdminPlatinum(req, kv, envReader(env));
   // Writes must come from this site's own pages.
   if (req.method !== "GET" && req.method !== "HEAD" && !sameOrigin(req)) throw new ApiError(403, "cross_site", "Not allowed from another site.");
-  if (pathname === "/api/me" || pathname.startsWith("/api/auth/")) return handleAuth(req, kv, { mail: mailer(env) });
+  if (pathname === "/api/me" || pathname.startsWith("/api/auth/")) return handleAuth(req, kv, { mail: mailer(env, fetchImpl) });
   if (pathname === "/api/projects" || pathname.startsWith("/api/projects/")) return handleProjects(req, kv);
   if (pathname === "/api/orders") {
     if (req.method === "POST") return createOrder(req, kv, { fetchImpl });
