@@ -297,7 +297,7 @@ await test("pages may post to the Charleston3D cart (orders, Platinum); nowhere 
     const csp = (await call(e, p)).headers.get("content-security-policy");
     assert.match(csp, /form-action 'self' https:\/\/charleston3d\.com https:\/\/www\.charleston3d\.com$/, p);
   }
-  assert.match((await call(e, "/")).headers.get("content-security-policy"), /script-src 'self' https:\/\/static\.cloudflareinsights\.com;/, "site pages run no inline script, only the Cloudflare analytics beacon");
+  assert.match((await call(e, "/")).headers.get("content-security-policy"), /script-src 'self' https:\/\/static\.cloudflareinsights\.com https:\/\/connect\.facebook\.net https:\/\/analytics\.tiktok\.com;/, "site pages run no inline script: only the analytics beacon and the ad pixels (after Allow)");
   assert.equal((await call(e, "/makers/")).headers.get("x-frame-options"), "DENY", "the makers list is a normal page");
 });
 
@@ -701,6 +701,171 @@ await test("SEO: build output has robots groups for AI crawlers, every maker in 
     const d = head.match(/name="description" content="([^"]*)"/)[1]; assert.ok(d.length >= 70 && d.length <= 160, `${id} description length ${d.length}`);
     const t = head.match(/<title>([^<]*)/)[1]; assert.ok(t.length <= 60, `${id} title length ${t.length}`);
   }
+});
+
+
+/* ---------- live print prices, Export and the Design files plan (2026-11-15) ---------- */
+const price = await import("../lib/print-price.mjs");
+const printVariants = JSON.parse((await import("node:fs")).readFileSync(new URL("../lib/print-variants.json", import.meta.url), "utf8"));
+const { deflateRawSync, crc32 } = await import("node:zlib");
+// A real zip (deflate), the way slicers and the makers write 3MF files.
+function zipOf(files) {
+  const enc = new TextEncoder(); const parts = []; const cent = []; let off = 0;
+  for (const [name, text] of files) {
+    const data = enc.encode(text), comp = deflateRawSync(data), n = enc.encode(name);
+    const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(8, 8); lh.writeUInt32LE(crc32(data), 14); lh.writeUInt32LE(comp.length, 18); lh.writeUInt32LE(data.length, 22); lh.writeUInt16LE(n.length, 26);
+    const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(8, 10); ch.writeUInt32LE(crc32(data), 16); ch.writeUInt32LE(comp.length, 20); ch.writeUInt32LE(data.length, 24); ch.writeUInt16LE(n.length, 28); ch.writeUInt32LE(off, 42);
+    parts.push(lh, n, comp); cent.push(ch, n); off += 30 + n.length + comp.length;
+  }
+  const cd = Buffer.concat(cent), end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
+  return new Uint8Array(Buffer.concat([...parts, cd, end]));
+}
+// A closed box mesh, s mm on each side (12 triangles, outward facing).
+function boxXml(s, { colours = [] } = {}) {
+  const v = [[0,0,0],[s,0,0],[s,s,0],[0,s,0],[0,0,s],[s,0,s],[s,s,s],[0,s,s]];
+  const t = [[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
+  const mats = colours.length ? `<basematerials id="9">${colours.map((c) => `<base name="c" displaycolor="${c}"/>`).join("")}</basematerials>` : "";
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter"><resources>${mats}<object id="1" type="model"><mesh><vertices>${v.map(([x, y, z]) => `<vertex x="${x}" y="${y}"\n z="${z}"/>`).join("")}</vertices><triangles>${t.map(([a, b, c]) => `<triangle v1="${a}" v2="${b}" v3="${c}"/>`).join("")}</triangles></mesh></object></resources></model>`;
+}
+const box3mf = (s, opts) => zipOf([["3D/3dmodel.model", boxXml(s, opts)]]);
+function boxStl(s) {
+  const v = [[0,0,0],[s,0,0],[s,s,0],[0,s,0],[0,0,s],[s,0,s],[s,s,s],[0,s,s]];
+  const t = [[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
+  const b = Buffer.alloc(84 + t.length * 50); b.writeUInt32LE(t.length, 80);
+  t.forEach((tri, i) => tri.forEach((k, j) => v[k].forEach((c, a) => b.writeFloatLE(c, 84 + i * 50 + 12 + j * 12 + a * 4))));
+  return new Uint8Array(b);
+}
+
+await test("print price: the calculator's minimum, rounding up to the dollar, and more for bigger, longer and more colours", () => {
+  const small = price.priceFor({ grams: 10, hours: 0.5 });
+  assert.equal(small.total, price.RATES.minJob, "small prints cost the $18 minimum");
+  const big = price.priceFor({ grams: 400, hours: 18 });
+  assert.ok(Number.isInteger(big.total) && big.total > 60, `a big print costs more (${big.total})`);
+  assert.ok(price.priceFor({ grams: 400, hours: 18, colours: 4 }).total > big.total, "extra colours add purge filament");
+  assert.ok(price.priceFor({ grams: 400, hours: 20 }).total > big.total, "longer prints cost more");
+  // Worked by hand from the calculator's defaults: 200 g and 9 h.
+  const g = 200, h = 9, R = price.RATES;
+  const cost = g / 1000 * R.kgPrice * (1 + R.fail / 100) + R.watts / 1000 * h * R.kwh + (R.printerCost / R.life + R.upkeep) * h + R.pack;
+  assert.equal(price.priceFor({ grams: g, hours: h }).total, Math.ceil(cost * 2 + h * R.timeRate));
+});
+
+await test("print price: 3MF and STL files are measured the same, with colours from the 3MF", async () => {
+  const m = await price.measure3MF(box3mf(20, { colours: ["#FF0000", "#00ff00", "#ff0000"] }));
+  assert.equal(Math.round(m.volume), 8000); assert.equal(Math.round(m.area), 2400);
+  assert.deepEqual(m.size, [20, 20, 20]); assert.equal(m.tris, 12); assert.equal(m.colours, 2);
+  const s = price.measureSTL(boxStl(20));
+  assert.equal(Math.round(s.volume), 8000); assert.deepEqual(s.size, [20, 20, 20]);
+  const a = await price.quoteFile(box3mf(40), "a.3mf"), b = await price.quoteFile(boxStl(40), "a.stl");
+  assert.equal(a.total, b.total, "same shape, same price");
+  await assert.rejects(price.measure3MF(box3mf(20), { max: 100 }), { code: "too_big" });
+});
+
+const printForm = (file, fields = {}) => orderForm({ maker: "lightbox", mode: "keychain", ...fields }, file);
+await test("orders: the price is worked out again from the file and the cart gets the matching Custom Print step", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  const file = new File([box3mf(60)], "cube.3mf");
+  const want = (await price.quoteFile(box3mf(60), "cube.3mf")).total;
+  const o = await (await handleRequest(orderReq(printForm(file, { price: "1" }), c), e, feed([requestProduct]))).json();
+  const step = printVariants.variants.find(([p]) => p >= want);
+  assert.equal(o.price, step[0], "a changed page price is ignored");
+  assert.equal(o.cart.fields.id, String(step[1]));
+  assert.equal(o.priced, true);
+  assert.equal(o.cart.fields["properties[_Price check]"], "worked out from the file");
+  assert.match(o.cart.fields["properties[_Estimate]"], /^\d+(\.\d)? g, .*60 x 60 x 60 mm$/);
+  const mine = await (await jcall(e, "/api/orders", { cookie: c })).json();
+  assert.equal(mine.items[0].price, step[0]);
+});
+
+await test("orders: a file too big to measure online keeps the page price (never under $18) and is marked for a check", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  const big = new File([zipOf([["3D/3dmodel.model", boxXml(30) + " ".repeat(price.MAX_MODEL_CHARS)]])], "big.3mf");
+  const o = await (await handleRequest(orderReq(printForm(big, { price: "41.2" }), c), e, feed([requestProduct]))).json();
+  assert.equal(o.price, 42);
+  assert.match(o.cart.fields["properties[_Price check]"], /check before printing/);
+  const low = await (await handleRequest(orderReq(printForm(big, { price: "3" }), c), e, feed([requestProduct]))).json();
+  assert.equal(low.price, 18);
+  const none = await (await handleRequest(orderReq(printForm(big), c), e, feed([requestProduct]))).json();
+  assert.deepEqual([none.price, none.cart.fields.id], [null, "11"], "no price at all: the free quote line");
+  const tagged = await (await handleRequest(orderReq(printForm(new File([box3mf(20)], "c.3mf"), { source: "utm_source=holo&utm_campaign=xmas" }), c), e, feed([requestProduct]))).json();
+  assert.equal(tagged.cart.fields["properties[_Campaign]"], "utm_source=holo&utm_campaign=xmas", "ad and Holo post tags reach the order");
+});
+
+await test("config: both plans, live pricing, and ad pixels only when set and well formed", async () => {
+  const cfg = await (await call(siteEnv(), "/api/config")).json();
+  assert.equal(cfg.printPricing, shop.PRINT_PRICING);
+  assert.deepEqual([cfg.designs.price, cfg.designs.available, cfg.designs.store], ["$15 a month", true, shop.STORE]);
+  assert.equal(String(cfg.designs.variant), String(shop.DESIGNS_VARIANT_ID));
+  assert.deepEqual(cfg.ads, { meta: null, tiktok: null });
+  const on = await (await call(siteEnv({ META_PIXEL_ID: "123456789012345", TIKTOK_PIXEL_ID: "C1ABCDEF23456789" }), "/api/config")).json();
+  assert.deepEqual(on.ads, { meta: "123456789012345", tiktok: "C1ABCDEF23456789" });
+  const bad = await (await call(siteEnv({ META_PIXEL_ID: "<script>", TIKTOK_PIXEL_ID: "x" }), "/api/config")).json();
+  assert.deepEqual(bad.ads, { meta: null, tiktok: null });
+});
+
+await test("webhook: a paid Design files order turns on Design files only, not Platinum", async () => {
+  const e = siteEnv();
+  const c = await signUp(e);
+  const order = paidOrder("maker@example.com", { line_items: [{ variant_id: shop.DESIGNS_VARIANT_ID, product_id: shop.DESIGNS_PRODUCT_ID, quantity: 1, properties: [{ name: "_EPIX3D account", value: "maker@example.com" }] }] });
+  assert.equal((await hook(e, order)).status, 200);
+  const u = await me(e, c);
+  assert.deepEqual([u.designs, u.platinum, u.designsUntil], [true, false, days35("2026-11-07T15:00:00Z")]);
+});
+
+const DRIVE = "https://library.test";
+const designEnv = () => siteEnv({ DRIVE_ORIGIN: DRIVE });
+const id20 = (n) => String(n).padStart(20, "a").replace(/[^0-9a-f]/g, "a");
+function fakePc(seen = []) {
+  return async (url, init) => {
+    const u = new URL(url); seen.push(u.pathname + u.search);
+    assert.ok(init.headers["x-drive-sig"], "every request to the PC is signed");
+    return new Response(JSON.stringify({ total: 3, items: [
+      { id: id20(1), name: "Merry Christmas.svg", kind: "svg", ext: ".svg", size: 2048, brand: "ed", src: "drive", thumb: true },
+      { id: id20(2), name: "Logo.png", kind: "logo", ext: ".png", size: 1, brand: "ed", src: "drive" },
+      { id: id20(3), name: "Kittl piece", kind: "image", ext: ".png", size: 1, brand: "ed", src: "kittl" },
+      { id: id20(4), name: "Cube.png", kind: "image", ext: ".png", size: 1, brand: "c3d", src: "drive" },
+      { id: id20(5), name: "Shirt.ai", kind: "source", ext: ".ai", size: 1, brand: "ed", src: "drive" },
+    ] }), { headers: { "content-type": "application/json" } });
+  };
+}
+await test("design files: members only; finished ED art only; downloads need the library's tag and are capped daily", async () => {
+  const e = designEnv();
+  assert.equal((await jcall(e, "/api/designs/search")).status, 401);
+  const c = await signUp(e);
+  const free = await handleRequest(new Request(`${ORIGIN}/api/designs/search`, { headers: { cookie: c } }), e, fakePc());
+  assert.equal(free.status, 402);
+  await call(e, "/api/admin/platinum", { method: "POST", body: JSON.stringify({ email: "maker@example.com", days: 30, plan: "designs" }), headers: { "content-type": "application/json", "x-console-key": KEY } });
+  assert.equal((await me(e, c)).platinum, false, "Design files doesn't give Platinum");
+  const seen = [];
+  const r = await handleRequest(new Request(`${ORIGIN}/api/designs/search?q=christmas&kind=svg`, { headers: { cookie: c } }), e, fakePc(seen));
+  assert.equal(r.status, 200);
+  const body = await r.json();
+  assert.deepEqual(body.items.map((i) => i.name), ["Merry Christmas.svg"]);
+  assert.match(seen[0], /^\/search\?brand=ed&per=48&page=0&q=christmas&kind=svg$/);
+  assert.match(body.items[0].thumbUrl, /^\/api\/drive\/thumb\/[0-9a-f]{20}\?exp=\d+&sig=/);
+  const dl = body.items[0].downloadUrl;
+  const get = (p) => handleRequest(new Request(`${ORIGIN}${p}`, { headers: { cookie: c } }), e, fakePc());
+  const ok = await get(dl);
+  assert.equal(ok.status, 302); assert.match(ok.headers.get("location"), /^\/api\/drive\/file\/[0-9a-f]{20}\?exp=/);
+  assert.equal((await get(dl.replace(/t=.*/, "t=forged-tag-forged-tag12"))).status, 404, "only files the library showed");
+  assert.equal((await get(`/api/designs/file/${id20(4)}`)).status, 404);
+  for (let i = 1; i < 60; i++) assert.equal((await get(dl)).status, 302);
+  assert.equal((await get(dl)).status, 429, "60 downloads a day");
+  const off = await handleRequest(new Request(`${ORIGIN}/api/designs/search`, { headers: { cookie: c } }), e, async () => new Response("down", { status: 530 }));
+  assert.equal(off.status, 503);
+});
+
+await test("site pages: Design files and three plans are built, linked from the menu and in the sitemap", async () => {
+  const fs = await import("node:fs");
+  const read = (p) => fs.readFileSync(new URL(`../dist/${p}`, import.meta.url), "utf8");
+  const d = read("designs/index.html");
+  assert.match(d, /<body class="page-designs">/);
+  assert.match(d, /<a href="\/designs\/" aria-current="page">Design files<\/a>/);
+  assert.match(read("pricing/index.html"), /data-go-designs[\s\S]*data-go-platinum|data-go-platinum[\s\S]*data-go-designs/);
+  assert.match(read("sitemap.xml"), /<loc>https:\/\/epix3d\.com\/designs\/<\/loc>/);
+  assert.match(read("llms.txt"), /Design files/);
+  assert.ok(fs.existsSync(new URL("../dist/assets/print-price.mjs", import.meta.url)), "the makers can load the price module");
 });
 
 console.log(`\n${passed} API tests passed`);

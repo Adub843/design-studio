@@ -6,10 +6,14 @@
 // The bridge then adds the EPIX3D bar (or wires [data-epix-*] buttons already on the page) and handles:
 //   Save to my projects   POST/PUT /api/projects (signed in; otherwise it keeps the design and asks them to sign in)
 //   Opening a project     ?project=<id> loads it from /api/projects/<id>
-//   Order a print         builds the maker's print file, POST /api/orders keeps it on epix3d.com, then the
-//                         page posts to the Charleston3D cart with the $0 quote line the server returns
-//   Downloads             every download/export button works only for signed-in Platinum members (checked
-//                         with /api/exports/check); everyone else sees the Platinum prompt
+//   Live price            the bar shows the print price as they design (lib/print-price.mjs, Aaron's 3D Print
+//                         Calculator), worked out from the maker's own print file
+//   Place order           builds the maker's print file, POST /api/orders keeps it on epix3d.com and works the
+//                         price out again from the file, then the page posts to the Charleston3D cart with
+//                         the matching "EPIX3D Custom Print" price line (or the $0 quote line it returns)
+//   Export                Platinum members get an Export button and the maker's own download buttons (checked
+//                         with /api/exports/check); everyone else gets Place order, and the maker's download
+//                         buttons are hidden
 (() => {
   const M = window.EPIX_MAKER;
   if (!M) return;
@@ -21,6 +25,8 @@
   let canDownload = false;
   let projectId = params.get("project");
   let busy = false;
+  let cfg = {};
+  let quote = null;  // the last live price: { total, grams, hours, colours, size }
 
   const LOGO = '<svg viewBox="0 0 32 32" aria-hidden="true" width="26" height="26"><rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="#15171c"/><path d="M16 7.6 23.6 11.8v8.4L16 24.4l-7.6-4.2v-8.4z" fill="#ffffff"/><path d="M16 16v8.4l7.6-4.2v-8.4z" fill="#6d28d9"/><path d="M16 16 8.4 11.8v8.4l7.6 4.2z" fill="#c4c8cf"/></svg>';
 
@@ -45,8 +51,11 @@
       <span data-epix-switch></span>
       <span class="epx-title" data-epix-title>${esc(title())}</span>
       <span class="epx-status" role="status" aria-live="polite"></span>
+      <span class="epx-price" data-epix-price hidden></span>
       <button type="button" class="epx-btn" data-epix-save>Save</button>
-      <button type="button" class="epx-btn epx-primary" data-epix-order><span class="epx-long">Order a print</span><span class="epx-short">Order</span></button>
+      <a class="epx-plat" data-epix-plat href="/pricing/#platinum" hidden>Export with Platinum</a>
+      <button type="button" class="epx-btn" data-epix-export hidden><span class="epx-long">Export</span><span class="epx-short">Export</span></button>
+      <button type="button" class="epx-btn epx-primary" data-epix-order><span class="epx-long">Place order</span><span class="epx-short">Order</span></button>
       <a class="epx-acct" data-epix-account href="/account/">Sign in</a>`;
   }
   function renderAccount() {
@@ -109,13 +118,13 @@
   }
   function askPlatinum() {
     dialog({
-      title: "Downloads come with Platinum",
-      body: `<p>Free accounts can design, save and order prints made in Charleston, SC.</p><p><b>Platinum</b> is $15 a month and adds 3MF and STL downloads, so you can print your designs at home.</p>${me ? "" : '<p class="epx-muted">Already a member? Sign in first.</p>'}`,
+      title: "Export comes with Platinum",
+      body: `<p>Free accounts can design, save and order prints made in Charleston, SC, priced as they design.</p><p><b>Platinum</b> is ${esc(cfg.platinum?.price || "$15 a month")} and adds Export: 3MF and STL files to print anywhere. Members can still order prints from us.</p>${me ? "" : '<p class="epx-muted">Already a member? Sign in first.</p>'}`,
       actions: [
         { label: "Not now" },
         ...(me ? [] : [{ label: "Sign in", href: `/account/?next=${encodeURIComponent(nextUrl())}`, onClick: () => go("signin", "download") }]),
-        { label: "Order a print instead", onClick: () => setTimeout(order, 0) },
-        { label: "See Platinum", primary: true, href: "/pricing/" },
+        { label: "Place an order instead", onClick: () => setTimeout(order, 0) },
+        { label: "See Platinum", primary: true, href: "/pricing/#platinum" },
       ],
     });
   }
@@ -169,11 +178,16 @@
     if (me === undefined) await loadMe();
     if (!me) return askSignIn("order");
     if (M.hasContent && !M.hasContent()) { toast("Add something to your design first."); return; }
-    const note = (M.orderNote && M.orderNote()) || "We print it in Charleston, SC. Your design goes to checkout as a free print request: we look it over and reply with a price within 1-2 business days. You pay nothing now.";
+    if (pricing() && !quote) await refreshPrice(true);
+    const priced = pricing() && quote && quote.total <= PRICE_CAP;
+    const note = (M.orderNote && M.orderNote()) || (priced
+      ? "We print it in Charleston, SC, check it over and ship it to you."
+      : "We print it in Charleston, SC. Your design goes to checkout as a free print request: we look it over and reply with a price within 1-2 business days. You pay nothing now.");
+    const lines = priced ? `<dl class="epx-quote"><div><dt>Your print</dt><dd>${money(quote.total)}</dd></div><div><dt>Filament</dt><dd>about ${Math.round(quote.grams)} g${quote.colours > 1 ? `, ${quote.colours} colours` : ""}</dd></div><div><dt>Print time</dt><dd>about ${hm(quote.hours)}</dd></div>${quote.size && quote.size[0] ? `<div><dt>Size</dt><dd>${quote.size.map((n) => Math.round(n)).join(" x ")} mm</dd></div>` : ""}</dl><p class="epx-muted">Shipping and tax are added at checkout. The price is checked again from your print file.</p>` : "";
     dialog({
-      title: "Order a print",
-      body: `<p>${esc(note)}</p><p class="epx-muted">Checkout is on the Charleston3D store, where EPIX3D prints are sold.</p>`,
-      actions: [{ label: "Cancel" }, { label: "Continue to checkout", primary: true, onClick: () => setTimeout(placeOrder, 0) }],
+      title: "Place order",
+      body: `<p>${esc(note)}</p>${lines}<p class="epx-muted">Checkout is on the Charleston3D store, where EPIX3D prints are sold.</p>`,
+      actions: [{ label: "Cancel" }, { label: priced ? `Checkout, ${money(quote.total)}` : "Continue to checkout", primary: true, onClick: () => setTimeout(placeOrder, 0) }],
     });
   }
   async function placeOrder() {
@@ -189,9 +203,13 @@
       fd.append("project", M.name());
       if (f.details) fd.append("details", f.details);
       if (f.product) fd.append("product", f.product);
+      if (quote) fd.append("price", String(quote.total));
       fd.append("file", new File([f.blob], f.name, { type: f.blob.type || "application/octet-stream" }));
       if (f.preview) fd.append("preview", new File([f.preview], "preview" + (f.preview.type === "image/jpeg" ? ".jpg" : ".png"), { type: f.preview.type || "image/png" }));
+      const src = window.EPIX_ADS?.source();
+      if (src) fd.append("source", Object.entries(src).map(([k, v]) => `${k}=${v}`).join("&").slice(0, 300));
       const r = await api("/api/orders", { method: "POST", body: fd });
+      window.EPIX_ADS?.track("InitiateCheckout", { content_name: title(), value: r.price || 0, currency: "USD" });
       say("Opening the cart…");
       const form = document.createElement("form");
       form.method = "post"; form.action = r.cart.action; form.target = "_top"; form.hidden = true;
@@ -208,18 +226,93 @@
     }
   }
 
+  /* ---------- live print price (Aaron's 3D Print Calculator, lib/print-price.mjs) ---------- */
+  const PRICE_CAP = 500; // the top "EPIX3D Custom Print" step; above it the order is a $0 quote
+  const pricing = () => !!cfg.printPricing && !M.noPrice;
+  // A maker whose print build changes what's on screen (the Hype chain shows its export plates) sets
+  // livePrice: false: its price is worked out when they press the price or Place order, not on every edit.
+  const live = () => pricing() && M.livePrice !== false;
+  const money = (n) => `$${Number(n).toFixed(0)}`;
+  const hm = (h) => { const m = Math.max(1, Math.round(h * 60)); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`; };
+  let priceMod = null, priceRun = null, priceDirty = false, priceT = 0;
+  function paintPrice(state) {
+    for (const el of document.querySelectorAll("[data-epix-price]")) {
+      el.hidden = !pricing() || state === "off";
+      el.classList.toggle("epx-busy", state === "busy");
+      if (state === "busy") el.innerHTML = `<span>Print price</span><b>${quote ? money(quote.total) : "…"}</b>`;
+      else if (quote && quote.total > PRICE_CAP) el.innerHTML = "<span>Print price</span><b>Quote</b>";
+      else if (quote) el.innerHTML = `<span>Print price</span><b>${money(quote.total)}</b>`;
+      else if (!live()) el.innerHTML = "<span>Print price</span><b>See price</b>";
+      else el.innerHTML = "<span>Print price</span><b>from $18</b>";
+      const tap = !live() && state !== "busy";
+      el.classList.toggle("epx-tap", tap);
+      if (tap) { el.setAttribute("role", "button"); el.tabIndex = 0; } else { el.removeAttribute("role"); el.removeAttribute("tabindex"); }
+      el.title = quote ? `About ${Math.round(quote.grams)} g of filament and ${hm(quote.hours)} of print time. Shipping is added at checkout.` : "Prints start at $18. Shipping is added at checkout.";
+    }
+  }
+  async function refreshPrice(now) {
+    if (!pricing()) return paintPrice("off");
+    if (M.hasContent && !M.hasContent()) { quote = null; return paintPrice("idle"); }
+    if (priceRun) { priceDirty = true; return priceRun; }
+    paintPrice("busy");
+    priceRun = (async () => {
+      try {
+        priceMod = priceMod || await import("/assets/print-price.mjs");
+        const f = await M.buildPrintFile();
+        if (/\.zip$/i.test(f.name || "")) { quote = null; return; }
+        const q = await priceMod.quoteFile(await f.blob.arrayBuffer(), f.name || "print.3mf");
+        quote = { total: q.total, grams: q.grams, hours: q.hours, colours: q.colours, size: q.size };
+      } catch (e) { console.warn("price", e?.message); quote = null; }
+    })();
+    await priceRun; priceRun = null; paintPrice("idle");
+    if (priceDirty && !now) { priceDirty = false; schedulePrice(); }
+  }
+  function schedulePrice() {
+    if (!live()) { if (quote) { quote = null; paintPrice("idle"); } return; }
+    clearTimeout(priceT); priceT = setTimeout(() => { if (!busy) refreshPrice(); }, 1400);
+  }
+  for (const ev of ["input", "change", "pointerup", "keyup", "drop"]) {
+    document.addEventListener(ev, (e) => { const t = e.target instanceof Element ? e.target : null; if (t && t.closest(".epx-bar, .epx-modal")) return; schedulePrice(); }, true);
+  }
+
+  /* ---------- Export (Platinum) and the gate on the maker's own downloads ---------- */
+  function hideDownloads() {
+    const sel = (M.downloadSelector || "[data-download]").split(",").map((x) => x.trim()).filter(Boolean);
+    const st = document.createElement("style");
+    st.textContent = `${sel.map((x) => `html:not([data-epix-downloads="on"]) ${x}`).join(",")}{display:none!important}`;
+    document.head.append(st);
+  }
+  function paintExport() {
+    const on = canDownload;
+    for (const b of document.querySelectorAll("[data-epix-export]")) b.hidden = !on;
+    for (const a of document.querySelectorAll("[data-epix-plat]")) a.hidden = on;
+  }
+  function exportNow() {
+    if (!canDownload) return askPlatinum();
+    const t = [...document.querySelectorAll(M.downloadSelector || "[data-download]")].find((el) => el.offsetParent !== null && !el.disabled) || document.querySelector(M.downloadSelector || "[data-download]");
+    if (t) t.click(); else toast("Use the maker's download button to export your file.");
+  }
+
   /* ---------- the Platinum gate on downloads ---------- */
+  let passThrough = false;
   document.addEventListener("click", (e) => {
     const t = e.target instanceof Element ? e.target.closest(M.downloadSelector || "[data-download]") : null;
-    if (!t || canDownload) return;
+    if (!t) return;
+    if (canDownload) {
+      // The maker's own export waits for a price build that's still running, so the two never overlap.
+      clearTimeout(priceT);
+      if (priceRun && !passThrough) { e.preventDefault(); e.stopImmediatePropagation(); priceRun.then(() => { passThrough = true; try { t.click(); } finally { passThrough = false; } }); }
+      return;
+    }
     e.preventDefault(); e.stopImmediatePropagation();
     askPlatinum();
   }, true);
   async function checkDownloads() {
     canDownload = false;
-    if (!me || !me.platinum) return;
+    if (!me || !me.platinum) { document.documentElement.dataset.epixDownloads = "off"; paintExport(); return; }
     try { await api("/api/exports/check", { method: "POST" }); canDownload = true; } catch { canDownload = false; }
     document.documentElement.dataset.epixDownloads = canDownload ? "on" : "off";
+    paintExport();
   }
 
   async function loadMe() {
@@ -268,6 +361,18 @@
   async function start() {
     renderBar();
     renderSwitch();
+    hideDownloads();
+    paintExport();
+    if (!document.querySelector('script[src="/assets/ads.js"]')) { const ad = document.createElement("script"); ad.src = "/assets/ads.js"; ad.defer = true; document.head.append(ad); }
+    setTimeout(() => window.EPIX_ADS?.track("ViewContent", { content_name: title(), content_type: "product" }), 1500);
+    try { cfg = await (await fetch("/api/config", { credentials: "same-origin" })).json() || {}; } catch { cfg = {}; }
+    paintPrice("idle");
+    for (const b of document.querySelectorAll("[data-epix-export]")) b.addEventListener("click", exportNow);
+    for (const el of document.querySelectorAll("[data-epix-price]")) {
+      const go = () => { if (!live() && pricing() && !priceRun) refreshPrice(true); };
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    }
     for (const b of document.querySelectorAll("[data-epix-save]")) b.addEventListener("click", save);
     for (const b of document.querySelectorAll("[data-epix-order]")) b.addEventListener("click", order);
     renderAccount();
@@ -281,12 +386,13 @@
         await M.setState(pending.data, { name: pending.name, mode: pending.mode });
         projectId = pending.projectId || null;
         if (pending.action === "save" && me) await save();
-        else if (pending.action === "order" && me) toast("Welcome back. Your design is here: press Order a print to continue.");
+        else if (pending.action === "order" && me) toast("Welcome back. Your design is here: press Place order to continue.");
       } catch (e) { console.error("restore", e); }
     }
     document.documentElement.dataset.epixReady = "1";
+    if (live()) refreshPrice();
     const t = $("[data-epix-title]"); if (t) t.textContent = title();
   }
-  window.EPIX = { save, order, me: () => me, project: () => projectId, toast, refreshTitle: () => { const t = $("[data-epix-title]"); if (t) t.textContent = title(); } };
+  window.EPIX = { save, order, exportNow, price: () => quote, refreshPrice, me: () => me, project: () => projectId, toast, refreshTitle: () => { const t = $("[data-epix-title]"); if (t) t.textContent = title(); } };
   start();
 })();

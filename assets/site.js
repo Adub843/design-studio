@@ -1,5 +1,6 @@
 // EPIX3D site pages: account state in the header, the Account page (sign in, sign up, sign out,
-// change password), My projects, and the Go Platinum button. Talks only to this site's /api.
+// change password), My projects, the Go Platinum and Join Design files buttons, and the Design files
+// library (/designs/). Talks only to this site's /api.
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -70,16 +71,24 @@
     const box = $("[data-member]");
     box.classList.toggle("on", me.platinum);
     $("[data-member-title]").textContent = me.platinum ? "Platinum member" : "Free account";
-    $("[data-member-text]").textContent = me.platinum ? `Downloads are on until ${fmtDate(me.platinumUntil)}.` : "Design, save and order prints. Go Platinum to download your files.";
+    $("[data-member-text]").textContent = me.platinum ? `Export is on until ${fmtDate(me.platinumUntil)}.` : "Design, save and order prints at a live price. Go Platinum to export your files.";
     $("[data-member-text]").classList.toggle("muted", !me.platinum);
     const goPlat = $("[data-member-cta] .btn-primary"); if (goPlat) goPlat.hidden = me.platinum;
+    const dbox = $("[data-designs-member-box]");
+    if (dbox) {
+      dbox.classList.toggle("on", !!me.designs);
+      $("[data-designs-title]").textContent = me.designs ? "Design files member" : "Design files";
+      $("[data-designs-text]").textContent = me.designs ? `The design library is open until ${fmtDate(me.designsUntil)}.` : "SVG, PNG and DTF art library, $15 a month.";
+      $("[data-designs-text]").classList.toggle("muted", !me.designs);
+      const dcta = $("[data-designs-acct-cta]"); if (dcta) dcta.textContent = me.designs ? "Open the library" : "See Design files";
+    }
     try {
       const { items } = await api("/api/orders");
       const ul = $("[data-orders]"); ul.innerHTML = "";
       $("[data-orders-empty]").hidden = items.length > 0;
       for (const o of items.slice(0, 10)) {
         const li = document.createElement("li");
-        const a = document.createElement("span"); a.textContent = `${o.project} (${MAKERS[o.maker] || o.maker})`;
+        const a = document.createElement("span"); a.textContent = `${o.project} (${MAKERS[o.maker] || o.maker})${o.price ? `, $${o.price}` : ""}`;
         const b = document.createElement("span"); b.className = "muted"; b.textContent = `${fmtDate(o.createdAt)} · ref ${o.ref}`;
         li.append(a, b); ul.append(li);
       }
@@ -172,33 +181,83 @@
     inp.addEventListener("keydown", (e) => { if (e.key === "Escape") { form.replaceWith(nameEl); } });
   }
 
-  /* ---------- Pricing: Go Platinum ---------- */
+  /* ---------- Plans: Go Platinum and Join Design files (both check out on the Charleston3D store) ---------- */
+  let cfgP = null;
+  const config = () => cfgP || (cfgP = api("/api/config").catch(() => null));
+  function checkout(plan, next) {
+    if (!me) { location.href = `/account/?mode=signup&next=${encodeURIComponent(next)}`; return; }
+    const form = document.createElement("form"); form.method = "post"; form.action = `${plan.store}/cart/add`; form.hidden = true;
+    const add = (k, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; form.append(i); };
+    add("id", String(plan.variant)); add("quantity", "1"); add("selling_plan", String(plan.sellingPlan));
+    add(`properties[${plan.accountProperty}]`, me.email); add("return_to", "/checkout");
+    window.EPIX_ADS?.track("InitiateCheckout", { content_name: plan.name || "EPIX3D plan", value: 15, currency: "USD" });
+    document.body.append(form); form.submit();
+  }
+  async function paintPlan({ key, btnSel, noteSel, active, until, onText, next, soon }) {
+    const btns = $$(btnSel); if (!btns.length) return;
+    const notes = $$(noteSel);
+    const say = (t) => { for (const n of notes) n.textContent = t; };
+    const cfg = await config();
+    if (me && active) { for (const b of btns) { b.disabled = true; b.textContent = onText; } say(`Your plan is on until ${fmtDate(until)}.`); return; }
+    if (!cfg?.[key]?.available) { for (const b of btns) b.disabled = true; say(soon); return; }
+    say(me ? `Checkout on the Charleston3D store, linked to ${me.email}.` : "Make a free account or sign in first, so we can link the plan to it.");
+    for (const b of btns) { b.disabled = false; b.addEventListener("click", () => checkout(cfg[key], next)); }
+  }
   async function paintPricing() {
-    const btn = $("[data-go-platinum]"); if (!btn) return;
-    const note = $("[data-platinum-note]");
     const free = $("[data-free-cta]");
     if (free && me) { free.textContent = "Open the makers"; free.href = "/makers/"; }
-    let cfg = null; try { cfg = await api("/api/config"); } catch { cfg = null; }
-    if (me?.platinum) { btn.disabled = true; btn.textContent = "You're Platinum"; note.textContent = `Downloads are on until ${fmtDate(me.platinumUntil)}.`; return; }
-    if (!cfg?.platinum?.available) { btn.disabled = true; note.textContent = "Platinum sign-up opens soon. Free accounts can design, save and order now."; return; }
-    btn.disabled = false;
-    note.textContent = me ? `Checkout on the Charleston3D store, linked to ${me.email}.` : "Sign in first so we can link Platinum to your account.";
-    btn.addEventListener("click", () => {
-      if (!me) { location.href = "/account/?next=%2Fpricing%2F"; return; }
-      const p = cfg.platinum;
-      const form = document.createElement("form"); form.method = "post"; form.action = `${p.store}/cart/add`; form.hidden = true;
-      const add = (k, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; form.append(i); };
-      add("id", String(p.variant)); add("quantity", "1"); add("selling_plan", String(p.sellingPlan));
-      add(`properties[${p.accountProperty}]`, me.email); add("return_to", "/checkout");
-      document.body.append(form); form.submit();
-    });
+    await Promise.all([
+      paintPlan({ key: "platinum", btnSel: "[data-go-platinum]", noteSel: "[data-platinum-note]", active: me?.platinum, until: me?.platinumUntil, onText: "You're Platinum", next: "/pricing/#platinum", soon: "Platinum sign-up opens soon. Free accounts can design, save and order now." }),
+      paintPlan({ key: "designs", btnSel: "[data-go-designs]", noteSel: "[data-designs-note]", active: me?.designs, until: me?.designsUntil, onText: "You're a member", next: location.pathname === "/designs/" ? "/designs/" : "/pricing/#design-files", soon: "Design files opens soon." }),
+    ]);
+  }
+
+  /* ---------- Design files library (/designs/) ---------- */
+  const KIND_LABEL = { svg: "SVG", image: "PNG", dtf: "DTF" };
+  const fmtSize = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+  async function paintDesigns() {
+    const root = $("[data-designs-member]"); if (!root) return;
+    const locked = $("[data-designs-locked]");
+    const signin = $("[data-designs-signin]"); if (signin) signin.hidden = !!me;
+    if (me && !me.designs) { const t = $("[data-designs-gate-text]"); if (t) t.textContent = `Signed in as ${me.email}. Join Design files to search, preview and download every design.`; }
+    if (!me?.designs) return;
+    locked.hidden = true; root.hidden = false;
+    for (const c of $$("[data-designs-cta] [data-go-designs]")) c.hidden = true;
+    const grid = $("[data-designs-grid]"), more = $("[data-designs-more]"), status = $("[data-designs-status]");
+    const form = $("[data-designs-search]");
+    let page = 0, kind = "", q = "", seq = 0;
+    async function load(reset) {
+      const my = ++seq;
+      if (reset) { page = 0; grid.innerHTML = ""; }
+      status.textContent = "Loading designs…"; more.hidden = true;
+      try {
+        const r = await api(`/api/designs/search?${new URLSearchParams({ q, kind, page: String(page) })}`);
+        if (my !== seq) return;
+        for (const d of r.items) {
+          const li = document.createElement("li");
+          const img = document.createElement("img"); img.alt = d.name; img.loading = "lazy"; img.width = 400; img.height = 400; if (d.thumbUrl) img.src = d.thumbUrl;
+          const name = document.createElement("span"); name.className = "dz-name"; name.textContent = d.name;
+          const meta = document.createElement("div"); meta.className = "dz-meta";
+          const k = document.createElement("span"); k.textContent = `${KIND_LABEL[d.kind] || d.kind}${d.size ? ` · ${fmtSize(d.size)}` : ""}`;
+          const dl = document.createElement("a"); dl.className = "dz-dl"; dl.href = d.downloadUrl; dl.textContent = "Download"; dl.setAttribute("download", "");
+          meta.append(k, dl); li.append(img, name, meta); grid.append(li);
+        }
+        status.textContent = grid.children.length ? (r.total ? `${r.total.toLocaleString()} designs` : "") : "No designs match that search.";
+        more.hidden = !r.more; page += 1;
+      } catch (e) { if (my === seq) status.textContent = e.message; }
+    }
+    form.addEventListener("submit", (e) => { e.preventDefault(); q = form.q.value.trim(); load(true); });
+    let t = 0; form.q.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { q = form.q.value.trim(); load(true); }, 450); });
+    for (const b of $$("[data-kind]", form)) b.addEventListener("click", () => { kind = b.dataset.kind; for (const x of $$("[data-kind]", form)) x.setAttribute("aria-checked", String(x === b)); load(true); });
+    more.addEventListener("click", () => load(false));
+    load(true);
   }
 
   async function start() {
     try { me = (await api("/api/me")).user; } catch { me = null; }
     paintHeader();
     wireAccount();
-    await Promise.all([paintAccount(), paintProjects(), paintPricing()]);
+    await Promise.all([paintAccount(), paintProjects(), paintPricing(), paintDesigns()]);
     document.documentElement.dataset.ready = "1";
   }
   start();
