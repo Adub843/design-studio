@@ -1,55 +1,87 @@
-<!--{"path": "/pricing/", "title": "Pricing: Free and Platinum | EPIX3D", "description": "Design, save and order prints for free. Platinum is $15 a month and adds 3MF and STL downloads from every EPIX3D maker so you can print at home.", "nav": "pricing", "priority": 0.8, "jsonld": {"@context": "https://schema.org", "@type": "Product", "name": "EPIX3D Platinum", "description": "Monthly membership that unlocks 3MF and STL downloads from every EPIX3D maker.", "brand": {"@type": "Brand", "name": "EPIX3D"}, "offers": {"@type": "Offer", "price": "15.00", "priceCurrency": "USD", "url": "https://epix3d.com/pricing/"}}}-->
+<!--{"path": "/pricing/", "title": "Pricing: Free, Platinum and Design files | EPIX3D", "description": "Design free and order prints priced live as you design, from $18. Platinum is $15 a month and adds Export (3MF and STL). Design files is $15 a month for SVG, PNG and DTF art.", "nav": "pricing", "priority": 0.8, "jsonld": [{"@context": "https://schema.org", "@type": "Product", "name": "EPIX3D Platinum", "description": "Monthly membership that adds Export: 3MF and STL files from every EPIX3D maker, to print anywhere.", "brand": {"@type": "Brand", "name": "EPIX3D"}, "offers": {"@type": "Offer", "price": "15.00", "priceCurrency": "USD", "url": "https://epix3d.com/pricing/#platinum", "availability": "https://schema.org/InStock", "priceSpecification": {"@type": "UnitPriceSpecification", "price": "15.00", "priceCurrency": "USD", "billingDuration": 1, "billingIncrement": 1, "unitCode": "MON"}}}, {"@context": "https://schema.org", "@type": "Product", "name": "EPIX3D Design files", "description": "Monthly membership for the EPIX3D design library: SVG cut files, PNG art and DTF-ready prints, updated as new designs are added.", "brand": {"@type": "Brand", "name": "EPIX3D"}, "offers": {"@type": "Offer", "price": "15.00", "priceCurrency": "USD", "url": "https://epix3d.com/designs/", "availability": "https://schema.org/InStock", "priceSpecification": {"@type": "UnitPriceSpecification", "price": "15.00", "priceCurrency": "USD", "billingDuration": 1, "billingIncrement": 1, "unitCode": "MON"}}}]}-->
 <section class="page-head center">
   <div class="wrap">
-    <h1>Free to design. Platinum to print at home.</h1>
-    <p class="lead" style="margin:0 auto">Everyone can use every maker. Platinum adds the print files.</p>
+    <h1>Design free. Pay for what you need.</h1>
+    <p class="lead" style="margin:0 auto">Every maker is free. Order a print at a price you see before checkout, export the files with Platinum, or join Design files for the art library.</p>
   </div>
 </section>
 <section class="section-tight" style="padding-top:20px">
   <div class="wrap">
-    <div class="plans">
-      <article class="plan">
+    <div class="plans plans-3">
+      <article class="plan" id="free">
         <h2>Free</h2>
-        <p class="muted" style="margin:0">For designing and ordering prints.</p>
+        <p class="muted" style="margin:0">Design and order prints.</p>
         <p class="price">$0</p>
         <ul class="plan-list">
           <li><b>Every maker</b>, with the live 3D preview and print check</li>
           <li><b>Save up to 50 projects</b> to your account</li>
-          <li><b>Order a print</b> made in Charleston, SC, quoted for each order</li>
+          <li><b>Place order</b> with a live print price, from $18, made in Charleston, SC</li>
+          <li>Shipping and tax are added at checkout</li>
         </ul>
         <a class="btn" href="/account/?mode=signup" data-free-cta>Create a free account</a>
       </article>
-      <article class="plan platinum">
+      <article class="plan platinum" id="platinum">
         <h2>Platinum</h2>
         <p class="muted" style="margin:0">For people with their own printer.</p>
         <p class="price">$15 <small>a month</small></p>
         <ul class="plan-list">
-          <li>Everything in Free</li>
-          <li><b>Download 3MF and STL files</b> from every maker</li>
-          <li><b>Print at home</b> in Bambu Studio, Orca, Prusa or Cura</li>
-          <li>Cancel any time; downloads stay on until the paid month ends</li>
+          <li>Everything in Free, and you can still order prints</li>
+          <li><b>Export</b> 3MF and STL files from every maker</li>
+          <li><b>Print anywhere</b>: Bambu Studio, Orca, Prusa or Cura</li>
+          <li>Cancel any time; Export stays on until the paid month ends</li>
         </ul>
         <button class="btn btn-primary" type="button" data-go-platinum disabled>Go Platinum</button>
         <p class="plan-note muted" data-platinum-note>Checking…</p>
       </article>
+      <article class="plan plan-designs" id="design-files">
+        <h2>Design files</h2>
+        <p class="muted" style="margin:0">A separate plan for the art library.</p>
+        <p class="price">$15 <small>a month</small></p>
+        <ul class="plan-list">
+          <li><b>SVG cut files</b> for Cricut and Silhouette</li>
+          <li><b>PNG art and DTF-ready prints</b> for shirts, mugs and signs</li>
+          <li><b>New designs</b> added as they're made</li>
+          <li>Up to 60 downloads a day; cancel any time</li>
+        </ul>
+        <button class="btn btn-primary" type="button" data-go-designs disabled>Join Design files</button>
+        <p class="plan-note muted" data-designs-note>Checking…</p>
+        <a class="plan-link" href="/designs/">See the design library</a>
+      </article>
+    </div>
+  </div>
+</section>
+<section class="section-tight" aria-labelledby="pp-h">
+  <div class="wrap">
+    <div class="how-price">
+      <div>
+        <h2 id="pp-h">How print prices work</h2>
+        <p class="muted">The price in each maker changes as you design. It comes from the filament your design uses and the time it takes to print, worked out from the print file itself.</p>
+      </div>
+      <ul class="price-steps">
+        <li><b>Filament</b><span>Bigger, taller and more solid designs use more. Each extra colour adds a little for colour changes.</span></li>
+        <li><b>Print time</b><span>Charged by the hour the printer runs, plus power and machine wear.</span></li>
+        <li><b>Minimum</b><span>Prints start at $18. Orders are rounded up to the whole dollar.</span></li>
+        <li><b>Shipping</b><span>Added at checkout on the Charleston3D store, with tax.</span></li>
+      </ul>
     </div>
   </div>
 </section>
 <section class="section-tight" aria-labelledby="pm-h">
   <div class="wrap center">
     <h2 id="pm-h">Every plan includes every maker</h2>
-    <p class="muted" style="margin:0 auto 18px;max-width:560px">One account works across the whole studio. New makers are added to both plans as they launch.</p>
+    <p class="muted" style="margin:0 auto 18px;max-width:560px">One account works across the whole studio. New makers are added for everyone as they launch.</p>
     {{makerChips}}
   </div>
 </section>
 <section class="section" aria-labelledby="pq-h">
   <div class="wrap">
-    <div class="section-head center"><h2 id="pq-h">Questions about Platinum</h2></div>
+    <div class="section-head center"><h2 id="pq-h">Questions about plans</h2></div>
     <div class="faq">
-      <details><summary>How do I pay?</summary><div><p>Platinum checks out on the Charleston3D Shopify store, where EPIX3D is sold. Shopify handles the payment; we never see your card.</p></div></details>
-      <details><summary>When do downloads turn on?</summary><div><p>As soon as the payment goes through, usually within a minute. Use the same email as your EPIX3D account, or start from the Go Platinum button while signed in so we can match it.</p></div></details>
-      <details><summary>What if I stop paying?</summary><div><p>Downloads stay on until the end of the month you paid for. Your saved projects stay in your account, and you can still order prints.</p></div></details>
-      <details><summary>How much does a printed piece cost?</summary><div><p>Each print is quoted when you order, because size, colours and detail change the cost. You pay nothing until you accept the price.</p></div></details>
+      <details><summary>How do I pay?</summary><div><p>Prints, Platinum and Design files all check out on the Charleston3D Shopify store, where EPIX3D is sold. Shopify handles the payment; we never see your card.</p></div></details>
+      <details><summary>How much does a printed piece cost?</summary><div><p>Each maker shows the price as you design, starting at $18. It's checked again from your print file when you order. Very large prints over $500 go to checkout as a free request, and we reply with a price.</p></div></details>
+      <details><summary>When does Export turn on?</summary><div><p>As soon as the payment goes through, usually within a minute. Use the same email as your EPIX3D account, or start from the Go Platinum button while signed in so we can match it.</p></div></details>
+      <details><summary>Are Platinum and Design files the same plan?</summary><div><p>No. They're separate monthly plans: Platinum is for exporting 3D print files from the makers, Design files is for the SVG, PNG and DTF art library. Join either one, or both.</p></div></details>
+      <details><summary>What if I stop paying?</summary><div><p>Your plan stays on until the end of the month you paid for. Your saved projects stay in your account, and you can still order prints.</p></div></details>
     </div>
   </div>
 </section>

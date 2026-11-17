@@ -1639,6 +1639,7 @@ window.EPIX_MAKER={
     const fl=S.d.slots.map(f=>getFil(f).name).join(', ');const d=S.d;
     return {blob:new Blob([out.blob],{type:'model/3mf'}),name:name.replace(/\s+/g,'-')+'.3mf',preview:out.shot,details:`${out.plates} plate${out.plates>1?'s':''}, chain: ${d.chain.on?CHAIN[d.chain.style].label+', '+d.chain.length+' in':'none'}, LED plate: ${d.pendant.light.on?'yes':'no'}, filaments: ${fl}`}},
   downloadSelector:'#exportBtn, #folderBtn',
+  livePrice:false,
 };
 </script>
 

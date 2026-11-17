@@ -1,6 +1,6 @@
 # EPIX3D
 
-> EPIX3D (https://epix3d.com) is a set of online makers for 3D prints. People design in the browser, see the result in 3D, then order a print made in Charleston, SC, or download the print files with a Platinum membership.
+> EPIX3D (https://epix3d.com) is a set of online makers for 3D prints. People design in the browser, see the result in 3D, then order a print made in Charleston, SC, at a price shown live as they design, or export the print files with a Platinum membership. A separate Design files plan opens a library of SVG, PNG and DTF art.
 
 ## Makers
 - [Light box](https://epix3d.com/makers/lightbox/): pictures, text and shapes in a framed box that glows; LED strips glue in through the back cover.
@@ -27,8 +27,13 @@
 - [Photo to 3D](https://epix3d.com/makers/ai3d/): a photo of one object turned into a solid, printable 3D model in the browser.
 
 ## Plans
-- Free: every maker, save up to 50 projects, order prints (each print is quoted per order).
-- Platinum: $15 a month; adds 3MF and STL downloads for printing at home.
+- Free: every maker, save up to 50 projects, Place order with a live print price (from $18, shipping and tax at checkout).
+- Platinum: $15 a month; adds Export (3MF and STL files) to print anywhere. Members can still order prints.
+- [Design files](https://epix3d.com/designs/): a separate $15 a month plan; SVG cut files, PNG art and DTF-ready prints, updated as new designs are added, up to 60 downloads a day.
+
+## How print prices work
+- Worked out from the print file: filament (size, height, solidity, plus a little per extra colour) and print time, with a $18 minimum, rounded up to the whole dollar. Shipping and tax are added at checkout.
+- Prints over $500 are quoted by email instead.
 
 ## Ordering
 - Prints are made in Charleston, SC. Checkout runs on the Charleston3D Shopify store, where EPIX3D is sold.
@@ -37,14 +42,14 @@
 - Based in Charleston, SC (city only; no walk-in shop). Serving Charleston, Mount Pleasant, Summerville, North Charleston, West Ashley, James Island, Goose Creek, Hanahan, Daniel Island and the rest of the Lowcountry, plus online orders.
 
 ## Common questions
-- Is it free? Designing, saving up to 50 projects and ordering prints are free. Each printed piece is quoted when you order. Platinum is $15 a month and adds 3MF and STL downloads.
+- Is it free? Designing and saving up to 50 projects are free. Prints are priced live in each maker, from $18. Platinum is $15 a month and adds Export (3MF and STL). Design files is a separate $15 a month.
 - Do I need to install anything? No. Every maker runs in a web browser on a computer, tablet or phone.
 - Which files can Platinum members download? 3MF files with one part per colour (ready for Bambu Studio) and STL files for any slicer such as Orca, Prusa or Cura.
 - Is my photo uploaded by Photo to 3D? No. The model is made on your own device.
 
 ## What EPIX3D doesn't do
 - No app or software to install, and no printer needed to order a print.
-- No fixed price list for printed pieces: each order is quoted.
+- No fixed price list for printed pieces: each design is priced from its own print file.
 - No street address or phone line; contact is by email.
 
 ## More

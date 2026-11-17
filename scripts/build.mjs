@@ -30,7 +30,7 @@ const ORG = {
   "@graph": [
     { "@type": ["OnlineStore", "LocalBusiness"], "@id": `${SITE}/#org`, name: "EPIX3D", url: `${SITE}/`, logo: `${SITE}/assets/img/logo.png`, image: `${SITE}/assets/img/og.jpg`,
       slogan: "Design your own 3D prints, right in your browser.",
-      description: "Online 3D print makers: design light boxes, keychains, name tags, signs, lithophanes, license plate frames, nameplates, hype chains and photo-to-3D models, then order a print made in Charleston, SC, or download the print files with Platinum.",
+      description: "Online 3D print makers: design light boxes, keychains, name tags, signs, lithophanes, license plate frames, nameplates, hype chains and photo-to-3D models, then order a print made in Charleston, SC, at a live price, or export the print files with Platinum. Design files is a separate library of SVG, PNG and DTF art.",
       address: { "@type": "PostalAddress", addressLocality: "Charleston", addressRegion: "SC", addressCountry: "US" },
       geo: { "@type": "GeoCoordinates", latitude: 32.7765, longitude: -79.9311 },
       areaServed: [...AREAS.map((name) => ({ "@type": "City", name: `${name}, SC` })), { "@type": "AdministrativeArea", name: "Lowcountry, South Carolina" }, { "@type": "Country", name: "United States" }],
@@ -59,7 +59,7 @@ export function makerChips(list = MAKERS) {
 // (WebApplication + BreadcrumbList). The Light box engine also runs the Keychain, Name tag, Sign and
 // Lithophane makers (?mode=...): each mode gets its own copy with its own title, description and canonical
 // in makers/lightbox/m/<mode>/, and the Worker serves that copy for /makers/lightbox/?mode=<mode>.
-const ORDER_LINE = "Order a print from Charleston, SC, or download it with Platinum.";
+const ORDER_LINE = "Order a print from Charleston, SC, or export it with Platinum.";
 export const MAKER_SEO = {
   "lightbox": { name: "Light box", title: "Light Box Maker: Custom 3D Printed Light Boxes | EPIX3D", h1: "Light box maker", desc: `Design a glowing 3D printed light box with your own pictures, text and shapes. ${ORDER_LINE}` },
   "keychain": { dir: "lightbox", mode: "keychain", name: "Keychain", title: "Custom Keychain Maker: 3D Printed Keychains | EPIX3D", h1: "Keychain maker", desc: `Turn a picture or a name into a multi-colour 3D printed keychain in your browser. ${ORDER_LINE}` },
@@ -99,8 +99,8 @@ export function makerSeo(html, id) {
   const app = { "@context": "https://schema.org", "@type": "WebApplication", "@id": `${url}#app`, name: `${m.name} maker`, url, description: m.desc,
     applicationCategory: "DesignApplication", operatingSystem: "Any (runs in a web browser)", browserRequirements: "Requires a browser with WebGL",
     isAccessibleForFree: true, inLanguage: "en-US", image: `${SITE}/assets/img/og.jpg`, provider: { "@id": `${SITE}/#org` }, publisher: { "@id": `${SITE}/#org` },
-    offers: [{ "@type": "Offer", name: "Free: design, save and order prints", price: "0", priceCurrency: "USD" },
-      { "@type": "Offer", name: "EPIX3D Platinum: print file downloads", price: "15.00", priceCurrency: "USD", url: `${SITE}/pricing/` }] };
+    offers: [{ "@type": "Offer", name: "Free: design, save and order prints (from $18 a print)", price: "0", priceCurrency: "USD" },
+      { "@type": "Offer", name: "EPIX3D Platinum: Export 3MF and STL", price: "15.00", priceCurrency: "USD", url: `${SITE}/pricing/#platinum` }] };
   const head = [
     '<meta name="robots" content="index, follow, max-image-preview:large">',
     '<meta name="geo.region" content="US-SC"><meta name="geo.placename" content="Charleston"><meta name="geo.position" content="32.7765;-79.9311"><meta name="ICBM" content="32.7765, -79.9311">',
@@ -169,6 +169,8 @@ function build() {
   fs.writeFileSync(path.join(dist, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${listed.map((u) => `  <url><loc>${SITE}${u.loc}</loc><lastmod>${today}</lastmod><priority>${u.pri}</priority></url>`).join("\n")}\n</urlset>\n`);
   fs.writeFileSync(path.join(dist, "robots.txt"), robotsTxt());
   fs.copyFileSync(path.join(root, "site", "llms.txt"), path.join(dist, "llms.txt"));
+  // The print price module runs in the makers (live price) and in the Worker (the server check).
+  fs.copyFileSync(path.join(root, "lib", "print-price.mjs"), path.join(dist, "assets", "print-price.mjs"));
   // The maker list for the "All makers" switcher on every maker (assets/epix-bridge.js).
   fs.writeFileSync(path.join(dist, "assets", "makers.json"), JSON.stringify(MAKERS.map(({ id, name, href, tone, blurb }) => ({ id, name, href, tone, blurb }))));
   console.log(`Built dist/: ${pages.length} pages, assets/, makers/, sitemap.xml (${listed.length} URLs), robots.txt, llms.txt`);

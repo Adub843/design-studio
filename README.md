@@ -31,7 +31,7 @@ menu and Maker Studio tabs (`index.html`, `assets/app.js`, `api.js`, `brands.js`
 | Page | Source |
 |---|---|
 | Home `/`, Makers `/makers/`, Pricing, FAQ, Privacy, Terms, 404 | `site/pages/*.html` wrapped in `site/layout.html` |
-| Account `/account/`, My projects `/projects/` | same, filled in by `assets/site.js` |
+| Account `/account/`, My projects `/projects/`, Design files `/designs/` | same, filled in by `assets/site.js` |
 | The makers `/makers/lightbox/` (also `?mode=keychain`, `nametag`, `sign`, `litho`, `relief`, `bookmark`, `ornament`, `coaster`, `magnet`), `/makers/ai3d/`, `/makers/license-plate/`, `/makers/nameplate/`, `/makers/hype-chain/` | `makers/` |
 
 **One site, one link.** Every maker lives here and nowhere else: no maker gets its own address, app or QR
@@ -44,22 +44,39 @@ code (Aaron, 8 Nov 2026). Each maker page carries the same EPIX3D bar with an **
 The maker cards come from `site/makers.json`; their pictures (`assets/img/makers/`) are real renders
 from the makers themselves. Look: professional and calm: white and warm-grey neutrals, ink buttons, one accent (#6d28d9), Inter only, photoreal product photos (see BRAND.md).
 
-Each maker loads `assets/epix-bridge.js`, which adds the EPIX3D bar (Save, Order a print, account),
-saves and opens projects, sends orders, and puts the Platinum gate on every download button. Each maker
-tells the bridge how to read and restore its design and build its print file (`window.EPIX_MAKER`).
+Each maker loads `assets/epix-bridge.js`, which adds the EPIX3D bar (live print price, Save, Place order,
+Export for Platinum, account), saves and opens projects and sends orders. Free accounts don't see the
+maker's own download buttons; Platinum members get them plus Export in the bar. Each maker tells the bridge
+how to read and restore its design and build its print file (`window.EPIX_MAKER`); `livePrice: false`
+(the Hype chain) prices on a tap instead of on every edit.
+
+### Plans (Aaron, 15 Nov 2026)
+
+- **Free:** every maker; Place order with a live price from Aaron's 3D Print Calculator (`lib/print-price.mjs`,
+  served to the makers as `/assets/print-price.mjs`): filament and print time measured from the print
+  file, $18 minimum, rounded up to the dollar, shipping and tax at checkout. The Worker measures the file
+  again (files up to 400,000 characters of model XML, the free plan's CPU budget); bigger files keep the
+  page's figure and the order says "check before printing". The cart gets the nearest "EPIX3D Custom
+  Print" price step (`lib/print-variants.json`, $18 to $500); above $500 it falls back to the $0 quote.
+- **Platinum, $15 a month:** Export. **Design files, $15 a month (separate):** the E: drive art library
+  (`lib/designs.mjs`, through the PC tunnel), 60 downloads a day. Both check out on the Charleston3D store.
+- **Ads:** `assets/ads.js` loads the Meta and TikTok pixels only when `META_PIXEL_ID` / `TIKTOK_PIXEL_ID`
+  are set in `wrangler.toml` and the visitor presses Allow. utm tags (ads, Holo posts) go on the order as
+  `_Campaign`.
 
 ## Site API
 
 | Call | Who | What |
 |---|---|---|
-| `GET /api/config` | anyone | Platinum price label and whether it's open (Shopify ids set) |
+| `GET /api/config` | anyone | both plans (price, open, cart ids), `printPricing`, ad pixel ids |
+| `GET /api/designs/search`, `GET /api/designs/file/:id` | Design files members | the art library; downloads need the tag the search gave |
 | `POST /api/auth/signup`, `/signin`, `/signout`, `/password`; `GET /api/me` | anyone / signed in | accounts |
 | `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/:id`, `POST /:id/duplicate`, `GET /:id/thumb` | signed in | My projects (2 MB per project, 50 per account) |
 | `POST /api/orders` (multipart), `GET /api/orders` | signed in | stores the print file, answers with the cart post |
 | `GET /files/<order id>/<name>` | anyone with the link | the stored print file (24 random bytes in the id) |
 | `POST /api/exports/check` | signed in | 200 for Platinum, 403 otherwise |
-| `POST /api/shopify/webhook` | Shopify (HMAC) | `orders/paid` with the Platinum variant: Platinum until paid date + 35 days |
-| `GET/POST /api/admin/platinum` | CONSOLE_KEY | set or clear Platinum by email |
+| `POST /api/shopify/webhook` | Shopify (HMAC) | `orders/paid` with a plan's variant: that plan until paid date + 35 days |
+| `GET/POST /api/admin/platinum` | CONSOLE_KEY | set or clear a plan by email (`plan`: `makers` or `designs`) |
 
 Accounts: email + password (PBKDF2-SHA256, 100,000 rounds, salt per user), HttpOnly Secure SameSite=Lax
 session cookie (30 days, token stored only as a hash), sign-in limited to 5 failures per email and 20

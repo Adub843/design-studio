@@ -23,10 +23,12 @@ const assert = require("node:assert/strict");
 
 const ROOT = path.resolve(__dirname, "..");
 const DIST = path.join(ROOT, "dist");
+const PRINT_VARIANTS = new Map(JSON.parse(fs.readFileSync(path.join(ROOT, "lib", "print-variants.json"), "utf8")).variants.map(([p, id]) => [String(id), p]));
 const SHOTS = process.env.SHOTS || "";
 const KEY = "ui-test-key-0123456789";
 const QUOTE_VARIANT = 67895111745723;
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".jpg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".txt": "text/plain", ".xml": "application/xml", ".wasm": "application/wasm" };
+
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".jpg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".txt": "text/plain", ".xml": "application/xml", ".wasm": "application/wasm" };
 
 // Polls a page function with evaluate. (waitForFunction evaluates a string, which the makers' policy blocks.)
 async function until(page, fn, arg, { timeout = 30000 } = {}) {
@@ -64,7 +66,7 @@ const ASSETS = { async fetch(req) {
   return new Response(fs.readFileSync(file), { headers: { "content-type": TYPES[path.extname(file)] ?? "application/octet-stream" } });
 } };
 
-const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/", "/privacy/", "/terms/", "/no-such-page/"];
+const PAGES = ["/", "/makers/", "/designs/", "/pricing/", "/faq/", "/account/", "/projects/", "/privacy/", "/terms/", "/no-such-page/"];
 
 (async () => {
   const { handleRequest } = await import(pathToFileURL(path.join(ROOT, "worker/index.mjs")).href);
@@ -180,7 +182,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
     let projectId;
     await step(`${label}: save a light box design to My projects`, async () => {
       await page.goto(BASE + "/makers/lightbox/", { waitUntil: "load" });
-      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
       assert.match(await page.locator("[data-epix-account]").innerText(), /My projects/);
       await page.evaluate(() => {
         MK.els = [
@@ -210,15 +212,21 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       await page.locator(".proj").first().locator(".btn", { hasText: "Delete" }).click();
       await until(page, () => document.querySelectorAll(".proj").length === 1);
       await page.locator(".proj a.btn", { hasText: "Open" }).click();
-      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
       assert.equal(new URL(page.url()).searchParams.get("project"), projectId);
       assert.equal(await page.evaluate(() => MK.els.length), 2);
       assert.equal(await page.evaluate(() => MK.name), "Heart box");
     });
 
-    await step(`${label}: a Free member sees the Platinum prompt on Download`, async () => {
+    await step(`${label}: a Free member gets Place order with a live price, no Export, and the Platinum prompt on any download`, async () => {
       let downloaded = false; page.once("download", () => { downloaded = true; });
-      await page.click("#mkExport");
+      await until(page, () => /^\$\d+$/.test(document.querySelector("[data-epix-price] b")?.textContent || ""), null, { timeout: 60000 });
+      assert.equal(await page.locator("#mkExport").isVisible(), false, "the maker's own export button is hidden");
+      assert.equal(await page.locator("[data-epix-export]").isVisible(), false);
+      assert.match(await page.locator("[data-epix-order]").innerText(), /Place order|Order/);
+      if (width > 820) assert.equal(await page.locator("[data-epix-plat]").isVisible(), true, "Export with Platinum link");
+      await shot("maker-free-price", false);
+      await page.evaluate(() => document.querySelector("#mkExport").click());
       await page.waitForSelector("#epx-dialog");
       assert.match(await page.locator("#epx-dialog h2").innerText(), /Platinum/);
       assert.equal(await page.locator("#mkPrinterDlg").count(), 0, "the export didn't start");
@@ -227,7 +235,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       assert.equal(await page.locator("#epx-dialog").count(), 0);
       // The license plate's download buttons are gated the same way.
       await page.goto(BASE + "/makers/license-plate/", { waitUntil: "load" });
-      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
       await page.evaluate(() => document.querySelector("[data-download='3mf']").click());
       await page.waitForSelector("#epx-dialog");
       await page.keyboard.press("Escape");
@@ -240,8 +248,12 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       await page.goto(`${BASE}/makers/lightbox/?project=${projectId}`, { waitUntil: "load" });
       await until(page, () => document.documentElement.dataset.epixReady === "1" && document.documentElement.dataset.epixDownloads === "on");
       assert.match(await page.locator("[data-epix-account]").textContent(), /Platinum/i);
+      assert.equal(await page.locator("#mkExport").isVisible(), true, "members see the maker's export button");
+      assert.equal(await page.locator("[data-epix-export]").isVisible(), true, "and Export in the bar");
+      assert.equal(await page.locator("[data-epix-plat]").isVisible(), false);
+      await shot("maker-platinum-export", false);
       const dl = page.waitForEvent("download", { timeout: 60000 });
-      await page.click("#mkExport");
+      await page.click("[data-epix-export]");
       const tip = page.locator("#mkHoleGo"); if (await tip.count()) await tip.click();
       await page.waitForSelector("#mkPrinterDlg");
       await page.click("#mkPrGo");
@@ -253,18 +265,24 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       assert.equal(await page.locator("[data-member-title]").innerText(), "Platinum member");
     });
 
-    await step(`${label}: Order a print stores the 3MF and hands off to the Charleston3D cart`, async () => {
+    await step(`${label}: Place order shows the live price, stores the 3MF and hands off to the matching Custom Print price`, async () => {
       let post = null;
       await page.route("https://charleston3d.com/cart/add", async (r) => { post = r.request(); await r.fulfill({ status: 200, contentType: "text/html", body: "<p>cart</p>" }); });
       await page.goto(`${BASE}/makers/lightbox/?project=${projectId}`, { waitUntil: "load" });
-      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
+      await until(page, () => /^\$\d+$/.test(document.querySelector("[data-epix-price] b")?.textContent || ""), null, { timeout: 60000 });
+      const shown = Number((await page.locator("[data-epix-price] b").innerText()).replace(/\D/g, ""));
+      assert.ok(shown >= 18, `live price ${shown}`);
       await page.click("[data-epix-order]");
-      await page.waitForSelector("#epx-dialog");
+      await page.waitForSelector("#epx-dialog .epx-quote");
+      assert.match(await page.locator("#epx-dialog .epx-primary").innerText(), new RegExp(`Checkout, \\$${shown}`));
       await shot("order-dialog", false);
       await page.locator("#epx-dialog .epx-primary").click();
       await page.waitForURL("https://charleston3d.com/cart/add", { timeout: 60000 });
       const form = new URLSearchParams(post.postData());
-      assert.equal(form.get("id"), String(QUOTE_VARIANT));
+      assert.ok(PRINT_VARIANTS.has(form.get("id")), `a Custom Print price step, got ${form.get("id")}`);
+      assert.ok(PRINT_VARIANTS.get(form.get("id")) >= shown, "the step covers the price shown");
+      assert.ok(form.get("properties[_Price check]"), "the order says how the price was checked");
       assert.equal(form.get("properties[Project]"), "Heart box");
       assert.equal(form.get("properties[Item]"), "EPIX3D Light box");
       assert.equal(form.get("properties[_EPIX3D account]"), email);
@@ -282,7 +300,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
       await page.click("[data-signout]");
       await page.waitForSelector("[data-auth]:not([hidden])");
       await page.goto(BASE + "/makers/lightbox/?mode=keychain", { waitUntil: "load" });
-      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
       assert.equal(await page.evaluate(() => MK.mode), "keychain", "?mode= picks the light box mode");
       await page.evaluate(() => { MK.els = [{ id: "k1", type: "text", text: "KEY", font: "Archivo Black", weight: 400, size: 0.3, align: "center", x: 0.5, y: 0.5, rot: 0, color: "#1f5fbf", spacing: 0, stroke: 0, strokeColor: "#1d1d1f" }]; MK.name = "Key tag"; mkRemount(); mkCommitNow(); });
       await page.click("[data-epix-save]");
@@ -302,7 +320,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
 
     await step(`${label}: the Name tag maker starts with a name badge and builds a 3MF`, async () => {
       await page.goto(BASE + "/makers/lightbox/?mode=nametag", { waitUntil: "load" });
-      await until(page, () => document.documentElement.dataset.epixReady === "1");
+      await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
       const st = await page.evaluate(() => ({ mode: MK.mode, w: MK.width, h: MK.height, ring: MK.ring, text: MK.els[0] && MK.els[0].text, title: EPIX_MAKER.title() }));
       assert.deepEqual(st, { mode: "nametag", w: 76, h: 26, ring: false, text: "YOUR NAME", title: "Name tag maker" });
       const parts = await page.evaluate(async () => (await lbBuild({ collect: true })).map((p) => [p.name, p.blob.size]));
@@ -314,7 +332,7 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
     await step(`${label}: "All makers" on every maker lists the whole studio and moves between makers`, async () => {
       for (const m of ["/makers/lightbox/?mode=nametag", "/makers/license-plate/"]) {
         await page.goto(BASE + m, { waitUntil: "load" });
-        await until(page, () => document.documentElement.dataset.epixReady === "1");
+        await until(page, () => document.documentElement.dataset.epixReady === "1" && !document.querySelector(".epx-price.epx-busy"));
         await page.click(".epx-switch");
         await page.waitForSelector(".epx-switch-menu:not([hidden]) li a");
         assert.equal(await page.locator(".epx-switch-menu li a").count(), 22, m);
@@ -367,6 +385,25 @@ const PAGES = ["/", "/makers/", "/pricing/", "/faq/", "/account/", "/projects/",
         assert.ok(r.size > 5000, m + " " + JSON.stringify(r)); assert.deepEqual(r.bad, [], m);
         assert.equal(await page.locator("[data-epix-save]").count(), 1, m);
       }
+    });
+
+    await step(`${label}: Design files: its own dark look, a locked sample for free accounts, and the library for members`, async () => {
+      await page.goto(BASE + "/designs/", { waitUntil: "networkidle" });
+      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(15, 17, 21)");
+      assert.equal(await page.locator("[data-designs-locked]").isVisible(), true);
+      assert.equal(await page.locator("[data-designs-member]").isVisible(), false);
+      await page.locator(".dz-gate").scrollIntoViewIfNeeded();
+      await shot("designs-locked", false);
+      const r = await page.request.post(BASE + "/api/admin/platinum", { data: { email, days: 35, plan: "designs" }, headers: { "x-console-key": KEY } });
+      assert.equal(r.status(), 200);
+      await page.goto(BASE + "/designs/", { waitUntil: "networkidle" });
+      await until(page, () => !document.querySelector("[data-designs-member]").hidden);
+      assert.equal(await page.locator("[data-designs-locked]").isVisible(), false);
+      await until(page, () => /library|offline|connected/i.test(document.querySelector("[data-designs-status]").textContent));
+      await page.goto(BASE + "/pricing/", { waitUntil: "networkidle" });
+      assert.equal(await page.locator(".plan").count(), 3);
+      assert.match(await page.locator("[data-go-designs]").innerText(), /member/);
+      await shot("pricing-members");
     });
 
     await step(`${label}: no script errors`, async () => { assert.deepEqual(errors, []); });
