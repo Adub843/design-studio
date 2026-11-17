@@ -21,7 +21,7 @@ routes = [
 DRIVE_ORIGIN = "https://library.epix3d.com"
 # Ad pixels (not secret; assets/ads.js loads them only after the visitor presses Allow). Empty = off.
 # Meta: Events Manager > Data sources > the pixel's number. TikTok: Ads Manager > Assets > Events > Web, the pixel code.
-META_PIXEL_ID = ""
+META_PIXEL_ID = "1784702796081304"
 TIKTOK_PIXEL_ID = ""
 
 # Builds dist/ (the pages, makers and assets) before `wrangler dev` and `wrangler deploy`.
